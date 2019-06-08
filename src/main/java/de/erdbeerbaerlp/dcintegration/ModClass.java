@@ -60,9 +60,7 @@ public class ModClass {
 	}
 	@EventHandler
 	public void serverStarting(FMLServerStartingEvent ev) {
-
-		String a = null;
-		a.chars();
+		
 	}
 	@EventHandler
 	public void serverStarted(FMLServerStartedEvent ev) {
