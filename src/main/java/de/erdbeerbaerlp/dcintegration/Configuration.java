@@ -1,7 +1,5 @@
 package de.erdbeerbaerlp.dcintegration;
 
-import java.net.URL;
-
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 
@@ -24,6 +22,8 @@ public class Configuration {
 		public String BOT_GAME_NAME = "Minecraft";
 		@Comment("The channel ID where the bot will be working in")
 		public String CHANNEL_ID = "000000000";
+		@Comment("Wether or not the Bot should modify the channel description")
+		public boolean MODIFY_CHANNEL_DESCRIPTRION = true;
 		
 	}
 	static class category_webhook{
@@ -47,7 +47,7 @@ public class Configuration {
 		public String PLAYER_LEFT_MSG = "%player% left";
 		@Comment({"PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The death message"})
 		public String PLAYER_DEATH_MSG = "%player% %msg%";
-		@Comment("The message to print to discord when it was possible to detect a server crash")
+		@Comment({"The message to print to discord when it was possible to detect a server crash", "Will also be used in the channel description"})
 		public String SERVER_CRASHED_MSG = "Server Crash Detected :thinking:";
 		@Comment({"This is what will be displayed ingame when someone types into the bot\u00B4s channel", "PLACEHOLDERS:", "%name% - The username", "%id% - The user ID", "%msg% - The Message"})
 		public String INGAME_DISCORD_MSG = "\u00A76[\u00A75DISCORD\u00A76]\u00A7r <%user%> %msg%";
@@ -55,6 +55,15 @@ public class Configuration {
 		public String PLAYER_ADVANCEMENT_MSG = "%player% just gained the advancement **%name%**\\n_%desc%_";
 		@Comment({"Chat message when webhook is disabled", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message"})
 		public String PLAYER_CHAT_MSG = "%player%: %msg%";
+		@Comment({"Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS", "%motd% - The server MOTD (from server.properties!)"})
+		public String CHANNEL_DESCRIPTION = "%motd% (%online%/%max%) | %tps% TPS";
+		@Comment("Channel description while the server is offline")
+		public String CHANNEL_DESCRIPTION_OFFLINE = "Server is Offline!";
+		@Comment("Channel description while the server is starting")
+		public String CHANNEL_DESCRIPTION_STARTING = "Starting...";
+		@Comment({"PLACEHOLDERS:", "%player% - The player\u00B4s name"})
+		public String PLAYER_TIMEOUT_MSG = "%player% timed out!";
+		
 	}
 	
 }

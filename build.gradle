@@ -2,15 +2,25 @@ buildscript {
     repositories {
         jcenter()
         maven { url = "http://files.minecraftforge.net/maven" }
+        maven {
+            name = 'sponge'
+            url = 'https://repo.spongepowered.org/maven'
+        }
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.4-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'org.spongepowered.mixin'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 repositories {
         jcenter()
+        maven {
+            name = 'sponge'
+            url = 'https://repo.spongepowered.org/maven'
+        }
 }
 version = "0.0.0"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
@@ -32,6 +42,7 @@ configurations {
     compile.extendsFrom shade
 }
 dependencies {
+	compile 'org.spongepowered:mixin:0.6.6-SNAPSHOT'
     shade "net.dv8tion:JDA:3.8.3_463"
 }
 
@@ -62,7 +73,10 @@ jar {
     manifest {
         attributes([
                 'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
-                'Timestamp': System.currentTimeMillis()
+                'Timestamp': System.currentTimeMillis(),
+                'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+        		'MixinConfigs': 'mixins.dcintegration.json',
+        		'FMLCorePluginContainsFMLMod': 'true'
         ])
     }
 }

@@ -1,0 +1,9 @@
+{
+    "package": "de.erdbeerbaerlp.dcintegration.mixin",
+    "refmap": "mixins.dcintegration.refmap.json",
+    "target": "@env(DEFAULT)",
+    "compatibilityLevel": "JAVA_8",
+    "mixins": [
+        "MixinNetHandlerPlayServer"
+    ]
+}

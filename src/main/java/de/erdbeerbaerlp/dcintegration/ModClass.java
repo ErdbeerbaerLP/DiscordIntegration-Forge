@@ -47,9 +47,11 @@ public class ModClass {
 	@EventHandler
 	public void init(FMLInitializationEvent ev) {
 		if(discord != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord.sendMessageReturns("Server Starting...");
+		if(discord != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord.channelManager.setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
+				if(discord != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord.channelManager.setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
 				if(discord != null && !discord.isKilled) discord.kill(Configuration.MESSAGES.SERVER_CRASHED_MSG);
 			}
 		});
@@ -60,7 +62,7 @@ public class ModClass {
 	}
 	@EventHandler
 	public void serverStarting(FMLServerStartingEvent ev) {
-		
+
 	}
 	@EventHandler
 	public void serverStarted(FMLServerStartedEvent ev) {
@@ -71,6 +73,7 @@ public class ModClass {
 			e.printStackTrace();
 		}
 		else discord.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
+		if(discord != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord.updateChannelDesc.start();
 	}
 	private boolean stopped = false;
 	@EventHandler
@@ -89,13 +92,25 @@ public class ModClass {
 				.replace("%player%", ev.player.getName())
 				);
 	}
+	public static EntityPlayerMP lastTimeout;
 	@SubscribeEvent
 	public void playerLeave(PlayerLoggedOutEvent ev) {
-		if(discord != null) discord.sendMessage(
-				Configuration.MESSAGES.PLAYER_LEFT_MSG
-				.replace("%player%", ev.player.getName())
-				);
+
+		if(discord != null && !ev.player.equals(lastTimeout))
+			discord.sendMessage(
+					Configuration.MESSAGES.PLAYER_LEFT_MSG
+					.replace("%player%", ev.player.getName())
+					);
+		else if(discord != null && ev.player.equals(lastTimeout)) {
+			if(discord != null && lastTimeout == null)
+				discord.sendMessage(
+						Configuration.MESSAGES.PLAYER_TIMEOUT_MSG
+						.replace("%player%", ev.player.getName())
+						);
+			lastTimeout = null;
+		}
 	}
+
 	@SubscribeEvent
 	public void chat(ServerChatEvent ev) {
 		if(discord != null) discord.sendMessage(ev.getPlayer(), ev.getMessage());

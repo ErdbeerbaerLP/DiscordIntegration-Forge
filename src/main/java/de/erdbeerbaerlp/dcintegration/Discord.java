@@ -3,6 +3,9 @@ package de.erdbeerbaerlp.dcintegration;
 import static de.erdbeerbaerlp.dcintegration.Configuration.GENERAL;
 import static de.erdbeerbaerlp.dcintegration.Configuration.WEBHOOK;
 
+import java.util.concurrent.TimeUnit;
+import java.util.stream.LongStream;
+
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 
@@ -15,10 +18,12 @@ import net.dv8tion.jda.core.entities.Webhook;
 import net.dv8tion.jda.core.events.Event;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.EventListener;
+import net.dv8tion.jda.core.managers.ChannelManager;
 import net.dv8tion.jda.core.requests.RequestFuture;
 import net.dv8tion.jda.webhook.WebhookClient;
 import net.dv8tion.jda.webhook.WebhookMessageBuilder;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
@@ -26,12 +31,42 @@ public class Discord implements EventListener{
 	private final JDA jda;
 	private Webhook w = null;
 	private final TextChannel channel;
+	public final ChannelManager channelManager;
 	public boolean isKilled = false;
 	public enum GameTypes{
 		WATCHING,PLAYING,LISTENING,DISABLED;
 	}
+	public Thread updateChannelDesc = new Thread() {
+		{
+			this.setName("Channel Description Updater");
+			this.setDaemon(true);
+		}
+		private double getAverageTickCount() {
+	        MinecraftServer minecraftServer = FMLCommonHandler.instance().getMinecraftServerInstance();
+	        return LongStream.of(minecraftServer.tickTimeArray).sum() / minecraftServer.tickTimeArray.length * 1.0E-6D;
+	    }
 
-
+		private double getAverageTPS() {
+	        return Math.min(1000.0 / getAverageTickCount(), 20);
+	    }
+		public void run() {
+			try {
+			while(true) {
+				channelManager.setTopic(
+						Configuration.MESSAGES.CHANNEL_DESCRIPTION
+						.replace("%tps%", ""+Math.round(getAverageTPS()))
+						.replace("%online%", ""+FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerProfiles().length)
+						.replace("%max%", ""+FMLCommonHandler.instance().getMinecraftServerInstance().getMaxPlayers())
+						.replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD())
+						).complete();
+				sleep(TimeUnit.SECONDS.toMillis(2));
+			}
+			}catch (InterruptedException e) {
+				channelManager.setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
+			}
+		}
+	};
+    
 	public Discord() throws LoginException, InterruptedException {
 		final JDABuilder b = new JDABuilder(GENERAL.BOT_TOKEN);
 		switch (GENERAL.BOT_GAME_TYPE) {
@@ -49,12 +84,14 @@ public class Discord implements EventListener{
 		}
 		this.jda = b.build().awaitReady();
 		this.channel = jda.getTextChannelById(GENERAL.CHANNEL_ID);
+		this.channelManager = new ChannelManager(channel);
 		System.out.println("Bot Ready");
 		for(Webhook web : channel.getWebhooks().complete()) {
 			if(web.getName().equals("MC_DISCORD_INTEGRATION")) w = web;
 		};
 		if(w == null) w = channel.createWebhook("MC_DISCORD_INTEGRATION").complete();
 		jda.addEventListener(this);
+		
 	}
 
 
@@ -109,6 +146,7 @@ public class Discord implements EventListener{
 	}
 
 	public void kill() {
+		if(!this.updateChannelDesc.isInterrupted()) this.updateChannelDesc.interrupt();
 		jda.shutdownNow();
 		this.isKilled = true;
 	}
