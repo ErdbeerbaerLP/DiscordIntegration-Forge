@@ -10,7 +10,7 @@ import de.erdbeerbaerlp.dcintegration.ModClass;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 @Mixin(NetHandlerPlayServer.class)
-public abstract class MixinNetHandlerPlayServer{
+public class MixinNetHandlerPlayServer{
 	@Shadow
 	public EntityPlayerMP player;
 	@Inject(method = "disconnect", at = @At("HEAD"))
