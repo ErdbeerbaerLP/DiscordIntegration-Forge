@@ -1,2 +1,2 @@
 # Discord-Chat-Integration
-This mod mirrors the server chat to discord and back
+This mod links your server chat with a channel on your discord server.

@@ -9,20 +9,25 @@ buildscript {
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-        classpath 'org.spongepowered:mixingradle:0.4-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 repositories {
-        jcenter()
-        maven {
+    jcenter()
+    maven {
             name = 'sponge'
             url = 'https://repo.spongepowered.org/maven'
         }
+    maven {
+        name = "CurseForge"
+        url = "https://minecraft.curseforge.com/api/maven/"
+    }// Maybe needed for other mods in the future
+    maven { url "https://maven.latmod.com/" } //FTB
 }
-version = "0.0.0"
+version = "1.0.0"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -34,18 +39,24 @@ compileJava {
 minecraft {
     version = "1.12.2-14.23.5.2768"
     runDir = "run"
-    
+	makeObfSourceJar = false
     mappings = "snapshot_20171003"
 }
 configurations {
-    shade
-    compile.extendsFrom shade
+    embed
+    compile.extendsFrom(embed)
 }
 dependencies {
-	compile 'org.spongepowered:mixin:0.6.6-SNAPSHOT'
-    shade "net.dv8tion:JDA:3.8.3_463"
+	embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+        transitive = false
+    }
+    embed("net.dv8tion:JDA:3.8.3_463")
+    deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.4.0.97"
+    deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
 }
-
+mixin {
+    add sourceSets.main, 'mixins.dcintegration.refmap.json'
+}
 processResources {
     // this will ensure that this task is redone when the versions change.
     inputs.property "version", project.version
@@ -65,10 +76,11 @@ processResources {
     }
 }
 jar {
-    configurations.shade.findAll { !it.name.endsWith('pom') }.each { dep ->
-        from(project.zipTree(dep)){
-            exclude 'META-INF', 'META-INF/**'
-        }
+    from(configurations.embed.findAll { !it.name.endsWith('pom') }.collect {
+       it.isDirectory() ? it : zipTree(it)
+    }) {
+
+        exclude "LICENSE.txt", "META-INF/MANIFSET.MF", "META-INF/maven/**", "META-INF/*.RSA", "META-INF/*.SF"
     }
     manifest {
         attributes([
@@ -76,6 +88,7 @@ jar {
                 'Timestamp': System.currentTimeMillis(),
                 'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
         		'MixinConfigs': 'mixins.dcintegration.json',
+        		"ForceLoadAsMod": "true",
         		'FMLCorePluginContainsFMLMod': 'true'
         ])
     }

@@ -2,21 +2,37 @@ package de.erdbeerbaerlp.dcintegration;
 
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
+import net.minecraftforge.common.config.Config.Name;
 
-@Config(modid = ModClass.MODID, name = "Discord-Integration")
+/**
+ * Class containing all config entries
+ */
+@Config(modid = DiscordIntegration.MODID, name = "Discord-Integration")
 public class Configuration {
+	@Name("General Config")
+	@Comment("General bot Configuration")
 	public static category_general GENERAL = new category_general();
+	@Name("Webhook")
+	@Comment("Webhook configuration")
 	public static category_webhook WEBHOOK = new category_webhook();
+	@Name("Messages")
+	@Comment("Customize messages of this mod")
 	public static category_messages MESSAGES = new category_messages();
-	
-	static class category_general{
+	@Comment("Configuration for built-in discord commands")
+	public static category_commands COMMANDS = new category_commands();
+	@Comment("Configurate the /discord command useable ingame")
+	public static Configuration.discord_command DISCORD_COMMAND = new Configuration.discord_command();
+	@Name("FTB Utilities")
+	@Comment("Theese config values will only be used when FTB Utilities is installed!")
+	public static category_ftbutilities FTB_UTILITIES = new category_ftbutilities();
+
+	public static class category_general{
 
 		@Comment({
 			"Insert your Bot Token here!",
 			"DO NOT SHARE IT WITH ANYONE!"
 		})
 		public String BOT_TOKEN = "INSERT TOKEN HERE!";
-		//	@Comment("")
 		public Discord.GameTypes BOT_GAME_TYPE = Discord.GameTypes.PLAYING;
 		@Comment("The Name of the Game")
 		public String BOT_GAME_NAME = "Minecraft";
@@ -24,17 +40,18 @@ public class Configuration {
 		public String CHANNEL_ID = "000000000";
 		@Comment("Wether or not the Bot should modify the channel description")
 		public boolean MODIFY_CHANNEL_DESCRIPTRION = true;
-		
 	}
-	static class category_webhook{
+	public static class category_webhook{
 
-		@Comment("Wether or not the bot should use a webhook")
+		@Comment("Wether or not the bot should use a webhook (it will create one)")
 		public boolean BOT_WEBHOOK = false;
 		@Comment("The avatar to be used for server messages")
-		public String SERVER_AVATAR = "https://adnservers.com/templates/GigaTick/html/img/server-icon-1.png";
+		public String SERVER_AVATAR = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/images/srv.png";
+		@Comment("The username of the server")
+		public String SERVER_NAME = "Server";
 	}
-	
-	static class category_messages {
+
+	public static class category_messages {
 		@Comment("This message will edited in / sent when the server finished starting")
 		public String SERVER_STARTED_MSG = "Server Started!";
 		@Comment({"Message to show while the server is starting", "This will be edited to SERVER_STARTED_MSG when webhook is false"})
@@ -64,6 +81,52 @@ public class Configuration {
 		@Comment({"PLACEHOLDERS:", "%player% - The player\u00B4s name"})
 		public String PLAYER_TIMEOUT_MSG = "%player% timed out!";
 		
+
 	}
-	
+	public static class category_ftbutilities{
+		@Comment("Print afk messages in discord")
+		public boolean DISCORD_AFK_MSG_ENABLED = true;
+		@Comment({"Format of the AFK message", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
+		public String DISCORD_AFK_MSG = "%player% is now AFK";
+		@Comment({"Format of the no longer AFK message", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
+		public String DISCORD_AFK_MSG_END = "%player% is no longer AFK";
+		@Comment("URL of the FTB Avatar icon")
+		public String FTB_AVATAR_ICON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/images/ftb.png";
+		@Comment({"Format of the shutdown message printed when the server will shutdown/restart in 30 and 10 seconds","PLACEHOLDERS:", "%seconds% - The seconds remaining till shutdown (30 or 10)"})
+		public String SHUTDOWN_MSG = "Server stopping in %seconds%!";
+	}
+
+	public static class category_commands{
+		@Comment("The Role ID of your Admin Role")
+		public String ADMIN_ROLE_ID = "0";
+		@Comment("The prefix of the commands like list")
+		public String CMD_PREFIX = "/";
+		@Comment("The message for 'list' when no player is online")
+		public String MSG_LIST_EMPTY = "There is no player online...";
+		@Comment({"The header for 'list'", "PLACEHOLDERS:", "%amount% - The amount of players online"})
+		public String MSG_LIST_HEADER = "There are %amount% players online:";
+		@Comment("Message sent when user does not have permission to run a command")
+		public String MSG_NO_PERMISSION = "You don\u00B4t have permission to execute this command!";
+		@Comment({"Message sent when an invalid command was typed", "PLACEHOLDERS:", "%prefix% - Command prefix"})
+		public String MSG_UNKNOWN_COMMAND = "Unknown command, try `%prefix%help` for a list of commands";
+		@Comment("Message if a player provides less arguments than required")
+		public String MSG_NOT_ENOUGH_ARGUMENTS = "Not enough arguments";
+		@Comment("Message if a player provides too many arguments")
+		public String MSG_TOO_MANY_ARGUMENTS = "Too many arguments";
+		@Comment({"Message if a player provides too many arguments", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
+		public String MSG_PLAYER_NOT_FOUND = "Can not find player \"%player%\"";
+	}
+
+	public static class discord_command {
+		@Comment("Enable the /discord command?")
+		public boolean enabled = true;
+		@Comment("The message displayed when typing /discord in the server chat")
+		public String MESSAGE = "Join our discord! http://discord.gg/myserver";
+		@Comment("The message shown when hovering the /discord command message")
+		public String HOVER = "Click to open the invite url";
+		@Comment("The url to open when clicking the /discord command text")
+		public String URL = "http://discord.gg/myserver";
+	}
+
+
 }

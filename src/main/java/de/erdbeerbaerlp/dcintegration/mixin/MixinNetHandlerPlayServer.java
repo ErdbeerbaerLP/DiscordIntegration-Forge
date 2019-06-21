@@ -6,16 +6,24 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import de.erdbeerbaerlp.dcintegration.ModClass;
+import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
-@Mixin(NetHandlerPlayServer.class)
-public class MixinNetHandlerPlayServer{
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentTranslation;
+
+/**
+ * Mixin used to detect player timeouts
+ */
+@Mixin(value=NetHandlerPlayServer.class, priority = 1001)
+public abstract class MixinNetHandlerPlayServer{
 	@Shadow
 	public EntityPlayerMP player;
 	@Inject(method = "disconnect", at = @At("HEAD"))
-	private void onDisconnect(CallbackInfo ci) {
-		ModClass.lastTimeout = this.player;
+	private void onDisconnect(final ITextComponent textComponent, CallbackInfo ci) {
+		
+		if(textComponent.equals(new TextComponentTranslation("disconnect.timeout", new Object[0])))
+			DiscordIntegration.lastTimeout = this.player;
 	}
 
 	
