@@ -46,8 +46,9 @@ public class CommandList extends DiscordCommand {
 				final boolean afk = data.afkTime >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
 				out = out+(afk?"[AFK]":"")+p.getName()+",";
 			}
-			out = out.substring(0, out.length()-1);
+			
 		}
+		out = out.substring(0, out.length()-1);
 		discord.sendMessage(out+"\n```");
 	}
 
