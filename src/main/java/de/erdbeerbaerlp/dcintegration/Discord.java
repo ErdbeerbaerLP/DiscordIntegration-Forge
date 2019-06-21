@@ -112,7 +112,7 @@ public class Discord implements EventListener{
 							.replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD())
 							.replace("%uptime%", getUptime())
 							).complete();
-					sleep(TimeUnit.SECONDS.toMillis(2));
+					sleep(500);
 				}
 			}catch (InterruptedException | RuntimeException e) {
 
@@ -178,7 +178,7 @@ public class Discord implements EventListener{
 					}
 				});
 				try {
-					sleep(TimeUnit.SECONDS.toMillis(2));
+					sleep(900);
 				} catch (InterruptedException e) {}
 			}
 		}
