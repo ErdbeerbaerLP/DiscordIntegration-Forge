@@ -37,15 +37,16 @@ public class CommandList extends DiscordCommand {
 		String out = "There are "+server.getPlayerList().getPlayers().size()+" online players!\n```\n";
 		if(!Loader.isModLoaded("ftbutilities") || !FTBUtilitiesConfig.afk.enabled)
 			for(final EntityPlayerMP p : server.getPlayerList().getPlayers()) {
-				out = out+p.getName()+", ";
+				out = out+p.getName()+" ";
 			}
 		else {
 			final Universe universe = Universe.get();
 			for(final EntityPlayerMP p : server.getPlayerList().getPlayers()) {
 				final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(universe.getPlayer(p));
 				final boolean afk = data.afkTime >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
-				out = out+(afk?"[AFK]":"")+p.getName()+", ";
+				out = out+(afk?"[AFK]":"")+p.getName()+" ";
 			}
+			out = out.trim().replace(" ", ",");
 		}
 		discord.sendMessage(out+"\n```");
 	}
