@@ -321,8 +321,14 @@ public class Discord implements EventListener{
 							}
 						}
 					}
-					if(!hasPermission) sendMessage(Configuration.COMMANDS.MSG_NO_PERMISSION);
-					if(!executed) sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX));
+					if(!hasPermission) {
+						sendMessage(Configuration.COMMANDS.MSG_NO_PERMISSION);
+						return;
+					}
+					if(!executed){
+						sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX));
+						return;
+					}
 
 				}else
 					FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(

@@ -21,7 +21,10 @@ public class CommandKick extends DiscordCommand {
 	public String getDescription() {
 		return "Kicks an player";
 	}
-
+	@Override
+	public boolean adminOnly() {
+		return true;
+	}
 	@Override
 	public void execute(String[] args, MessageReceivedEvent cmdMsg) {
 		if(args.length <= 0 || args[0].isEmpty()) discord.sendMessage(Configuration.COMMANDS.MSG_NOT_ENOUGH_ARGUMENTS);

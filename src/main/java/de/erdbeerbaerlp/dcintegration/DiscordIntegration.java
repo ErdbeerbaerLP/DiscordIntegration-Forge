@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
 
 import de.erdbeerbaerlp.dcintegration.commands.CommandHelp;
+import de.erdbeerbaerlp.dcintegration.commands.CommandKick;
 import de.erdbeerbaerlp.dcintegration.commands.CommandKill;
 import de.erdbeerbaerlp.dcintegration.commands.CommandList;
 import de.erdbeerbaerlp.dcintegration.commands.CommandStop;
@@ -71,6 +72,7 @@ public class DiscordIntegration {
 			discord_instance.registerCommand(new CommandList());
 			discord_instance.registerCommand(new CommandKill());
 			discord_instance.registerCommand(new CommandStop());
+			discord_instance.registerCommand(new CommandKick());
 		} catch (Exception e) {
 			System.err.println("Failed to login: "+e.getMessage());
 			discord_instance = null;
