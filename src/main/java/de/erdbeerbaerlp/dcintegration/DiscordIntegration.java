@@ -1,6 +1,7 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
@@ -60,6 +61,10 @@ public class DiscordIntegration {
 	 * If the server was stopped or has crashed
 	 */
 	private boolean stopped = false;
+	/**
+	 * Time when the server was started
+	 */
+	public static long started;
 	public DiscordIntegration() {
 
 	}
@@ -94,6 +99,7 @@ public class DiscordIntegration {
 	}
 	@EventHandler
 	public void serverStarted(FMLServerStartedEvent ev) {
+		started = new Date().getTime();
 		if(discord_instance != null) if(startingMsg != null) try {
 			this.startingMsg.get().editMessage(Configuration.MESSAGES.SERVER_STARTED_MSG).queue();
 		} catch (InterruptedException | ExecutionException e) {

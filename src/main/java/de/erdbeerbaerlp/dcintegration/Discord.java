@@ -2,10 +2,12 @@ package de.erdbeerbaerlp.dcintegration;
 
 import static de.erdbeerbaerlp.dcintegration.Configuration.GENERAL;
 import static de.erdbeerbaerlp.dcintegration.Configuration.WEBHOOK;
+import static de.erdbeerbaerlp.dcintegration.DiscordIntegration.started;
 
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,31 @@ public class Discord implements EventListener{
 		private double getAverageTPS() {
 			return Math.min(1000.0 / getAverageTickCount(), 20);
 		}
+		private String getUptime() {
+	        if (started == 0) {
+	            return "?????";
+	        }
+
+	        long diff = new Date().getTime() - started;
+
+	        int seconds = (int) Math.floorDiv(diff, 1000);
+	        if (seconds < 60) {
+	            return seconds + " second" + (seconds == 1 ? "" : "s");
+	        }
+	        int minutes = Math.floorDiv(seconds, 60);
+	        seconds -= minutes * 60;
+	        if (minutes < 60) {
+	            return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+	        }
+	        int hours = Math.floorDiv(minutes, 60);
+	        minutes -= hours * 60;
+	        if (hours < 24) {
+	            return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+	        }
+	        int days = Math.floorDiv(hours, 24);
+	        hours -= days * 24;
+	        return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+	    }
 		public void run() {
 			try {
 				while(true) {
@@ -83,6 +110,7 @@ public class Discord implements EventListener{
 							.replace("%online%", ""+FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerProfiles().length)
 							.replace("%max%", ""+FMLCommonHandler.instance().getMinecraftServerInstance().getMaxPlayers())
 							.replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD())
+							.replace("%uptime%", getUptime())
 							).complete();
 					sleep(TimeUnit.SECONDS.toMillis(2));
 				}

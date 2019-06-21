@@ -72,8 +72,8 @@ public class Configuration {
 		public String PLAYER_ADVANCEMENT_MSG = "%player% just gained the advancement **%name%**\\n_%desc%_";
 		@Comment({"Chat message when webhook is disabled", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message"})
 		public String PLAYER_CHAT_MSG = "%player%: %msg%";
-		@Comment({"Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS", "%motd% - The server MOTD (from server.properties!)"})
-		public String CHANNEL_DESCRIPTION = "%motd% (%online%/%max%) | %tps% TPS";
+		@Comment({"Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS", "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server"})
+		public String CHANNEL_DESCRIPTION = "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%";
 		@Comment("Channel description while the server is offline")
 		public String CHANNEL_DESCRIPTION_OFFLINE = "Server is Offline!";
 		@Comment("Channel description while the server is starting")
