@@ -103,6 +103,8 @@ public class Configuration {
 		public String CMD_PREFIX = "/";
 		@Comment("The message for 'list' when no player is online")
 		public String MSG_LIST_EMPTY = "There is no player online...";
+		@Comment("The message for 'list' when one is online")
+		public String MSG_LIST_ONE = "There is 1 player online:";
 		@Comment({"The header for 'list'", "PLACEHOLDERS:", "%amount% - The amount of players online"})
 		public String MSG_LIST_HEADER = "There are %amount% players online:";
 		@Comment("Message sent when user does not have permission to run a command")

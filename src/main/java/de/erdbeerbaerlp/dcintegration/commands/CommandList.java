@@ -34,7 +34,7 @@ public class CommandList extends DiscordCommand {
 			discord.sendMessage(Configuration.COMMANDS.MSG_LIST_EMPTY);
 			return;
 		}
-		String out = "There are "+server.getPlayerList().getPlayers().size()+" online players!\n```\n";
+		String out = (server.getPlayerList().getPlayers().size() == 1 ? Configuration.COMMANDS.MSG_LIST_ONE : Configuration.COMMANDS.MSG_LIST_HEADER.replace("%amount%", ""+server.getPlayerList().getPlayers().size()))+"\n```\n";
 		if(!Loader.isModLoaded("ftbutilities") || !FTBUtilitiesConfig.afk.enabled)
 			for(final EntityPlayerMP p : server.getPlayerList().getPlayers()) {
 				out = out+p.getName()+",";
