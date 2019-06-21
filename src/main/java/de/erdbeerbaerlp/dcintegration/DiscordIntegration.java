@@ -1,6 +1,8 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
+import static de.erdbeerbaerlp.dcintegration.DiscordIntegration.started;
+
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -11,6 +13,7 @@ import de.erdbeerbaerlp.dcintegration.commands.CommandKick;
 import de.erdbeerbaerlp.dcintegration.commands.CommandKill;
 import de.erdbeerbaerlp.dcintegration.commands.CommandList;
 import de.erdbeerbaerlp.dcintegration.commands.CommandStop;
+import de.erdbeerbaerlp.dcintegration.commands.CommandUptime;
 import de.erdbeerbaerlp.dcintegration.commands.McCommandDiscord;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.requests.RequestFuture;
@@ -78,6 +81,7 @@ public class DiscordIntegration {
 			discord_instance.registerCommand(new CommandKill());
 			discord_instance.registerCommand(new CommandStop());
 			discord_instance.registerCommand(new CommandKick());
+			discord_instance.registerCommand(new CommandUptime());
 		} catch (Exception e) {
 			System.err.println("Failed to login: "+e.getMessage());
 			discord_instance = null;
@@ -223,4 +227,30 @@ public class DiscordIntegration {
 				.replace("\\n", "\n")
 				);
 	}
+	
+	public static String getUptime() {
+        if (started == 0) {
+            return "?????";
+        }
+
+        long diff = new Date().getTime() - started;
+
+        int seconds = (int) Math.floorDiv(diff, 1000);
+        if (seconds < 60) {
+            return seconds + " second" + (seconds == 1 ? "" : "s");
+        }
+        int minutes = Math.floorDiv(seconds, 60);
+        seconds -= minutes * 60;
+        if (minutes < 60) {
+            return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+        }
+        int hours = Math.floorDiv(minutes, 60);
+        minutes -= hours * 60;
+        if (hours < 24) {
+            return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+        }
+        int days = Math.floorDiv(hours, 24);
+        hours -= days * 24;
+        return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+    }
 }
