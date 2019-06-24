@@ -47,12 +47,8 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class Discord implements EventListener{
 	private final JDA jda;
-	private Webhook w = null;
-	private final TextChannel channel;
-	public final ChannelManager channelManager;
 	public boolean isKilled = false;
 	private final List<DiscordCommand> commands = new ArrayList<DiscordCommand>();
-	private final Role adminRole;
 	
 	public enum GameTypes{
 		WATCHING,PLAYING,LISTENING,DISABLED;
@@ -78,7 +74,7 @@ public class Discord implements EventListener{
 		public void run() {
 			try {
 				while(true) {
-					channelManager.setTopic(
+					getChannelManager().setTopic(
 							Configuration.MESSAGES.CHANNEL_DESCRIPTION
 							.replace("%tps%", ""+Math.round(getAverageTPS()))
 							.replace("%online%", ""+FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerProfiles().length)
@@ -177,18 +173,8 @@ public class Discord implements EventListener{
 			break;
 		}
 		this.jda = b.build().awaitReady();
-		this.channel = jda.getTextChannelById(GENERAL.CHANNEL_ID);
-		this.channelManager = new ChannelManager(channel);
 		System.out.println("Bot Ready");
-		for(Webhook web : channel.getWebhooks().complete()) {
-			if(web.getName().equals("MC_DISCORD_INTEGRATION")) {
-				w = web;
-				break;
-			}
-		};
-		if(w == null) w = channel.createWebhook("MC_DISCORD_INTEGRATION").complete();
 		jda.addEventListener(this);
-		this.adminRole = (Configuration.COMMANDS.ADMIN_ROLE_ID.equals("0")) ? null : jda.getRoleById(Configuration.COMMANDS.ADMIN_ROLE_ID);
 	}
 	/**
 	 * Sends a message when *not* using a webhook and returns it as RequestFuture<Message> or null when using a webhook
@@ -199,7 +185,7 @@ public class Discord implements EventListener{
 		if(WEBHOOK.BOT_WEBHOOK) 
 			return null;
 		else
-			return channel.sendMessage(msg).submit();
+			return getChannel().sendMessage(msg).submit();
 	}
 	/**
 	 * Sends a message as player
@@ -230,11 +216,11 @@ public class Discord implements EventListener{
 			b.setContent(msg);
 			b.setUsername(name);
 			b.setAvatarUrl(avatarURL);
-			final WebhookClient cli = w.newClient().build();
+			final WebhookClient cli = getWebhook().newClient().build();
 			cli.send(b.build());
 			cli.close();
 		} else 
-			channel.sendMessage(
+			getChannel().sendMessage(
 					Configuration.MESSAGES.PLAYER_CHAT_MSG
 					.replace("%player%", name)
 					.replace("%msg%", msg)
@@ -254,7 +240,7 @@ public class Discord implements EventListener{
 				b.setContent(msg);
 				b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
 				b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
-				final WebhookClient cli = w.newClient().build();
+				final WebhookClient cli = getWebhook().newClient().build();
 				cli.send(b.build());
 				cli.close();
 			}else {
@@ -262,16 +248,16 @@ public class Discord implements EventListener{
 				b.setContent(msg);
 				b.setUsername(playerName);
 				b.setAvatarUrl("https://minotar.net/avatar/"+UUID);
-				final WebhookClient cli = w.newClient().build();
+				final WebhookClient cli = getWebhook().newClient().build();
 				cli.send(b.build());
 				cli.close();
 			}
 		} else 
 			if(playerName == Configuration.WEBHOOK.SERVER_NAME && UUID == "0000000") {
-				channel.sendMessage(msg).complete();
+				getChannel().sendMessage(msg).complete();
 			}
 			else {
-				channel.sendMessage(
+				getChannel().sendMessage(
 						Configuration.MESSAGES.PLAYER_CHAT_MSG
 						.replace("%player%", playerName)
 						.replace("%msg%", msg)
@@ -294,7 +280,7 @@ public class Discord implements EventListener{
 		if(isKilled) return;
 		if(event instanceof MessageReceivedEvent) {
 			final MessageReceivedEvent ev = (MessageReceivedEvent) event;
-			if(channel.getId().equals(ev.getChannel().getId()) && !ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
+			if(getChannel().getId().equals(ev.getChannel().getId()) && !ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
 				if(ev.getMessage().getContentRaw().startsWith(Configuration.COMMANDS.CMD_PREFIX)) {
 					final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.COMMANDS.CMD_PREFIX, "").split(" ");
 					String argumentsRaw = "";
@@ -342,6 +328,9 @@ public class Discord implements EventListener{
 
 		}
 	}
+	public ChannelManager getChannelManager(){
+		return new ChannelManager(getChannel());
+	}
 	/**
 	 * Registers an {@link DiscordCommand}
 	 * @param cmd command
@@ -355,18 +344,17 @@ public class Discord implements EventListener{
 	}
 	/**
 	 * 
-	 * @return an instance of the used TextChannel
-	 */
-	public TextChannel getChannel() {
-		return channel;
-	}
-	/**
-	 * 
 	 * @return an instance of the webhook or null
 	 */
 	@Nullable
 	public Webhook getWebhook() {
-		return w;
+		if(!Configuration.WEBHOOK.BOT_WEBHOOK) return null;
+		for(Webhook web : getChannel().getWebhooks().complete()) {
+			if(web.getName().equals("MC_DISCORD_INTEGRATION")) {
+				return web;
+			}
+		};
+		return getChannel().createWebhook("MC_DISCORD_INTEGRATION").complete();
 	}
 	/**
 	 * Used to stop all discord integration threads in background
@@ -377,8 +365,7 @@ public class Discord implements EventListener{
 		if(ftbUtilitiesShutdownDetectThread.isAlive()) ftbUtilitiesShutdownDetectThread.interrupt();
 	}
 	/**
-	 * 
-	 * @return A list of all commands
+	 * @return A list of all registered commands
 	 */
 	public List<DiscordCommand> getCommandList() {
 		return this.commands;
@@ -388,6 +375,13 @@ public class Discord implements EventListener{
 	 * @return The admin role of the server
 	 */
 	public Role getAdminRole() {
-		return this.adminRole;
+		return (Configuration.COMMANDS.ADMIN_ROLE_ID.equals("0") || Configuration.COMMANDS.ADMIN_ROLE_ID.trim().isEmpty()) ? null : jda.getRoleById(Configuration.COMMANDS.ADMIN_ROLE_ID);
+	}
+	/**
+	 * @return the specified text channel
+	 */
+	public TextChannel getChannel() {
+		return jda.getTextChannelById(GENERAL.CHANNEL_ID);
 	}
 }
+

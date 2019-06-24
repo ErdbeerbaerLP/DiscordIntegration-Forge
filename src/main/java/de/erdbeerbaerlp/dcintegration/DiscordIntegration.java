@@ -91,7 +91,7 @@ public class DiscordIntegration {
 	@EventHandler
 	public void init(FMLInitializationEvent ev) {
 		if(discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
-		if(discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.channelManager.setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
+		if(discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
 	}
 	@EventHandler
 	public void serverAboutToStart(FMLServerAboutToStartEvent ev) {
@@ -125,7 +125,7 @@ public class DiscordIntegration {
 					if(!stopped) {
 						if(!discord_instance.isKilled) {
 							discord_instance.stopThreads();
-							if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.channelManager.setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
+							if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
 							discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
 						}
 					}
@@ -148,7 +148,7 @@ public class DiscordIntegration {
 				cli.send(b.build());
 				cli.close();
 			}else discord_instance.getChannel().sendMessage(Configuration.MESSAGES.SERVER_STOPPED_MSG).complete();
-			discord_instance.channelManager.setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
+			discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
 		}
 		stopped = true;
 	}
@@ -158,7 +158,7 @@ public class DiscordIntegration {
 			if(!stopped) {
 				if(!discord_instance.isKilled) {
 					discord_instance.stopThreads();
-					if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.channelManager.setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
+					if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
 					discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
 				}
 			}
