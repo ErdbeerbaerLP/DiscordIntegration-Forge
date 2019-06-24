@@ -25,6 +25,7 @@ import com.feed_the_beast.ftbutilities.data.FTBUtilitiesUniverseData;
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Game;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Role;
@@ -32,9 +33,11 @@ import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.Webhook;
 import net.dv8tion.jda.core.events.Event;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.core.exceptions.PermissionException;
 import net.dv8tion.jda.core.hooks.EventListener;
 import net.dv8tion.jda.core.managers.ChannelManager;
 import net.dv8tion.jda.core.requests.RequestFuture;
+import net.dv8tion.jda.core.utils.PermissionUtil;
 import net.dv8tion.jda.webhook.WebhookClient;
 import net.dv8tion.jda.webhook.WebhookMessageBuilder;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -49,7 +52,7 @@ public class Discord implements EventListener{
 	private final JDA jda;
 	public boolean isKilled = false;
 	private final List<DiscordCommand> commands = new ArrayList<DiscordCommand>();
-	
+
 	public enum GameTypes{
 		WATCHING,PLAYING,LISTENING,DISABLED;
 	}
@@ -70,7 +73,7 @@ public class Discord implements EventListener{
 		private double getAverageTPS() {
 			return Math.min(1000.0 / getAverageTickCount(), 20);
 		}
-		
+
 		public void run() {
 			try {
 				while(true) {
@@ -153,7 +156,7 @@ public class Discord implements EventListener{
 			}
 		}
 	};
-	
+
 	/**
 	 * Constructor for this class
 	 */
@@ -175,6 +178,20 @@ public class Discord implements EventListener{
 		this.jda = b.build().awaitReady();
 		System.out.println("Bot Ready");
 		jda.addEventListener(this);
+		if(!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS, Permission.MESSAGE_MANAGE)){
+			System.err.println("ERROR! Bot does not have all permissions to work!");
+			throw new PermissionException("Bot requires message read, message write, embed links and manage messages");
+		}
+		if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION)
+			if(!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_CHANNEL)) {
+				Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION = false;
+				System.err.println("ERROR! Bot does not have permission to manage channel, disabling channel description");
+			}
+		if(Configuration.WEBHOOK.BOT_WEBHOOK)
+			if(!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
+				Configuration.WEBHOOK.BOT_WEBHOOK = false;
+				System.err.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
+			}
 	}
 	/**
 	 * Sends a message when *not* using a webhook and returns it as RequestFuture<Message> or null when using a webhook
@@ -349,6 +366,11 @@ public class Discord implements EventListener{
 	@Nullable
 	public Webhook getWebhook() {
 		if(!Configuration.WEBHOOK.BOT_WEBHOOK) return null;
+		if(!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
+			Configuration.WEBHOOK.BOT_WEBHOOK = false;
+			System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
+			return null;
+		}
 		for(Webhook web : getChannel().getWebhooks().complete()) {
 			if(web.getName().equals("MC_DISCORD_INTEGRATION")) {
 				return web;
