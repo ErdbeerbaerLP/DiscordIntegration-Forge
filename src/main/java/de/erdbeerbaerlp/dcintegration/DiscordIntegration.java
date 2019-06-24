@@ -52,7 +52,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-	public static final String VERSION = "0.9.1";
+	public static final String VERSION = "1.0.0";
 	/**
 	 * Modid
 	 */
@@ -61,6 +61,9 @@ public class DiscordIntegration {
 	 * The only instance of {@link Discord}
 	 */
 	public static Discord discord_instance;
+	/**
+	 * Message sent when the server is starting (in non-webhook mode!), stored for editing
+	 */
 	private RequestFuture<Message> startingMsg;
 	/**
 	 * If the server was stopped or has crashed
@@ -109,7 +112,6 @@ public class DiscordIntegration {
 		if(discord_instance != null) if(startingMsg != null) try {
 			this.startingMsg.get().editMessage(Configuration.MESSAGES.SERVER_STARTED_MSG).queue();
 		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
@@ -138,18 +140,18 @@ public class DiscordIntegration {
 		
 		if(Configuration.GENERAL.UPDATE_CHECK) {
 				CheckResult result = ForgeVersion.getResult(Loader.instance().getIndexedModList().get(DiscordIntegration.MODID));
-				if (result.status == Status.OUTDATED)
-				{
+				if (result.status == Status.OUTDATED){
 					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c Update available!\n\u00A7cCurrent version: \u00A74"+DiscordIntegration.VERSION+"\u00A7c, Newest: \u00A7a"+result.target+"\n\u00A7cChangelog:\n\u00A76"+result.changes.get(result.target)+"\nDownload the newest version on https://minecraft.curseforge.com/projects/dcintegration");
 				}else if(result.status == Status.AHEAD){
 					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A77 It looks like you are using an Development version... \n\u00A77Your version: \u00A76"+DiscordIntegration.VERSION);
 				}else if(result.status == Status.FAILED){
-					System.err.println(new TextComponentString("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c FAILED TO CHECK FOR UPDATES"));
+					System.err.println("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c FAILED TO CHECK FOR UPDATES");
 				}else if(result.status == Status.BETA){
 					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7a You are using an Beta Version. This may contain bugs which are being fixed.");
 				}else if(result.status == Status.BETA_OUTDATED){
 					System.out.println(new TextComponentString("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c You are using an Outdated Beta Version. This may contain bugs which are being fixed or are already fixed\n\u00A76Changelog of newer Beta:"+result.changes.get(result.target)));
-				} else {
+				}else if(result.status == Status.UP_TO_DATE) {
+				}else {
 					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7cUpdateCheck: "+result.status.toString());
 				}
 			
