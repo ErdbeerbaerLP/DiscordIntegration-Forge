@@ -6,7 +6,6 @@ import com.mojang.authlib.GameProfile;
 
 import de.erdbeerbaerlp.dcintegration.Configuration;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.DamageSource;

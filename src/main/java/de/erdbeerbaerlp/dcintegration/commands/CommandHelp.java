@@ -1,6 +1,5 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
-import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 public class CommandHelp extends DiscordCommand{

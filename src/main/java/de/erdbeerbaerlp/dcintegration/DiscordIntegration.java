@@ -1,8 +1,6 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
-import static de.erdbeerbaerlp.dcintegration.DiscordIntegration.started;
-
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
