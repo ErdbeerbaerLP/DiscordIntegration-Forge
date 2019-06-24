@@ -1,7 +1,7 @@
 {
   "homepage": "https://minecraft.curseforge.com/projects/dcintegration/files",
   "1.12.2": {
-    "1.0": "Initial release"
+    "1.0.0": "Initial release"
   },
   "promos": {
     "1.12.2-latest": "1.0.0",
