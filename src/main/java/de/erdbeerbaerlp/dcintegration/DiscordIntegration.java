@@ -20,6 +20,10 @@ import net.dv8tion.jda.webhook.WebhookMessageBuilder;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.common.ForgeVersion;
+import net.minecraftforge.common.ForgeVersion.CheckResult;
+import net.minecraftforge.common.ForgeVersion.Status;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
@@ -39,7 +43,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 
-@Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*")
+@Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*", updateJSON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/update_check.json")
 public class DiscordIntegration {
 	/**
 	 * Mod name
@@ -48,7 +52,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-	public static final String VERSION = "1.0.0";
+	public static final String VERSION = "0.9.1";
 	/**
 	 * Modid
 	 */
@@ -131,6 +135,25 @@ public class DiscordIntegration {
 				}
 			}
 		});
+		
+		if(Configuration.GENERAL.UPDATE_CHECK) {
+				CheckResult result = ForgeVersion.getResult(Loader.instance().getIndexedModList().get(DiscordIntegration.MODID));
+				if (result.status == Status.OUTDATED)
+				{
+					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c Update available!\n\u00A7cCurrent version: \u00A74"+DiscordIntegration.VERSION+"\u00A7c, Newest: \u00A7a"+result.target+"\n\u00A7cChangelog:\n\u00A76"+result.changes.get(result.target)+"\nDownload the newest version on https://minecraft.curseforge.com/projects/dcintegration");
+				}else if(result.status == Status.AHEAD){
+					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A77 It looks like you are using an Development version... \n\u00A77Your version: \u00A76"+DiscordIntegration.VERSION);
+				}else if(result.status == Status.FAILED){
+					System.err.println(new TextComponentString("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c FAILED TO CHECK FOR UPDATES"));
+				}else if(result.status == Status.BETA){
+					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7a You are using an Beta Version. This may contain bugs which are being fixed.");
+				}else if(result.status == Status.BETA_OUTDATED){
+					System.out.println(new TextComponentString("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c You are using an Outdated Beta Version. This may contain bugs which are being fixed or are already fixed\n\u00A76Changelog of newer Beta:"+result.changes.get(result.target)));
+				} else {
+					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7cUpdateCheck: "+result.status.toString());
+				}
+			
+		}
 	}
 	
 	@EventHandler

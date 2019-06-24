@@ -40,6 +40,8 @@ public class Configuration {
 		public String CHANNEL_ID = "000000000";
 		@Comment("Wether or not the Bot should modify the channel description")
 		public boolean MODIFY_CHANNEL_DESCRIPTRION = true;
+		@Comment("If you think the update check is annoying disable this")
+		public boolean UPDATE_CHECK = true;
 	}
 	public static class category_webhook{
 
