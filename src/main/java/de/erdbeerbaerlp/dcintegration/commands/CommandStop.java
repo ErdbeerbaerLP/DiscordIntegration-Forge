@@ -22,7 +22,7 @@ public class CommandStop extends DiscordCommand {
 	@Override
 	public void execute(String[] args, MessageReceivedEvent cmdMsg) {
 		discord.sendMessage("Stopping server");
-		server.initiateShutdown();
+		server.initiateShutdown(false);
 	}
 	@Override
 	public boolean adminOnly() {

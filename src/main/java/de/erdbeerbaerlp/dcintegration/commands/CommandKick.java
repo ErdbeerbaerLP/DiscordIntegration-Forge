@@ -2,8 +2,8 @@ package de.erdbeerbaerlp.dcintegration.commands;
 
 import de.erdbeerbaerlp.dcintegration.Configuration;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.StringTextComponent;
 
 public class CommandKick extends DiscordCommand {
 
@@ -27,15 +27,15 @@ public class CommandKick extends DiscordCommand {
 	}
 	@Override
 	public void execute(String[] args, MessageReceivedEvent cmdMsg) {
-		if(args.length <= 0 || args[0].isEmpty()) discord.sendMessage(Configuration.COMMANDS.MSG_NOT_ENOUGH_ARGUMENTS);
+		if(args.length <= 0 || args[0].isEmpty()) discord.sendMessage(Configuration.INSTANCE.msgNotEnoughArgs.get());
 		else {
-			for(EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-				if(player.getName().equalsIgnoreCase(args[0])) {
+			for(ServerPlayerEntity player : server.getPlayerList().getPlayers()) {
+				if(player.getName().getUnformattedComponentText().equalsIgnoreCase(args[0])) {
 					String kickString = "";
 					for(int i=1;i<args.length;i++) {
 						kickString = kickString+args[i]+" ";
 					}
-					player.connection.disconnect(new TextComponentString(kickString.trim().isEmpty()?"Kicked using discord":kickString.trim()));
+					player.connection.disconnect(new StringTextComponent(kickString.trim().isEmpty()?"Kicked using discord":kickString.trim()));
 					discord.sendMessage("Kicked "+player.getName());
 					return;
 				}

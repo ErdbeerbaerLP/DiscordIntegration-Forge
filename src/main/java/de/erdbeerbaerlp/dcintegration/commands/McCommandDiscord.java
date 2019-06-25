@@ -16,7 +16,7 @@ public class McCommandDiscord {
 	{
 		dispatcher.register(
 				LiteralArgumentBuilder.<CommandSource>literal("discord").executes((ctx) -> {
-					ctx.getSource().sendFeedback(new StringTextComponent(Configuration.DISCORD_COMMAND.MESSAGE).setStyle(new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.DISCORD_COMMAND.HOVER))).setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.DISCORD_COMMAND.URL))), false);
+					ctx.getSource().sendFeedback(new StringTextComponent(Configuration.INSTANCE.dcCmdMsg.get()).setStyle(new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.INSTANCE.dcCmdMsgHover.get()))).setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
 					return 0;
 				})
 				);

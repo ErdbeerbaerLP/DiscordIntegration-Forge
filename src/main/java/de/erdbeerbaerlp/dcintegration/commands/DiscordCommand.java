@@ -8,7 +8,7 @@ import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 /**
  * Abstract class used for discord commands
@@ -21,7 +21,7 @@ public abstract class DiscordCommand {
 	/**
 	 * Instance of {@link MinecraftServer}
 	 */
-	final MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+	final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
 	/**
 	 * The text channel the bot is working in
 	 */
@@ -76,7 +76,7 @@ public abstract class DiscordCommand {
 	 * Override to customize the command usage, which is being displayed in help (ex. to add arguments)
 	 */
 	public String getCommandUsage() {
-		return Configuration.COMMANDS.CMD_PREFIX+getName();
+		return Configuration.INSTANCE.prefix.get()+getName();
 	}
 	
 	public final boolean equals(DiscordCommand cmd) {
@@ -88,6 +88,6 @@ public abstract class DiscordCommand {
 	 * @return The message
 	 */
 	public final String parsePlayerNotFoundMsg(String playerName) {
-		return Configuration.COMMANDS.MSG_PLAYER_NOT_FOUND.replace("%player%", playerName);
+		return Configuration.INSTANCE.msgPlayerNotFound.get().replace("%player%", playerName);
 	}
 }

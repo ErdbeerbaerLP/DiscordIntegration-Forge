@@ -31,6 +31,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
@@ -71,7 +72,7 @@ public class DiscordIntegration {
 	public static long started;
 
 	private static final Logger LOGGER = LogManager.getLogger();
-
+	public static ModConfig cfg = null;
 	public DiscordIntegration() {
 		// Register the setup method for modloading
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
@@ -99,8 +100,8 @@ public class DiscordIntegration {
 			System.err.println("Failed to login: "+e.getMessage());
 			discord_instance = null;
 		}
-		if(discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
-		if(discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
+		if(discord_instance != null && !Configuration.INSTANCE.enableWebhook.get()) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
+		if(discord_instance != null && Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
 	}
 	public void serverAboutToStart(final FMLServerAboutToStartEvent ev) {
 
@@ -111,13 +112,13 @@ public class DiscordIntegration {
 	public void serverStarted(final FMLServerStartedEvent ev) {
 		started = new Date().getTime();
 		if(discord_instance != null) if(startingMsg != null) try {
-			this.startingMsg.get().editMessage(Configuration.MESSAGES.SERVER_STARTED_MSG).queue();
+			this.startingMsg.get().editMessage(Configuration.INSTANCE.msgServerStarted.get()).queue();
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
 		}
-		else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
+		else discord_instance.sendMessage(Configuration.INSTANCE.msgServerStarted.get());
 		if(discord_instance != null) {
-			if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.updateChannelDesc.start();
+			if(Configuration.INSTANCE.botModifyDescription.get()) discord_instance.updateChannelDesc.start();
 			//			if(Loader.isModLoaded("ftbutilities")) {
 			//				if(FTBUtilitiesConfig.auto_shutdown.enabled) discord_instance.ftbUtilitiesShutdownDetectThread.start();
 			//				if(FTBUtilitiesConfig.afk.enabled) discord_instance.ftbUtilitiesAFKDetectThread.start();
@@ -130,8 +131,8 @@ public class DiscordIntegration {
 					if(!stopped) {
 						if(!discord_instance.isKilled) {
 							discord_instance.stopThreads();
-							if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
-							discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
+							if(Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
+							discord_instance.sendMessage(Configuration.INSTANCE.msgServerCrash.get());
 						}
 					}
 					discord_instance.kill();
@@ -139,7 +140,7 @@ public class DiscordIntegration {
 			}
 		});
 
-		if(Configuration.GENERAL.UPDATE_CHECK) {
+		if(Configuration.INSTANCE.updateCheck.get()) {
 			//UNUSED for now
 			//				CheckResult result = ForgeVersion.getResult(FML.instance().getIndexedModList().get(DiscordIntegration.MODID));
 			//				if (result.status == Status.OUTDATED){
@@ -162,16 +163,16 @@ public class DiscordIntegration {
 	public void serverStopping(final FMLServerStoppingEvent ev) {
 		if(discord_instance != null) {
 			discord_instance.stopThreads();
-			if(Configuration.WEBHOOK.BOT_WEBHOOK) {
+			if(Configuration.INSTANCE.enableWebhook.get()) {
 				final WebhookMessageBuilder b = new WebhookMessageBuilder();
-				b.setContent(Configuration.MESSAGES.SERVER_STOPPED_MSG);
-				b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
-				b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
+				b.setContent(Configuration.INSTANCE.msgServerStopped.get());
+				b.setUsername(Configuration.INSTANCE.serverName.get());
+				b.setAvatarUrl(Configuration.INSTANCE.serverAvatar.get());
 				final WebhookClient cli = discord_instance.getWebhook().newClient().build();
 				cli.send(b.build());
 				cli.close();
-			}else discord_instance.getChannel().sendMessage(Configuration.MESSAGES.SERVER_STOPPED_MSG).complete();
-			discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
+			}else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).complete();
+			discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
 		}
 		stopped = true;
 	}
@@ -180,8 +181,8 @@ public class DiscordIntegration {
 			if(!stopped) {
 				if(!discord_instance.isKilled) {
 					discord_instance.stopThreads();
-					if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
-					discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
+					if(Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
+					discord_instance.sendMessage(Configuration.INSTANCE.msgServerCrash.get());
 				}
 			}
 			discord_instance.kill();
@@ -190,7 +191,7 @@ public class DiscordIntegration {
 	@SubscribeEvent
 	public void playerJoin(final PlayerLoggedInEvent ev) {
 		if(discord_instance != null) discord_instance.sendMessage(
-				Configuration.MESSAGES.PLAYER_JOINED_MSG
+				Configuration.INSTANCE.msgPlayerJoin.get()
 				.replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
 				);
 	}
@@ -200,15 +201,23 @@ public class DiscordIntegration {
 
 		if(discord_instance != null && !ev.getPlayer().equals(lastTimeout))
 			discord_instance.sendMessage(
-					Configuration.MESSAGES.PLAYER_LEFT_MSG
+					Configuration.INSTANCE.msgPlayerLeave.get()
 					.replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
 					);
 		else if(discord_instance != null && ev.getPlayer().equals(lastTimeout)) {
 			discord_instance.sendMessage(
-					Configuration.MESSAGES.PLAYER_TIMEOUT_MSG
+					Configuration.INSTANCE.msgPlayerTimeout.get()
 					.replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
 					);
 			lastTimeout = null;
+		}
+	}
+	@SubscribeEvent
+	public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
+		final ModConfig config = event.getConfig();
+		// Rebake the configs when they change
+		if (config.getSpec() == Configuration.cfgSpec) {
+			cfg = config;
 		}
 	}
 	@SubscribeEvent
@@ -238,7 +247,7 @@ public class DiscordIntegration {
 	public void death(LivingDeathEvent ev) {
 		if(ev.getEntity() instanceof PlayerEntity) {
 			if(discord_instance!=null) discord_instance.sendMessage(
-					Configuration.MESSAGES.PLAYER_DEATH_MSG
+					Configuration.INSTANCE.msgPlayerDeath.get()
 					.replace("%player%", ((PlayerEntity) ev.getEntity()).getName().getUnformattedComponentText())
 					.replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving()).getUnformattedComponentText().replace(ev.getEntity().getName()+" ", ""))
 					);
@@ -247,7 +256,7 @@ public class DiscordIntegration {
 	@SubscribeEvent
 	public void advancement(AdvancementEvent ev) {
 		if(discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat()) discord_instance.sendMessage(
-				Configuration.MESSAGES.PLAYER_ADVANCEMENT_MSG
+				Configuration.INSTANCE.msgAdvancement.get()
 				.replace("%player%", ev.getEntityPlayer().getName().getUnformattedComponentText())
 				.replace("%name%", ev.getAdvancement().getDisplay().getTitle().getUnformattedComponentText())
 				.replace("%desc%", ev.getAdvancement().getDisplay().getDescription().getUnformattedComponentText())
