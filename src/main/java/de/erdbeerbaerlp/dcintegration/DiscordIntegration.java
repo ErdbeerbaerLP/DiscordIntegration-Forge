@@ -4,7 +4,10 @@ package de.erdbeerbaerlp.dcintegration;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
-import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import de.erdbeerbaerlp.dcintegration.commands.CommandHelp;
 import de.erdbeerbaerlp.dcintegration.commands.CommandKick;
@@ -17,33 +20,26 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.requests.RequestFuture;
 import net.dv8tion.jda.webhook.WebhookClient;
 import net.dv8tion.jda.webhook.WebhookMessageBuilder;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraftforge.common.ForgeVersion;
-import net.minecraftforge.common.ForgeVersion.CheckResult;
-import net.minecraftforge.common.ForgeVersion.Status;
+import net.minecraft.command.arguments.MessageArgument;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
-import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-@Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*", updateJSON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/update_check.json")
+@Mod(DiscordIntegration.MODID)
 public class DiscordIntegration {
 	/**
 	 * Mod name
@@ -73,11 +69,23 @@ public class DiscordIntegration {
 	 * Time when the server was started
 	 */
 	public static long started;
-	public DiscordIntegration() {
 
+	private static final Logger LOGGER = LogManager.getLogger();
+
+	public DiscordIntegration() {
+		// Register the setup method for modloading
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverAboutToStart);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStarting);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStarted);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStopping);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStopped);
+
+		// Register ourselves for server and other game events we are interested in
+		MinecraftForge.EVENT_BUS.register(this);
 	}
-	@EventHandler
-	public void preInit(FMLPreInitializationEvent ev) {
+
+	public void preInit(final FMLDedicatedServerSetupEvent ev) {
 		System.out.println("Loading mod");
 		try {
 			discord_instance = new Discord();
@@ -91,23 +99,16 @@ public class DiscordIntegration {
 			System.err.println("Failed to login: "+e.getMessage());
 			discord_instance = null;
 		}
-		MinecraftForge.EVENT_BUS.register(this);
-	}
-	@EventHandler
-	public void init(FMLInitializationEvent ev) {
 		if(discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
 		if(discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
 	}
-	@EventHandler
-	public void serverAboutToStart(FMLServerAboutToStartEvent ev) {
+	public void serverAboutToStart(final FMLServerAboutToStartEvent ev) {
 
 	}
-	@EventHandler
-	public void serverStarting(FMLServerStartingEvent ev) {
-		if(Configuration.DISCORD_COMMAND.enabled) ev.registerServerCommand(new McCommandDiscord());
+	public void serverStarting(final FMLServerStartingEvent ev) {
+		new McCommandDiscord(ev.getCommandDispatcher());
 	}
-	@EventHandler
-	public void serverStarted(FMLServerStartedEvent ev) {
+	public void serverStarted(final FMLServerStartedEvent ev) {
 		started = new Date().getTime();
 		if(discord_instance != null) if(startingMsg != null) try {
 			this.startingMsg.get().editMessage(Configuration.MESSAGES.SERVER_STARTED_MSG).queue();
@@ -117,10 +118,10 @@ public class DiscordIntegration {
 		else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
 		if(discord_instance != null) {
 			if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.updateChannelDesc.start();
-			if(Loader.isModLoaded("ftbutilities")) {
-				if(FTBUtilitiesConfig.auto_shutdown.enabled) discord_instance.ftbUtilitiesShutdownDetectThread.start();
-				if(FTBUtilitiesConfig.afk.enabled) discord_instance.ftbUtilitiesAFKDetectThread.start();
-			}
+			//			if(Loader.isModLoaded("ftbutilities")) {
+			//				if(FTBUtilitiesConfig.auto_shutdown.enabled) discord_instance.ftbUtilitiesShutdownDetectThread.start();
+			//				if(FTBUtilitiesConfig.afk.enabled) discord_instance.ftbUtilitiesAFKDetectThread.start();
+			//			}
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread(){
 			@Override
@@ -137,29 +138,28 @@ public class DiscordIntegration {
 				}
 			}
 		});
-		
+
 		if(Configuration.GENERAL.UPDATE_CHECK) {
-				CheckResult result = ForgeVersion.getResult(Loader.instance().getIndexedModList().get(DiscordIntegration.MODID));
-				if (result.status == Status.OUTDATED){
-					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c Update available!\n\u00A7cCurrent version: \u00A74"+DiscordIntegration.VERSION+"\u00A7c, Newest: \u00A7a"+result.target+"\n\u00A7cChangelog:\n\u00A76"+result.changes.get(result.target)+"\nDownload the newest version on https://minecraft.curseforge.com/projects/dcintegration");
-				}else if(result.status == Status.AHEAD){
-					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A77 It looks like you are using an Development version... \n\u00A77Your version: \u00A76"+DiscordIntegration.VERSION);
-				}else if(result.status == Status.FAILED){
-					System.err.println("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c FAILED TO CHECK FOR UPDATES");
-				}else if(result.status == Status.BETA){
-					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7a You are using an Beta Version. This may contain bugs which are being fixed.");
-				}else if(result.status == Status.BETA_OUTDATED){
-					System.out.println(new TextComponentString("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c You are using an Outdated Beta Version. This may contain bugs which are being fixed or are already fixed\n\u00A76Changelog of newer Beta:"+result.changes.get(result.target)));
-				}else if(result.status == Status.UP_TO_DATE) {
-				}else {
-					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7cUpdateCheck: "+result.status.toString());
-				}
-			
+			//UNUSED for now
+			//				CheckResult result = ForgeVersion.getResult(FML.instance().getIndexedModList().get(DiscordIntegration.MODID));
+			//				if (result.status == Status.OUTDATED){
+			//					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c Update available!\n\u00A7cCurrent version: \u00A74"+DiscordIntegration.VERSION+"\u00A7c, Newest: \u00A7a"+result.target+"\n\u00A7cChangelog:\n\u00A76"+result.changes.get(result.target)+"\nDownload the newest version on https://minecraft.curseforge.com/projects/dcintegration");
+			//				}else if(result.status == Status.AHEAD){
+			//					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A77 It looks like you are using an Development version... \n\u00A77Your version: \u00A76"+DiscordIntegration.VERSION);
+			//				}else if(result.status == Status.FAILED){
+			//					System.err.println("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c FAILED TO CHECK FOR UPDATES");
+			//				}else if(result.status == Status.BETA){
+			//					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7a You are using an Beta Version. This may contain bugs which are being fixed.");
+			//				}else if(result.status == Status.BETA_OUTDATED){
+			//					System.out.println("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c You are using an Outdated Beta Version. This may contain bugs which are being fixed or are already fixed\n\u00A76Changelog of newer Beta:"+result.changes.get(result.target));
+			//				}else if(result.status == Status.UP_TO_DATE) {
+			//				}else {
+			//					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7cUpdateCheck: "+result.status.toString());
+			//				}
 		}
 	}
-	
-	@EventHandler
-	public void serverStopping(FMLServerStoppingEvent ev) {
+
+	public void serverStopping(final FMLServerStoppingEvent ev) {
 		if(discord_instance != null) {
 			discord_instance.stopThreads();
 			if(Configuration.WEBHOOK.BOT_WEBHOOK) {
@@ -175,8 +175,7 @@ public class DiscordIntegration {
 		}
 		stopped = true;
 	}
-	@EventHandler
-	public void serverStopped(FMLServerStoppedEvent ev) {
+	public void serverStopped(final FMLServerStoppedEvent ev) {
 		if(discord_instance != null) {
 			if(!stopped) {
 				if(!discord_instance.isKilled) {
@@ -189,25 +188,25 @@ public class DiscordIntegration {
 		}
 	}
 	@SubscribeEvent
-	public void playerJoin(PlayerLoggedInEvent ev) {
+	public void playerJoin(final PlayerLoggedInEvent ev) {
 		if(discord_instance != null) discord_instance.sendMessage(
 				Configuration.MESSAGES.PLAYER_JOINED_MSG
-				.replace("%player%", ev.player.getName())
+				.replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
 				);
 	}
-	public static EntityPlayerMP lastTimeout;
+	public static PlayerEntity lastTimeout;
 	@SubscribeEvent
 	public void playerLeave(PlayerLoggedOutEvent ev) {
 
-		if(discord_instance != null && !ev.player.equals(lastTimeout))
+		if(discord_instance != null && !ev.getPlayer().equals(lastTimeout))
 			discord_instance.sendMessage(
 					Configuration.MESSAGES.PLAYER_LEFT_MSG
-					.replace("%player%", ev.player.getName())
+					.replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
 					);
-		else if(discord_instance != null && ev.player.equals(lastTimeout)) {
+		else if(discord_instance != null && ev.getPlayer().equals(lastTimeout)) {
 			discord_instance.sendMessage(
 					Configuration.MESSAGES.PLAYER_TIMEOUT_MSG
-					.replace("%player%", ev.player.getName())
+					.replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
 					);
 			lastTimeout = null;
 		}
@@ -215,15 +214,20 @@ public class DiscordIntegration {
 	@SubscribeEvent
 	public void command(CommandEvent ev) {
 		if(discord_instance != null)
-			if(ev.getCommand().getName().equals("say")) {
-				String msg = "";
-				for(String s : ev.getParameters()) {
-					msg = msg+s+" ";
+			try {
+				if(ev.getParseResults().getContext().getRootNode().getName().equals("say")) {
+
+					String msg = MessageArgument.getMessage(ev.getParseResults().getContext().build("say"), "message").getUnformattedComponentText();
+
+					System.out.println(ev.getParseResults().getContext().getSource().getClass().getCanonicalName());
+					//				if(ev.getParseResults().getContext() instanceof DedicatedServer)
+					//					discord_instance.sendMessage(msg);
+					//				else if(ev.getSender().getCommandSenderEntity() instanceof EntityPlayer)
+					//					discord_instance.sendMessage(ev.getSender().getName(), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), msg);
 				}
-				if(ev.getSender() instanceof DedicatedServer) 
-					discord_instance.sendMessage(msg);
-				else if(ev.getSender().getCommandSenderEntity() instanceof EntityPlayer)
-					discord_instance.sendMessage(ev.getSender().getName(), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), msg);
+			} catch (CommandSyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 	}
 	@SubscribeEvent
@@ -232,11 +236,11 @@ public class DiscordIntegration {
 	}
 	@SubscribeEvent
 	public void death(LivingDeathEvent ev) {
-		if(ev.getEntity() instanceof EntityPlayerMP) {
+		if(ev.getEntity() instanceof PlayerEntity) {
 			if(discord_instance!=null) discord_instance.sendMessage(
 					Configuration.MESSAGES.PLAYER_DEATH_MSG
-					.replace("%player%", ((EntityPlayerMP) ev.getEntity()).getName())
-					.replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving()).getUnformattedText().replace(ev.getEntity().getName()+" ", ""))
+					.replace("%player%", ((PlayerEntity) ev.getEntity()).getName().getUnformattedComponentText())
+					.replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving()).getUnformattedComponentText().replace(ev.getEntity().getName()+" ", ""))
 					);
 		}
 	}
@@ -244,36 +248,36 @@ public class DiscordIntegration {
 	public void advancement(AdvancementEvent ev) {
 		if(discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat()) discord_instance.sendMessage(
 				Configuration.MESSAGES.PLAYER_ADVANCEMENT_MSG
-				.replace("%player%", ev.getEntityPlayer().getName())
-				.replace("%name%", ev.getAdvancement().getDisplay().getTitle().getUnformattedText())
-				.replace("%desc%", ev.getAdvancement().getDisplay().getDescription().getUnformattedText())
+				.replace("%player%", ev.getEntityPlayer().getName().getUnformattedComponentText())
+				.replace("%name%", ev.getAdvancement().getDisplay().getTitle().getUnformattedComponentText())
+				.replace("%desc%", ev.getAdvancement().getDisplay().getDescription().getUnformattedComponentText())
 				.replace("\\n", "\n")
 				);
 	}
-	
+
 	public static String getUptime() {
-        if (started == 0) {
-            return "?????";
-        }
+		if (started == 0) {
+			return "?????";
+		}
 
-        long diff = new Date().getTime() - started;
+		long diff = new Date().getTime() - started;
 
-        int seconds = (int) Math.floorDiv(diff, 1000);
-        if (seconds < 60) {
-            return seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int minutes = Math.floorDiv(seconds, 60);
-        seconds -= minutes * 60;
-        if (minutes < 60) {
-            return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int hours = Math.floorDiv(minutes, 60);
-        minutes -= hours * 60;
-        if (hours < 24) {
-            return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int days = Math.floorDiv(hours, 24);
-        hours -= days * 24;
-        return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-    }
+		int seconds = (int) Math.floorDiv(diff, 1000);
+		if (seconds < 60) {
+			return seconds + " second" + (seconds == 1 ? "" : "s");
+		}
+		int minutes = Math.floorDiv(seconds, 60);
+		seconds -= minutes * 60;
+		if (minutes < 60) {
+			return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+		}
+		int hours = Math.floorDiv(minutes, 60);
+		minutes -= hours * 60;
+		if (hours < 24) {
+			return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+		}
+		int days = Math.floorDiv(hours, 24);
+		hours -= days * 24;
+		return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+	}
 }

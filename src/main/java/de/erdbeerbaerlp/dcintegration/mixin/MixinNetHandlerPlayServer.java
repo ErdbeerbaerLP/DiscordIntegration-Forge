@@ -1,5 +1,5 @@
 package de.erdbeerbaerlp.dcintegration.mixin;
-
+/*
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,7 +14,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 
 /**
  * Mixin used to detect player timeouts
- */
+ *//*
 @Mixin(value=NetHandlerPlayServer.class, priority = 1001)
 public abstract class MixinNetHandlerPlayServer{
 	@Shadow
@@ -28,3 +28,4 @@ public abstract class MixinNetHandlerPlayServer{
 
 	
 }
+*/

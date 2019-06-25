@@ -3,24 +3,12 @@ package de.erdbeerbaerlp.dcintegration;
 import static de.erdbeerbaerlp.dcintegration.Configuration.GENERAL;
 import static de.erdbeerbaerlp.dcintegration.Configuration.WEBHOOK;
 
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
-
-import com.feed_the_beast.ftblib.lib.data.Universe;
-import com.feed_the_beast.ftblib.lib.math.Ticks;
-import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
-import com.feed_the_beast.ftbutilities.data.FTBUtilitiesPlayerData;
-import com.feed_the_beast.ftbutilities.data.FTBUtilitiesUniverseData;
 
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
 import net.dv8tion.jda.core.JDA;
@@ -40,13 +28,13 @@ import net.dv8tion.jda.core.requests.RequestFuture;
 import net.dv8tion.jda.core.utils.PermissionUtil;
 import net.dv8tion.jda.webhook.WebhookClient;
 import net.dv8tion.jda.webhook.WebhookMessageBuilder;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 public class Discord implements EventListener{
 	private final JDA jda;
@@ -66,7 +54,7 @@ public class Discord implements EventListener{
 			this.setPriority(MAX_PRIORITY);
 		}
 		private double getAverageTickCount() {
-			MinecraftServer minecraftServer = FMLCommonHandler.instance().getMinecraftServerInstance();
+			MinecraftServer minecraftServer = ServerLifecycleHooks.getCurrentServer();
 			return LongStream.of(minecraftServer.tickTimeArray).sum() / minecraftServer.tickTimeArray.length * 1.0E-6D;
 		}
 
@@ -80,9 +68,9 @@ public class Discord implements EventListener{
 					getChannelManager().setTopic(
 							Configuration.MESSAGES.CHANNEL_DESCRIPTION
 							.replace("%tps%", ""+Math.round(getAverageTPS()))
-							.replace("%online%", ""+FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerProfiles().length)
-							.replace("%max%", ""+FMLCommonHandler.instance().getMinecraftServerInstance().getMaxPlayers())
-							.replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD())
+							.replace("%online%", ""+ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
+							.replace("%max%", ""+ServerLifecycleHooks.getCurrentServer().getMaxPlayers())
+							.replace("%motd%", ServerLifecycleHooks.getCurrentServer().getMOTD())
 							.replace("%uptime%", DiscordIntegration.getUptime())
 							).complete();
 					sleep(500);
@@ -94,7 +82,7 @@ public class Discord implements EventListener{
 	};
 	/**
 	 * This thread is used to detect auto shutdown status using ftb utilities
-	 */
+	 *//*
 	Thread ftbUtilitiesShutdownDetectThread = new Thread() {
 		{
 			setName("[DC INTEGRATION] FTB Utilities shutdown detector");
@@ -120,7 +108,7 @@ public class Discord implements EventListener{
 	};
 	/**
 	 * This thread is used to detect AFK states using ftb utilities
-	 */
+	 *//*
 	Thread ftbUtilitiesAFKDetectThread = new Thread() {
 		{
 			setName("[DC INTEGRATION] FTB Utilities AFK detector");
@@ -131,7 +119,7 @@ public class Discord implements EventListener{
 			final Map<EntityPlayerMP, Entry<Long, Boolean>> timers = new HashMap<EntityPlayerMP, Entry<Long, Boolean>>();
 			final Universe universe = Universe.get();
 			while(true) {
-				for(EntityPlayerMP player : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) {
+				for(EntityPlayerMP player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
 					final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(universe.getPlayer(player));
 					if(timers.containsKey(player) && data.afkTime < timers.get(player).getKey() && timers.get(player).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_END
 							.replace("%player%", player.getName()), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
@@ -140,7 +128,7 @@ public class Discord implements EventListener{
 				}
 
 				timers.keySet().forEach((p)->{
-					if(!FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers().contains(p)) {
+					if(!ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers().contains(p)) {
 						timers.remove(p); //Clean up
 					}else {
 						final boolean afk = timers.get(p).getKey() >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
@@ -156,7 +144,7 @@ public class Discord implements EventListener{
 			}
 		}
 	};
-
+*/
 	/**
 	 * Constructor for this class
 	 */
@@ -209,8 +197,8 @@ public class Discord implements EventListener{
 	 * @param player Player
 	 * @param msg Message
 	 */
-	public void sendMessage(EntityPlayerMP player, String msg) {
-		sendMessage(player.getName(), player.getUniqueID().toString(), msg);
+	public void sendMessage(PlayerEntity player, String msg) {
+		sendMessage(player.getName().getUnformattedComponentText(), player.getUniqueID().toString(), msg);
 	}
 	/**
 	 * Sends a message as server
@@ -336,11 +324,11 @@ public class Discord implements EventListener{
 					}
 
 				}else
-					FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(
-							new TextComponentString(Configuration.MESSAGES.INGAME_DISCORD_MSG
+					ServerLifecycleHooks.getCurrentServer().getPlayerList().sendMessage(
+							new StringTextComponent(Configuration.MESSAGES.INGAME_DISCORD_MSG
 									.replace("%user%", ev.getAuthor().getName())
 									.replace("%id%", ev.getAuthor().getId())
-									.replace("%msg%", ev.getMessage().getContentRaw())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString("Sent by discord user \""+ev.getAuthor().getAsTag()+"\"")))));
+									.replace("%msg%", ev.getMessage().getContentRaw())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \""+ev.getAuthor().getAsTag()+"\"")))));
 			}
 
 		}
@@ -382,9 +370,9 @@ public class Discord implements EventListener{
 	 * Used to stop all discord integration threads in background
 	 */
 	void stopThreads() { 
-		if(ftbUtilitiesAFKDetectThread.isAlive()) ftbUtilitiesAFKDetectThread.interrupt();
+//		if(ftbUtilitiesAFKDetectThread.isAlive()) ftbUtilitiesAFKDetectThread.interrupt();
 		if(updateChannelDesc.isAlive()) updateChannelDesc.interrupt();
-		if(ftbUtilitiesShutdownDetectThread.isAlive()) ftbUtilitiesShutdownDetectThread.interrupt();
+//		if(ftbUtilitiesShutdownDetectThread.isAlive()) ftbUtilitiesShutdownDetectThread.interrupt();
 	}
 	/**
 	 * @return A list of all registered commands
