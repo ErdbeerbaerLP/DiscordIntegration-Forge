@@ -1,7 +1,9 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
+import java.lang.reflect.Field;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +42,8 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLCommonLaunchHandler;
+import net.minecraftforge.fml.loading.FMLLoader;
 
 @Mod(DiscordIntegration.MODID)
 public class DiscordIntegration {
@@ -74,10 +78,12 @@ public class DiscordIntegration {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 	public static ModConfig cfg = null;
-	public DiscordIntegration() {
+	public DiscordIntegration() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+	
 		//Register Config
 		final ModLoadingContext modLoadingContext = ModLoadingContext.get();
-		modLoadingContext.registerConfig(ModConfig.Type.SERVER, Configuration.cfgSpec);
+		modLoadingContext.registerConfig(ModConfig.Type.COMMON, Configuration.cfgSpec);
+		
 		// Register the setup method for modloading
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverAboutToStart);
@@ -193,7 +199,7 @@ public class DiscordIntegration {
 		}
 	}
 	@SubscribeEvent
-	public void playerJoin(final PlayerLoggedInEvent ev) {
+	public static void playerJoin(final PlayerLoggedInEvent ev) {
 		if(discord_instance != null) discord_instance.sendMessage(
 				Configuration.INSTANCE.msgPlayerJoin.get()
 				.replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
@@ -225,7 +231,7 @@ public class DiscordIntegration {
 		}
 	}
 	@SubscribeEvent
-	public void command(CommandEvent ev) {
+	public static void command(CommandEvent ev) {
 		if(discord_instance != null)
 			try {
 				if(ev.getParseResults().getContext().getRootNode().getName().equals("say")) {
@@ -244,11 +250,11 @@ public class DiscordIntegration {
 			}
 	}
 	@SubscribeEvent
-	public void chat(ServerChatEvent ev) {
+	public static void chat(ServerChatEvent ev) {
 		if(discord_instance != null) discord_instance.sendMessage(ev.getPlayer(), ev.getMessage());
 	}
 	@SubscribeEvent
-	public void death(LivingDeathEvent ev) {
+	public static void death(LivingDeathEvent ev) {
 		if(ev.getEntity() instanceof PlayerEntity) {
 			if(discord_instance!=null) discord_instance.sendMessage(
 					Configuration.INSTANCE.msgPlayerDeath.get()
@@ -258,7 +264,7 @@ public class DiscordIntegration {
 		}
 	}
 	@SubscribeEvent
-	public void advancement(AdvancementEvent ev) {
+	public static void advancement(AdvancementEvent ev) {
 		if(discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat()) discord_instance.sendMessage(
 				Configuration.INSTANCE.msgAdvancement.get()
 				.replace("%player%", ev.getEntityPlayer().getName().getUnformattedComponentText())

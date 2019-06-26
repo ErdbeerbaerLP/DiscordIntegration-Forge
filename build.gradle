@@ -7,9 +7,16 @@ buildscript {
             name = 'sponge'
             url = 'https://repo.spongepowered.org/maven'
         }
+        repositories {
+    		maven {
+    		url "https://plugins.gradle.org/m2/"
+      
+    		}
+  		}
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
         //classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
     }
 }
@@ -17,8 +24,8 @@ apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
+apply plugin: "com.github.johnrengelman.shadow"
 //apply plugin: 'org.spongepowered.mixin'
-//Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 repositories {
     jcenter()
     maven {
@@ -49,7 +56,6 @@ minecraft {
     // Simply re-run your setup task after changing the mappings to update your workspace.
     mappings channel: 'snapshot', version: '20190621-1.14.2'
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
-    
     // accessTransformer = file('build/resources/main/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
@@ -65,7 +71,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                examplemod {
+                dcintegration {
                     source sourceSets.main
                 }
             }
@@ -81,7 +87,7 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                examplemod {
+                dcintegration {
                     source sourceSets.main
                 }
             }
@@ -92,12 +98,33 @@ configurations {
     embed
     compile.extendsFrom(embed)
 }
+shadowJar {
+	dependencies {
+        include(dependency('org.apache.commons:commons.collections4:.*'))
+    }
+
+    // Relocate fluent-hc to prevent conflicts with other mods that include it
+    relocate 'org.apache.commons:commons.collections4', 'shadow.apache-commons.collections4'
+    
+    classifier '' // Replace the default JAR
+}
+reobf {
+    shadowJar {} // Reobfuscate the shadowed JAR
+}
 dependencies {
 	minecraft 'net.minecraftforge:forge:1.14.2-26.0.63'
 	/*embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         transitive = false
     }*/
-    embed("net.dv8tion:JDA:3.8.3_463")
+    embed("net.dv8tion:JDA:3.8.3_463"){
+        transitive = false
+    }
+    //Dependencies for JDA
+    embed 'com.squareup.okhttp3:okhttp:3.13.0'
+    embed 'com.neovisionaries:nv-websocket-client:2.5'
+    embed 'org.slf4j:slf4j-api:1.7.25'
+    compile 'org.apache.commons:commons-collections4:4.1'
+    embed 'org.json:json:20160810'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.4.0.97"
    // deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
 }
@@ -105,6 +132,7 @@ dependencies {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
 }*/
 jar {
+	//dependsOn shadowJar
     from(configurations.embed.findAll { !it.name.endsWith('pom') }.collect {
        it.isDirectory() ? it : zipTree(it)
     }) {
@@ -115,10 +143,6 @@ jar {
         attributes([
                 'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
                 'Timestamp': System.currentTimeMillis(),
-                'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
-        		'MixinConfigs': 'mixins.dcintegration.json',
-        		"ForceLoadAsMod": "true",
-        		'FMLCorePluginContainsFMLMod': 'true',
         		"Specification-Title": "dcintegration",
             	"Specification-Vendor": "dcintegration",
             	"Specification-Version": "1", // We are version 1 of ourselves
