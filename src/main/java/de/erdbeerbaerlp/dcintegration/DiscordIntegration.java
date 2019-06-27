@@ -1,9 +1,7 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
-import java.lang.reflect.Field;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +40,6 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLCommonLaunchHandler;
 import net.minecraftforge.fml.loading.FMLLoader;
 
 @Mod(DiscordIntegration.MODID)

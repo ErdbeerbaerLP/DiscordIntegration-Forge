@@ -16,7 +16,6 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
-        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
         //classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
     }
 }
@@ -24,7 +23,6 @@ apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-apply plugin: "com.github.johnrengelman.shadow"
 //apply plugin: 'org.spongepowered.mixin'
 repositories {
     jcenter()
@@ -97,19 +95,7 @@ minecraft {
 configurations {
     embed
     compile.extendsFrom(embed)
-}
-shadowJar {
-	dependencies {
-        include(dependency('org.apache.commons:commons.collections4:.*'))
-    }
-
-    // Relocate fluent-hc to prevent conflicts with other mods that include it
-    relocate 'org.apache.commons:commons.collections4', 'shadow.apache-commons.collections4'
-    
-    classifier '' // Replace the default JAR
-}
-reobf {
-    shadowJar {} // Reobfuscate the shadowed JAR
+    contained
 }
 dependencies {
 	minecraft 'net.minecraftforge:forge:1.14.2-26.0.63'
@@ -123,8 +109,10 @@ dependencies {
     embed 'com.squareup.okhttp3:okhttp:3.13.0'
     embed 'com.neovisionaries:nv-websocket-client:2.5'
     embed 'org.slf4j:slf4j-api:1.7.25'
-    compile 'org.apache.commons:commons-collections4:4.1'
+    contained 'org.apache.commons:commons-collections4:4.1'
+    contained 'net.sf.trove4j:trove4j:3.0.3'
     embed 'org.json:json:20160810'
+    embed 'org.jetbrains:annotations:16.0.1'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.4.0.97"
    // deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
 }
@@ -139,6 +127,9 @@ jar {
 
         exclude "LICENSE.txt", "META-INF/MANIFSET.MF", "META-INF/maven/**", "META-INF/*.RSA", "META-INF/*.SF"
     }
+    into('META-INF/libraries'){
+		from configurations.contained
+	}
     manifest {
         attributes([
                 'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -149,7 +140,8 @@ jar {
             	"Implementation-Title": project.name,
             	"Implementation-Version": "${version}",
             	"Implementation-Vendor" :"dcintegration",
-            	"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+            	"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            	'ContainedDeps': configurations.contained.collect { it.getName() }.join(' ')
         ])
     }
 }
