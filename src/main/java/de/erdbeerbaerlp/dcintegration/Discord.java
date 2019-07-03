@@ -166,6 +166,7 @@ public class Discord implements EventListener{
 	Discord() throws LoginException, InterruptedException {
 		final JDABuilder b = new JDABuilder(GENERAL.BOT_TOKEN);
 		b.setAutoReconnect(true);
+		
 		switch (GENERAL.BOT_GAME_TYPE) {
 		case DISABLED:
 			break;
@@ -180,6 +181,7 @@ public class Discord implements EventListener{
 			break;
 		}
 		this.jda = b.build().awaitReady();
+		
 		System.out.println("Bot Ready");
 		jda.addEventListener(this);
 		if(!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS, Permission.MESSAGE_MANAGE)){
@@ -231,6 +233,7 @@ public class Discord implements EventListener{
 	 * @param nullMe Just pass null, required to differ from a different method
 	 */
 	public void sendMessage(String msg, String avatarURL, String name, @Nullable Void nullMe) {
+		try {
 		if(isKilled) return;
 		if(WEBHOOK.BOT_WEBHOOK) {
 			final WebhookMessageBuilder b = new WebhookMessageBuilder();
@@ -246,6 +249,7 @@ public class Discord implements EventListener{
 					.replace("%player%", name)
 					.replace("%msg%", msg)
 					).complete();
+		}catch (Exception e) {}
 	}
 	/**
 	 * Sends a message to discord
@@ -254,6 +258,7 @@ public class Discord implements EventListener{
 	 * @param msg the message to send
 	 */
 	public void sendMessage(String playerName, String UUID, String msg) {
+		try {
 		if(isKilled) return;
 		if(WEBHOOK.BOT_WEBHOOK) {
 			if(playerName == Configuration.WEBHOOK.SERVER_NAME && UUID == "0000000") {
@@ -284,6 +289,7 @@ public class Discord implements EventListener{
 						.replace("%msg%", msg)
 						).complete();
 			}
+		}catch (Exception e) {}
 	}
 	/**
 	 * Kills the discord bot
