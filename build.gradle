@@ -35,7 +35,7 @@ sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse t
 compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
 }
-
+ 
 minecraft {
     version = "1.12.2-14.23.5.2768"
     runDir = "run"
