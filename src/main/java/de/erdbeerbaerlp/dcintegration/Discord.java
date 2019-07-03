@@ -165,6 +165,7 @@ public class Discord implements EventListener{
 	 */
 	Discord() throws LoginException, InterruptedException {
 		final JDABuilder b = new JDABuilder(GENERAL.BOT_TOKEN);
+		b.setAutoReconnect(true);
 		switch (GENERAL.BOT_GAME_TYPE) {
 		case DISABLED:
 			break;
