@@ -138,10 +138,10 @@ public class Discord implements EventListener{
 					//					System.out.println(player.getName()+": "+data.afkTime+ ". Afk Time:"+ Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis());
 					timers.put(player, new SimpleEntry<Long, Boolean>(data.afkTime, (timers.containsKey(player)? timers.get(player).getValue():false)));
 				}
-
+				final List<EntityPlayerMP> toRemove = new ArrayList<EntityPlayerMP>();
 				timers.keySet().forEach((p)->{
 					if(!FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers().contains(p)) {
-						timers.remove(p); //Clean up
+						toRemove.add(p);
 					}else {
 						final boolean afk = timers.get(p).getKey() >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
 						if(afk && !timers.get(p).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG
@@ -150,6 +150,9 @@ public class Discord implements EventListener{
 
 					}
 				});
+				for(EntityPlayerMP p : toRemove) {
+					timers.remove(p);
+				}
 				try {
 					sleep(900);
 				} catch (InterruptedException e) {}
