@@ -27,7 +27,7 @@ repositories {
     }// Maybe needed for other mods in the future
     maven { url "https://maven.latmod.com/" } //FTB
 }
-version = "1.0.1"
+version = "1.0.2TEST"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -50,7 +50,12 @@ dependencies {
 	embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         transitive = false
     }
-    embed("net.dv8tion:JDA:3.8.3_463")
+    embed("net.dv8tion:JDA:3.8.3_463"){
+        exclude group: "com.squareup.okio"
+        exclude group: "com.squareup.okhttp3"
+    }
+    embed 'com.squareup.okio:okio:2.2.2'
+    embed "com.squareup.okhttp3:okhttp:4.0.1"
     deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.4.0.97"
     deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
 }
