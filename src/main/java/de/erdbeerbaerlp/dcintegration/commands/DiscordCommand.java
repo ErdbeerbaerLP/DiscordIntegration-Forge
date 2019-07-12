@@ -43,8 +43,9 @@ public abstract class DiscordCommand {
 	 */
 	public boolean adminOnly() {
 		return false;
-	};
-	/**
+    }
+
+    /**
 	 * Method called when executing this command
 	 * @param args arguments passed by the player
 	 * @param cmdMsg the {@link MessageReceivedEvent} of the message
@@ -70,7 +71,7 @@ public abstract class DiscordCommand {
 			}
 		}
 		if(m == null) return false;
-		return this.adminOnly() ? m.getRoles().contains(discord.getAdminRole()) : true;
+        return !this.adminOnly() || m.getRoles().contains(discord.getAdminRole());
 	}
 	/**
 	 * Override to customize the command usage, which is being displayed in help (ex. to add arguments)
