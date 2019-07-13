@@ -17,8 +17,10 @@ buildscript {
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
         //classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
     }
 }
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
@@ -36,7 +38,7 @@ repositories {
     }// Maybe needed for other mods in the future
     maven { url "https://maven.latmod.com/" } //FTB
 }
-version = "1.0.1-1.14"
+version = "1.0.2-1.14"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -95,38 +97,41 @@ minecraft {
 configurations {
     embed
     compile.extendsFrom(embed)
-    contained
+}
+shadowJar {
+    classifier = ''
+    configurations = [project.configurations.embed]
+    relocate 'okhttp3', 'dcshadow.okhttp'
+    relocate 'okio', 'dcshadow.okio'
+    relocate 'club.minnced', 'dcshadow.club.minnced'
+    relocate 'com.sun', 'dcshadow.com.sun'
+    relocate 'com.iwebpp', 'dcshadow.com.iwebpp'
+    relocate 'com.neovisionaries', 'dcshadow.com.neovisionaries'
+    relocate 'gnu', 'dcshadow.gnu'
+    relocate 'org.apache.commons.collections4', 'dcshadow.apache-collections4'
+    relocate 'org.slf4j', 'dcshadow.slf4j'
+    relocate 'org.json', 'dcshadow.org.json'
+    relocate 'org.intellij', 'dcshadow.intellij'
+    relocate 'org.jetbrains', 'dcshadow.jetbrains'
+    relocate 'tomp2p', 'dcshadow.tomp2p'
 }
 dependencies {
 	minecraft 'net.minecraftforge:forge:1.14.2-26.0.63'
 	/*embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         transitive = false
     }*/
-    embed("net.dv8tion:JDA:3.8.3_463"){
-        transitive = false
-    }
-    //Dependencies for JDA
-    embed 'com.squareup.okhttp3:okhttp:3.13.0'
-    embed 'com.neovisionaries:nv-websocket-client:2.5'
-    embed 'org.slf4j:slf4j-api:1.7.25'
-    contained 'org.apache.commons:commons-collections4:4.1'
-    contained 'net.sf.trove4j:trove4j:3.0.3'
-    embed 'org.json:json:20160810'
-    embed 'org.jetbrains:annotations:16.0.1'
+    embed("net.dv8tion:JDA:3.8.3_463")
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.4.0.97"
    // deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
 }
 /*mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
 }*/
+reobf {
+    shadowJar { mappingType = 'SEARGE' }
+}
+tasks.build.dependsOn reobfShadowJar
 jar {
-	//dependsOn shadowJar
-    from(configurations.embed.findAll { !it.name.endsWith('pom') }.collect {
-       it.isDirectory() ? it : zipTree(it)
-    }) {
-
-        exclude "LICENSE.txt", "META-INF/MANIFSET.MF", "META-INF/maven/**", "META-INF/*.RSA", "META-INF/*.SF"
-    }
     into('META-INF/libraries'){
 		from configurations.contained
 	}
@@ -140,26 +145,7 @@ jar {
             	"Implementation-Title": project.name,
             	"Implementation-Version": "${version}",
             	"Implementation-Vendor" :"dcintegration",
-            	"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            	'ContainedDeps': configurations.contained.collect { it.getName() }.join(' ')
+            	"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
-    }
-}
-def reobfFile = file("$buildDir/reobfJar/output.jar")
-def reobfArtifact = artifacts.add('default', reobfFile) {
-    //noinspection GroovyAssignabilityCheck
-    type 'jar'
-    builtBy 'reobfJar'
-}
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact reobfArtifact
-        }
-    }
-    repositories {
-        maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
-        }
     }
 }
