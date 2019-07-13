@@ -132,9 +132,6 @@ reobf {
 }
 tasks.build.dependsOn reobfShadowJar
 jar {
-    into('META-INF/libraries'){
-		from configurations.contained
-	}
     manifest {
         attributes([
                 'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
