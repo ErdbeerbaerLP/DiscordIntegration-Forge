@@ -1,18 +1,8 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
-import java.util.Date;
-import java.util.concurrent.ExecutionException;
-
 import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
-
-import de.erdbeerbaerlp.dcintegration.commands.CommandHelp;
-import de.erdbeerbaerlp.dcintegration.commands.CommandKick;
-import de.erdbeerbaerlp.dcintegration.commands.CommandKill;
-import de.erdbeerbaerlp.dcintegration.commands.CommandList;
-import de.erdbeerbaerlp.dcintegration.commands.CommandStop;
-import de.erdbeerbaerlp.dcintegration.commands.CommandUptime;
-import de.erdbeerbaerlp.dcintegration.commands.McCommandDiscord;
+import de.erdbeerbaerlp.dcintegration.commands.*;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.requests.RequestFuture;
 import net.dv8tion.jda.webhook.WebhookClient;
@@ -32,16 +22,14 @@ import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
+import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Date;
+import java.util.concurrent.ExecutionException;
 
 @Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*", updateJSON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/update_check.json")
 public class DiscordIntegration {
@@ -60,7 +48,8 @@ public class DiscordIntegration {
 	/**
 	 * The only instance of {@link Discord}
 	 */
-	public static Discord discord_instance;
+    @Nullable
+    public static Discord discord_instance;
 	/**
 	 * Message sent when the server is starting (in non-webhook mode!), stored for editing
 	 */
@@ -235,7 +224,7 @@ public class DiscordIntegration {
 		if(ev.getEntity() instanceof EntityPlayerMP) {
 			if(discord_instance!=null) discord_instance.sendMessage(
 					Configuration.MESSAGES.PLAYER_DEATH_MSG
-					.replace("%player%", ((EntityPlayerMP) ev.getEntity()).getName())
+                            .replace("%player%", ev.getEntity().getName())
 					.replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving()).getUnformattedText().replace(ev.getEntity().getName()+" ", ""))
 					);
 		}

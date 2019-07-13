@@ -10,8 +10,10 @@ buildscript {
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
         classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
     }
 }
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
@@ -27,7 +29,7 @@ repositories {
     }// Maybe needed for other mods in the future
     maven { url "https://maven.latmod.com/" } //FTB
 }
-version = "1.0.2TEST"
+version = "1.0.2"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -46,19 +48,35 @@ configurations {
     embed
     compile.extendsFrom(embed)
 }
+reobf {
+    shadowJar { mappingType = 'SEARGE' }
+}
+shadowJar {
+    classifier = ''
+    configurations = [project.configurations.embed]
+    relocate 'okhttp3', 'dcshadow.okhttp'
+    relocate 'okio', 'dcshadow.okio'
+    relocate 'club.minnced', 'dcshadow.club.minnced'
+    relocate 'com.sun', 'dcshadow.com.sun'
+    relocate 'com.iwebpp', 'dcshadow.com.iwebpp'
+    relocate 'com.neovisionaries', 'dcshadow.com.neovisionaries'
+    relocate 'gnu', 'dcshadow.gnu'
+    relocate 'org.apache.commons.collections4', 'dcshadow.apache-collections4'
+    relocate 'org.slf4j', 'dcshadow.slf4j'
+    relocate 'org.json', 'dcshadow.org.json'
+    relocate 'org.intellij', 'dcshadow.intellij'
+    relocate 'org.jetbrains', 'dcshadow.jetbrains'
+    relocate 'tomp2p', 'dcshadow.tomp2p'
+}
 dependencies {
 	embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         transitive = false
     }
-    embed("net.dv8tion:JDA:3.8.3_463"){
-        exclude group: "com.squareup.okio"
-        exclude group: "com.squareup.okhttp3"
-    }
-    embed 'com.squareup.okio:okio:2.2.2'
-    embed "com.squareup.okhttp3:okhttp:4.0.1"
+    embed("net.dv8tion:JDA:3.8.3_463")
     deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.4.0.97"
     deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
 }
+tasks.build.dependsOn reobfShadowJar
 mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
 }
@@ -81,12 +99,6 @@ processResources {
     }
 }
 jar {
-    from(configurations.embed.findAll { !it.name.endsWith('pom') }.collect {
-       it.isDirectory() ? it : zipTree(it)
-    }) {
-
-        exclude "LICENSE.txt", "META-INF/MANIFSET.MF", "META-INF/maven/**", "META-INF/*.RSA", "META-INF/*.SF"
-    }
     manifest {
         attributes([
                 'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
