@@ -1,36 +1,15 @@
 package de.erdbeerbaerlp.dcintegration;
 
-import static de.erdbeerbaerlp.dcintegration.Configuration.GENERAL;
-import static de.erdbeerbaerlp.dcintegration.Configuration.WEBHOOK;
-
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.LongStream;
-
-import javax.annotation.Nullable;
-import javax.security.auth.login.LoginException;
-
 import com.feed_the_beast.ftblib.lib.data.Universe;
 import com.feed_the_beast.ftblib.lib.math.Ticks;
 import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
 import com.feed_the_beast.ftbutilities.data.FTBUtilitiesPlayerData;
 import com.feed_the_beast.ftbutilities.data.FTBUtilitiesUniverseData;
-
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.Permission;
-import net.dv8tion.jda.core.entities.Game;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.Role;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.Webhook;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.Event;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.exceptions.PermissionException;
@@ -48,13 +27,43 @@ import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+import javax.annotation.Nullable;
+import javax.security.auth.login.LoginException;
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.LongStream;
+
+import static de.erdbeerbaerlp.dcintegration.Configuration.GENERAL;
+import static de.erdbeerbaerlp.dcintegration.Configuration.WEBHOOK;
+
 public class Discord implements EventListener{
 	private final JDA jda;
 	public boolean isKilled = false;
 	private final List<DiscordCommand> commands = new ArrayList<DiscordCommand>();
 
-	public enum GameTypes{
-		WATCHING,PLAYING,LISTENING,DISABLED;
+    /**
+     * @return an instance of the webhook or null
+     */
+    @Nullable
+    public Webhook getWebhook() {
+        if (!Configuration.WEBHOOK.BOT_WEBHOOK) return null;
+        if (!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
+            Configuration.WEBHOOK.BOT_WEBHOOK = false;
+            System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
+            return null;
+        }
+        for (Webhook web : getChannel().getWebhooks().complete()) {
+            if (web.getName().equals("MC_DISCORD_INTEGRATION")) {
+                return web;
+            }
+        }
+        return getChannel().createWebhook("MC_DISCORD_INTEGRATION").complete();
 	}
 	/**
 	 * This thread is used to update the channel description
@@ -367,26 +376,11 @@ public class Discord implements EventListener{
 			if(cmd.equals(c)) return false;
 		}
 		return commands.add(cmd);
-	}
-	/**
-	 * 
-	 * @return an instance of the webhook or null
-	 */
-	@Nullable
-	public Webhook getWebhook() {
-		if(!Configuration.WEBHOOK.BOT_WEBHOOK) return null;
-		if(!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
-			Configuration.WEBHOOK.BOT_WEBHOOK = false;
-			System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
-			return null;
-		}
-		for(Webhook web : getChannel().getWebhooks().complete()) {
-			if(web.getName().equals("MC_DISCORD_INTEGRATION")) {
-				return web;
-			}
-		};
-		return getChannel().createWebhook("MC_DISCORD_INTEGRATION").complete();
-	}
+    }
+
+    public enum GameTypes {
+        WATCHING, PLAYING, LISTENING, DISABLED
+    }
 	/**
 	 * Used to stop all discord integration threads in background
 	 */
