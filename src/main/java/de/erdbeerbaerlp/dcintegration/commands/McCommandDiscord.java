@@ -1,8 +1,5 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import de.erdbeerbaerlp.dcintegration.Configuration;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
@@ -14,8 +11,10 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 
-public class McCommandDiscord implements ICommand {
+import java.util.ArrayList;
+import java.util.List;
 
+public class McCommandDiscord implements ICommand {
 	@Override
 	public String getName() {
 		return "discord";

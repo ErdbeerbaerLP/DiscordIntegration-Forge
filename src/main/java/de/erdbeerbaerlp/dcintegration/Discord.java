@@ -326,7 +326,6 @@ public class Discord implements EventListener{
 					boolean hasPermission = true;
 					boolean executed = false;
 					for(DiscordCommand cmd : commands) {
-
 						if(cmd.getName().equals(command[0])){
 							if(cmd.canUserExecuteCommand(ev.getAuthor())) {
 								cmd.execute(argumentsRaw.split(" "), ev);
@@ -334,7 +333,6 @@ public class Discord implements EventListener{
 							}else hasPermission = false;
 
 						}
-
 						for(String alias : cmd.getAliases()) {
 							if(alias.equals(command[0])) {
 								if(cmd.canUserExecuteCommand(ev.getAuthor())) {

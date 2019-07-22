@@ -2,6 +2,9 @@ package de.erdbeerbaerlp.dcintegration;
 
 
 import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import de.erdbeerbaerlp.dcintegration.commands.*;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.requests.RequestFuture;
@@ -29,6 +32,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*", updateJSON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/update_check.json")
@@ -40,7 +44,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-	public static final String VERSION = "1.0.1";
+	public static final String VERSION = "1.0.3";
 	/**
 	 * Modid
 	 */
@@ -65,22 +69,15 @@ public class DiscordIntegration {
 	public DiscordIntegration() {
 
 	}
-	@EventHandler
-	public void preInit(FMLPreInitializationEvent ev) {
-		System.out.println("Loading mod");
-		try {
-			discord_instance = new Discord();
-			discord_instance.registerCommand(new CommandHelp());
-			discord_instance.registerCommand(new CommandList());
-			discord_instance.registerCommand(new CommandKill());
-			discord_instance.registerCommand(new CommandStop());
-			discord_instance.registerCommand(new CommandKick());
-			discord_instance.registerCommand(new CommandUptime());
-		} catch (Exception e) {
-			System.err.println("Failed to login: "+e.getMessage());
-			discord_instance = null;
-		}
-		MinecraftForge.EVENT_BUS.register(this);
+
+	/**
+	 * Removes Color code formatting
+	 *
+	 * @param formatted Formatted text with �2 color codes
+	 * @return Raw text without color codes
+	 */
+	public static String removeFormatting(String formatted) {
+		return formatted.replaceAll("\u00A70", "").replaceAll("\u00A71", "").replaceAll("\u00A72", "").replaceAll("\u00A73", "").replaceAll("\u00A74", "").replaceAll("\u00A75", "").replaceAll("\u00A76", "").replaceAll("\u00A77", "").replaceAll("\u00A78", "").replaceAll("\u00A79", "").replaceAll("\u00A7a", "").replaceAll("\u00A7b", "").replaceAll("\u00A7c", "").replaceAll("\u00A7d", "").replaceAll("\u00A7e", "").replaceAll("\u00A7f", "").replaceAll("\u00A7l", "").replaceAll("\u00A7k", "").replaceAll("\u00A7m", "").replaceAll("\u00A7n", "").replaceAll("\u00A7o", "").replaceAll("\u00A7r", "");
 	}
 	@EventHandler
 	public void init(FMLInitializationEvent ev) {
@@ -239,30 +236,67 @@ public class DiscordIntegration {
 				.replace("\\n", "\n")
 				);
 	}
-	
+
 	public static String getUptime() {
-        if (started == 0) {
-            return "?????";
-        }
+		if (started == 0) {
+			return "?????";
+		}
 
-        long diff = new Date().getTime() - started;
+		long diff = new Date().getTime() - started;
 
-        int seconds = (int) Math.floorDiv(diff, 1000);
-        if (seconds < 60) {
-            return seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int minutes = Math.floorDiv(seconds, 60);
-        seconds -= minutes * 60;
-        if (minutes < 60) {
-            return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int hours = Math.floorDiv(minutes, 60);
-        minutes -= hours * 60;
-        if (hours < 24) {
-            return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int days = Math.floorDiv(hours, 24);
-        hours -= days * 24;
-        return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-    }
+		int seconds = (int) Math.floorDiv(diff, 1000);
+		if (seconds < 60) {
+			return seconds + " second" + (seconds == 1 ? "" : "s");
+		}
+		int minutes = Math.floorDiv(seconds, 60);
+		seconds -= minutes * 60;
+		if (minutes < 60) {
+			return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+		}
+		int hours = Math.floorDiv(minutes, 60);
+		minutes -= hours * 60;
+		if (hours < 24) {
+			return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+		}
+		int days = Math.floorDiv(hours, 24);
+		hours -= days * 24;
+		return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+	}
+
+	@EventHandler
+	public void preInit(FMLPreInitializationEvent ev) {
+		System.out.println("Loading mod");
+		try {
+			discord_instance = new Discord();
+			System.out.println("Registering discord commands...");
+			discord_instance.registerCommand(new CommandHelp());
+			discord_instance.registerCommand(new CommandUptime());
+			discord_instance.registerCommand(new CommandList());
+			final JsonObject commandJson = new JsonParser().parse(Configuration.COMMANDS.JSON_COMMANDS).getAsJsonObject();
+			System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
+			for (Map.Entry<String, JsonElement> cmd : commandJson.entrySet()) {
+				final JsonObject cmdVal = cmd.getValue().getAsJsonObject();
+				if (!cmdVal.has("mcCommand")) {
+					System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
+					continue;
+				}
+				final String mcCommand = cmdVal.get("mcCommand").getAsString();
+				final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
+				final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
+				final boolean useArgs = !cmdVal.has("useArgs") || cmdVal.get("useArgs").getAsBoolean();
+				String[] aliases = new String[0];
+				if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
+					aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
+					for (int i = 0; i < aliases.length; i++)
+						aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
+				}
+				discord_instance.registerCommand(new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs));
+			}
+			System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
+		} catch (Exception e) {
+			System.err.println("Failed to login: " + e.getMessage());
+			discord_instance = null;
+		}
+		MinecraftForge.EVENT_BUS.register(this);
+	}
 }
