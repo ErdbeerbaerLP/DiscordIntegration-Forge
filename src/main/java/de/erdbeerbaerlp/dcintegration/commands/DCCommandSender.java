@@ -17,7 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 @SuppressWarnings("EntityConstructor")
 public class DCCommandSender extends FakePlayer {
 
-    private static final UUID playerUUID = UUID.fromString("828653ca-0185-43d4-b26d-620a7f016be6");
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
             new ThreadFactoryBuilder()
                     .setNameFormat(DCCommandSender.class.getSimpleName())
@@ -27,15 +26,14 @@ public class DCCommandSender extends FakePlayer {
 
     private final CommandFromCFG command;
 
-
     public DCCommandSender(User user, CommandFromCFG command) {
-        super(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0], new GameProfile(playerUUID, "@" + user.getName() + "#" + user.getDiscriminator()));
+        super(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0], new GameProfile(UUID.randomUUID(), "@" + user.getName() + "#" + user.getDiscriminator()));
         this.command = command;
     }
 
     @SuppressWarnings("unused")
     public DCCommandSender(WorldServer world, String name, CommandFromCFG command) {
-        super(world, new GameProfile(playerUUID, "@" + name));
+        super(world, new GameProfile(UUID.randomUUID(), "@" + name));
         this.command = command;
     }
 
