@@ -2,7 +2,6 @@
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.12.2": {
     "1.0.4": "Fix commands not having permission, add uuid \"\" to ops.json",
-    ",",
     "1.0.3": "Added Config option for custom commands",
     "1.0.1": "Fixed bugs:\nFix AFK detector not working after a player leaves\nFix server crashes when it is unable to connect",
     "1.0.0": "Initial release"
