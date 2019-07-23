@@ -4,18 +4,19 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class CommandFromCFG extends DiscordCommand {
-    private final String cmd, desc, mcCmd;
+    private final String cmd, desc, mcCmd, argText;
     private final boolean admin;
     private final String[] aliases;
     private final boolean useArgs;
 
-    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs) {
+    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText) {
         this.desc = description;
         this.cmd = cmd;
         this.admin = adminOnly;
         this.mcCmd = mcCommand;
         this.aliases = aliases;
         this.useArgs = useArgs;
+        this.argText = argText;
     }
 
     /**
@@ -50,7 +51,7 @@ public class CommandFromCFG extends DiscordCommand {
     @Override
     public String getCommandUsage() {
         if (useArgs)
-            return super.getCommandUsage() + " <args>";
+            return super.getCommandUsage() + " " + argText;
         else
             return super.getCommandUsage();
     }

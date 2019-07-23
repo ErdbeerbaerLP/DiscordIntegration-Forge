@@ -116,6 +116,7 @@ public class Configuration {
             kick.addProperty("mcCommand", "kick");
             kick.addProperty("description", "Kicks a player from the server");
             kick.addProperty("useArgs", true);
+            kick.addProperty("argText", "<player> [reason]");
             a.add("kick", kick);
             final JsonObject stop = new JsonObject();
             stop.addProperty("adminOnly", true);
@@ -124,13 +125,14 @@ public class Configuration {
             final JsonArray stopAliases = new JsonArray();
             stopAliases.add("shutdown");
             stop.add("aliases", stopAliases);
-            stop.addProperty("useArgs", true);
+            stop.addProperty("useArgs", false);
             a.add("stop", stop);
             final JsonObject kill = new JsonObject();
             kill.addProperty("adminOnly", true);
             kill.addProperty("mcCommand", "kill");
             kill.addProperty("description", "Kills a player");
             kill.addProperty("useArgs", true);
+            kill.addProperty("argText", "<player>");
             a.add("kill", kill);
             final Gson gson = new GsonBuilder().create();
             defaultCommandJson = gson.toJson(a);
@@ -153,12 +155,17 @@ public class Configuration {
                 "Add your Custom commands to this JSON",
                 "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.",
                 "You can click on \"Compact JSON Data\" on the website",
+                "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!",
                 "",
                 "mcCommand   -   The command to execute on the server",
                 "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command",
                 "description -   Description shown in /help",
-                "aliases     -   Aliases for the command in a string array"})
+                "aliases     -   Aliases for the command in a string array",
+                "useArgs     -   Shows argument text after the command",
+                "argText     -   Defines custom arg text. Defauult is <args>"})
         public String JSON_COMMANDS = this.defaultCommandJson;
+        @Comment("You MUST op this UUID in the ops.txt or many commands won´t work!!")
+        public String SENDER_UUID = "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3";
         @Comment({"Message if a player provides too many arguments", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
         public String MSG_PLAYER_NOT_FOUND = "Can not find player \"%player%\"";
 

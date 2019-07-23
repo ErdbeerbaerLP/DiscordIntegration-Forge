@@ -3,6 +3,7 @@ package de.erdbeerbaerlp.dcintegration.commands;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.authlib.GameProfile;
+import de.erdbeerbaerlp.dcintegration.Configuration;
 import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
 import net.dv8tion.jda.core.entities.User;
 import net.minecraft.util.text.ITextComponent;
@@ -25,15 +26,15 @@ public class DCCommandSender extends FakePlayer {
     );
 
     private final CommandFromCFG command;
-
+    private static final UUID uuid = UUID.fromString(Configuration.COMMANDS.SENDER_UUID);
     public DCCommandSender(User user, CommandFromCFG command) {
-        super(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0], new GameProfile(UUID.randomUUID(), "@" + user.getName() + "#" + user.getDiscriminator()));
+        super(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0], new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
         this.command = command;
     }
 
     @SuppressWarnings("unused")
     public DCCommandSender(WorldServer world, String name, CommandFromCFG command) {
-        super(world, new GameProfile(UUID.randomUUID(), "@" + name));
+        super(world, new GameProfile(uuid, "@" + name));
         this.command = command;
     }
 

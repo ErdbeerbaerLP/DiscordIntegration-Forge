@@ -269,7 +269,7 @@ public class Discord implements EventListener{
 		try {
 		if(isKilled) return;
 		if(WEBHOOK.BOT_WEBHOOK) {
-			if(playerName == Configuration.WEBHOOK.SERVER_NAME && UUID == "0000000") {
+			if (playerName.equals(WEBHOOK.SERVER_NAME) && UUID.equals("0000000")) {
 				final WebhookMessageBuilder b = new WebhookMessageBuilder();
 				b.setContent(msg);
 				b.setUsername(Configuration.WEBHOOK.SERVER_NAME);

@@ -44,7 +44,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-	public static final String VERSION = "1.0.3";
+	public static final String VERSION = "1.0.4";
 	/**
 	 * Modid
 	 */
@@ -284,13 +284,16 @@ public class DiscordIntegration {
 				final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
 				final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
 				final boolean useArgs = !cmdVal.has("useArgs") || cmdVal.get("useArgs").getAsBoolean();
+				String argText = "<args>";
+				if (cmdVal.has("argText")) argText = cmdVal.get("argText").getAsString();
 				String[] aliases = new String[0];
 				if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
 					aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
 					for (int i = 0; i < aliases.length; i++)
 						aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
 				}
-				discord_instance.registerCommand(new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs));
+				if (!discord_instance.registerCommand(new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText)))
+					System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
 			}
 			System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
 		} catch (Exception e) {
