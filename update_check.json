@@ -1,13 +1,14 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.12.2": {
+    "1.0.5": "Most likely fix bug in FTB Utilites AFK detection",
     "1.0.4": "Fix commands not having permission, add uuid from new config to to ops.json",
     "1.0.3": "Added Config option for custom commands",
     "1.0.1": "Fixed bugs:\nFix AFK detector not working after a player leaves\nFix server crashes when it is unable to connect",
     "1.0.0": "Initial release"
   },
   "promos": {
-    "1.12.2-latest": "1.0.4",
-    "1.12.2-recommended": "1.0.4"
+    "1.12.2-latest": "1.0.5",
+    "1.12.2-recommended": "1.0.5"
   }
 }
