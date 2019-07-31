@@ -31,10 +31,7 @@ import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
@@ -45,7 +42,7 @@ import static de.erdbeerbaerlp.dcintegration.Configuration.WEBHOOK;
 public class Discord implements EventListener{
 	private final JDA jda;
 	public boolean isKilled = false;
-	private final List<DiscordCommand> commands = new ArrayList<DiscordCommand>();
+    private final List<DiscordCommand> commands = new ArrayList<>();
 
     /**
      * @return an instance of the webhook or null
@@ -76,6 +73,7 @@ public class Discord implements EventListener{
 		}
 		private double getAverageTickCount() {
 			MinecraftServer minecraftServer = FMLCommonHandler.instance().getMinecraftServerInstance();
+            //noinspection IntegerDivisionInFloatingPointContext
 			return LongStream.of(minecraftServer.tickTimeArray).sum() / minecraftServer.tickTimeArray.length * 1.0E-6D;
 		}
 
@@ -96,7 +94,7 @@ public class Discord implements EventListener{
 							).complete();
 					sleep(500);
 				}
-			}catch (InterruptedException | RuntimeException e) {
+            } catch (InterruptedException | RuntimeException ignored) {
 
 			}
 		}
@@ -113,7 +111,7 @@ public class Discord implements EventListener{
 		public void run() {
 			while(true) {
 				final long timeLeft = TimeUnit.MILLISECONDS.toSeconds(FTBUtilitiesUniverseData.shutdownTime-Instant.now().toEpochMilli());
-
+                //noinspection StatementWithEmptyBody
 				if(timeLeft > 30);
 				else if(timeLeft == 30) sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG.replace("%seconds%", "30"), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
 				else if(timeLeft == 10) {
@@ -123,7 +121,8 @@ public class Discord implements EventListener{
 
 				try {
 					sleep(TimeUnit.SECONDS.toMillis(1));
-				} catch (InterruptedException e) {}
+                } catch (InterruptedException ignored) {
+                }
 			} interrupt();
 		}
 	};
@@ -137,16 +136,19 @@ public class Discord implements EventListener{
 			setPriority(MAX_PRIORITY);
 		}
 		public void run() {
-			final Map<EntityPlayerMP, Entry<Long, Boolean>> timers = new HashMap<EntityPlayerMP, Entry<Long, Boolean>>();
+            final Map<EntityPlayerMP, Entry<Long, Boolean>> timers = new HashMap<>();
 			final Universe universe = Universe.get();
 			while(true) {
 				for(EntityPlayerMP player : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) {
-					final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(universe.getPlayer(player));
+                    try {
+                        final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(Objects.requireNonNull(universe.getPlayer(player)));
 					if(timers.containsKey(player) && data.afkTime < timers.get(player).getKey() && timers.get(player).getValue())
 						sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_END.replace("%player%", player.getName()), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
-					timers.put(player, new SimpleEntry<Long, Boolean>(data.afkTime, (timers.containsKey(player)? timers.get(player).getValue():false)));
-				}
-				final List<EntityPlayerMP> toRemove = new ArrayList<EntityPlayerMP>();
+                        timers.put(player, new SimpleEntry<>(data.afkTime, (timers.containsKey(player) ? timers.get(player).getValue() : false)));
+                    } catch (NullPointerException ignored) {
+                    }
+                }
+                final List<EntityPlayerMP> toRemove = new ArrayList<>();
 				timers.keySet().forEach((p)->{
 					if(!FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers().contains(p)) {
 						toRemove.add(p);
@@ -154,7 +156,7 @@ public class Discord implements EventListener{
 						final boolean afk = timers.get(p).getKey() >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
 						if(afk && !timers.get(p).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG
 								.replace("%player%", p.getName()), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
-						timers.put(p, new SimpleEntry<Long, Boolean>(timers.get(p).getKey(), afk));
+                        timers.put(p, new SimpleEntry<>(timers.get(p).getKey(), afk));
 
 					}
 				});
@@ -163,7 +165,8 @@ public class Discord implements EventListener{
 				}
 				try {
 					sleep(900);
-				} catch (InterruptedException e) {}
+                } catch (InterruptedException ignored) {
+                }
 			}
 		}
 	};
@@ -248,7 +251,7 @@ public class Discord implements EventListener{
 			b.setContent(msg);
 			b.setUsername(name);
 			b.setAvatarUrl(avatarURL);
-			final WebhookClient cli = getWebhook().newClient().build();
+            final WebhookClient cli = Objects.requireNonNull(getWebhook()).newClient().build();
 			cli.send(b.build());
 			cli.close();
 		} else 
@@ -257,7 +260,8 @@ public class Discord implements EventListener{
 					.replace("%player%", name)
 					.replace("%msg%", msg)
 					).complete();
-		}catch (Exception e) {}
+        } catch (Exception ignored) {
+        }
 	}
 	/**
 	 * Sends a message to discord
@@ -265,7 +269,8 @@ public class Discord implements EventListener{
 	 * @param UUID the player uuid
 	 * @param msg the message to send
 	 */
-	public void sendMessage(String playerName, String UUID, String msg) {
+    @SuppressWarnings("ConstantConditions")
+    public void sendMessage(String playerName, String UUID, String msg) {
 		try {
 		if(isKilled) return;
 		if(WEBHOOK.BOT_WEBHOOK) {
@@ -286,8 +291,7 @@ public class Discord implements EventListener{
 				cli.send(b.build());
 				cli.close();
 			}
-		} else 
-			if(playerName == Configuration.WEBHOOK.SERVER_NAME && UUID == "0000000") {
+		} else if (playerName.equals(WEBHOOK.SERVER_NAME) && UUID.equals("0000000")) {
 				getChannel().sendMessage(msg).complete();
 			}
 			else {
@@ -297,7 +301,8 @@ public class Discord implements EventListener{
 						.replace("%msg%", msg)
 						).complete();
 			}
-		}catch (Exception e) {}
+        } catch (Exception ignored) {
+        }
 	}
 	/**
 	 * Kills the discord bot
@@ -320,6 +325,7 @@ public class Discord implements EventListener{
 					final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.COMMANDS.CMD_PREFIX, "").split(" ");
 					String argumentsRaw = "";
 					for(int i=1;i<command.length;i++) {
+                        //noinspection StringConcatenationInLoop
 						argumentsRaw = argumentsRaw+command[i]+" ";
 					}
 					argumentsRaw = argumentsRaw.trim();
@@ -348,7 +354,6 @@ public class Discord implements EventListener{
 					}
 					if(!executed){
 						sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX));
-						return;
 					}
 
 				}else
