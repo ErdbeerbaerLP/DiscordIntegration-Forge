@@ -44,7 +44,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-	public static final String VERSION = "1.0.4";
+	public static final String VERSION = "1.0.5";
 	/**
 	 * Modid
 	 */
@@ -108,21 +108,19 @@ public class DiscordIntegration {
 				if(FTBUtilitiesConfig.afk.enabled) discord_instance.ftbUtilitiesAFKDetectThread.start();
 			}
 		}
-		Runtime.getRuntime().addShutdownHook(new Thread(){
-			@Override
-			public void run() {
-				if(discord_instance != null) {
-					if(!stopped) {
-						if(!discord_instance.isKilled) {
-							discord_instance.stopThreads();
-							if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
-							discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
-						}
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			if (discord_instance != null) {
+				if (!stopped) {
+					if (!discord_instance.isKilled) {
+						discord_instance.stopThreads();
+						if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION)
+							discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
+						discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
 					}
-					discord_instance.kill();
 				}
+				discord_instance.kill();
 			}
-		});
+		}));
 		
 		if(Configuration.GENERAL.UPDATE_CHECK) {
 				CheckResult result = ForgeVersion.getResult(Loader.instance().getIndexedModList().get(DiscordIntegration.MODID));
@@ -136,7 +134,8 @@ public class DiscordIntegration {
 					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7a You are using an Beta Version. This may contain bugs which are being fixed.");
 				}else if(result.status == Status.BETA_OUTDATED){
 					System.out.println(new TextComponentString("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c You are using an Outdated Beta Version. This may contain bugs which are being fixed or are already fixed\n\u00A76Changelog of newer Beta:"+result.changes.get(result.target)));
-				}else if(result.status == Status.UP_TO_DATE) {
+				} else //noinspection StatementWithEmptyBody
+					if (result.status == Status.UP_TO_DATE) {
 				}else {
 					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7cUpdateCheck: "+result.status.toString());
 				}
@@ -153,7 +152,7 @@ public class DiscordIntegration {
 				b.setContent(Configuration.MESSAGES.SERVER_STOPPED_MSG);
 				b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
 				b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
-				final WebhookClient cli = discord_instance.getWebhook().newClient().build();
+				@SuppressWarnings("ConstantConditions") final WebhookClient cli = discord_instance.getWebhook().newClient().build();
 				cli.send(b.build());
 				cli.close();
 			}else discord_instance.getChannel().sendMessage(Configuration.MESSAGES.SERVER_STOPPED_MSG).complete();
@@ -198,6 +197,8 @@ public class DiscordIntegration {
 			lastTimeout = null;
 		}
 	}
+
+	@SuppressWarnings("StringConcatenationInLoop")
 	@SubscribeEvent
 	public void command(CommandEvent ev) {
 		if(discord_instance != null)
@@ -206,7 +207,7 @@ public class DiscordIntegration {
 				for(String s : ev.getParameters()) {
 					msg = msg+s+" ";
 				}
-				if(ev.getSender() instanceof DedicatedServer) 
+				if(ev.getSender() instanceof DedicatedServer)
 					discord_instance.sendMessage(msg);
 				else if(ev.getSender().getCommandSenderEntity() instanceof EntityPlayer)
 					discord_instance.sendMessage(ev.getSender().getName(), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), msg);
