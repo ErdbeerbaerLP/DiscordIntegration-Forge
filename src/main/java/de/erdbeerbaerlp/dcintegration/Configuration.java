@@ -104,7 +104,7 @@ public class Configuration {
         @Comment({"Format of the shutdown message printed when the server will shutdown/restart in 10 seconds"})
         public String SHUTDOWN_MSG_10SECONDS = "Server stopping in 10 seconds!";
         @Comment({"Format of the shutdown message printed when the server will shutdown/restart in 2 minutes"})
-        public String SHUTDOWN_MSG_2MINUTES = "Server stopping in 10 seconds!";
+        public String SHUTDOWN_MSG_2MINUTES = "Server stopping in 2 minutes!";
     }
 
     public static class category_commands {
