@@ -113,9 +113,10 @@ public class Discord implements EventListener{
 				final long timeLeft = TimeUnit.MILLISECONDS.toSeconds(FTBUtilitiesUniverseData.shutdownTime-Instant.now().toEpochMilli());
                 //noinspection StatementWithEmptyBody
 				if(timeLeft > 30);
-				else if(timeLeft == 30) sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG.replace("%seconds%", "30"), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+				else if (timeLeft == TimeUnit.SECONDS.toMinutes(2))
+					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_2MINUTES, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
 				else if(timeLeft == 10) {
-					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG.replace("%seconds%", "10"), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_10SECONDS, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
 					break;
 				}
 
@@ -136,6 +137,7 @@ public class Discord implements EventListener{
 			setPriority(MAX_PRIORITY);
 		}
 		public void run() {
+			if (!Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_ENABLED) return;
             final Map<EntityPlayerMP, Entry<Long, Boolean>> timers = new HashMap<>();
 			final Universe universe = Universe.get();
 			while(true) {

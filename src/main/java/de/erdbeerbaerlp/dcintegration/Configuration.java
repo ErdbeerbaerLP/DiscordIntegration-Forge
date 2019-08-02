@@ -101,8 +101,10 @@ public class Configuration {
         public String DISCORD_AFK_MSG_END = "%player% is no longer AFK";
         @Comment("URL of the FTB Avatar icon")
         public String FTB_AVATAR_ICON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/images/ftb.png";
-        @Comment({"Format of the shutdown message printed when the server will shutdown/restart in 30 and 10 seconds", "PLACEHOLDERS:", "%seconds% - The seconds remaining till shutdown (30 or 10)"})
-        public String SHUTDOWN_MSG = "Server stopping in %seconds%!";
+        @Comment({"Format of the shutdown message printed when the server will shutdown/restart in 10 seconds"})
+        public String SHUTDOWN_MSG_10SECONDS = "Server stopping in 10 seconds!";
+        @Comment({"Format of the shutdown message printed when the server will shutdown/restart in 2 minutes"})
+        public String SHUTDOWN_MSG_2MINUTES = "Server stopping in 10 seconds!";
     }
 
     public static class category_commands {

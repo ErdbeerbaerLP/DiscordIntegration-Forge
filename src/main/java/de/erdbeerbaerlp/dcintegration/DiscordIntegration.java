@@ -44,7 +44,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-	public static final String VERSION = "1.0.5";
+	public static final String VERSION = "1.0.6";
 	/**
 	 * Modid
 	 */
@@ -81,7 +81,8 @@ public class DiscordIntegration {
 	}
 	@EventHandler
 	public void init(FMLInitializationEvent ev) {
-		if(discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
+		if (discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK)
+			this.startingMsg = discord_instance.sendMessageReturns(Configuration.MESSAGES.SERVER_STARTING_MSG);
 		if(discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
 	}
 	@EventHandler
@@ -183,7 +184,6 @@ public class DiscordIntegration {
 	public static EntityPlayerMP lastTimeout;
 	@SubscribeEvent
 	public void playerLeave(PlayerLoggedOutEvent ev) {
-
 		if(discord_instance != null && !ev.player.equals(lastTimeout))
 			discord_instance.sendMessage(
 					Configuration.MESSAGES.PLAYER_LEFT_MSG
@@ -215,7 +215,8 @@ public class DiscordIntegration {
 	}
 	@SubscribeEvent
 	public void chat(ServerChatEvent ev) {
-		if(discord_instance != null) discord_instance.sendMessage(ev.getPlayer(), ev.getMessage());
+		if (discord_instance != null)
+			discord_instance.sendMessage(ev.getPlayer(), ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
 	}
 	@SubscribeEvent
 	public void death(LivingDeathEvent ev) {
