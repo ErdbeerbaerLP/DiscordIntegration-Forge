@@ -23,6 +23,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -321,47 +322,70 @@ public class Discord implements EventListener{
 		if(event instanceof MessageReceivedEvent) {
 			final MessageReceivedEvent ev = (MessageReceivedEvent) event;
 			if(getChannel().getId().equals(ev.getChannel().getId()) && !ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
-				if(ev.getMessage().getContentRaw().startsWith(Configuration.COMMANDS.CMD_PREFIX)) {
+				if (ev.getMessage().getContentRaw().startsWith(Configuration.COMMANDS.CMD_PREFIX)) {
 					final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.COMMANDS.CMD_PREFIX, "").split(" ");
 					String argumentsRaw = "";
-					for(int i=1;i<command.length;i++) {
+					for (int i = 1; i < command.length; i++) {
                         //noinspection StringConcatenationInLoop
-						argumentsRaw = argumentsRaw+command[i]+" ";
+						argumentsRaw = argumentsRaw + command[i] + " ";
 					}
 					argumentsRaw = argumentsRaw.trim();
 					boolean hasPermission = true;
 					boolean executed = false;
-					for(DiscordCommand cmd : commands) {
-						if(cmd.getName().equals(command[0])){
-							if(cmd.canUserExecuteCommand(ev.getAuthor())) {
+					for (DiscordCommand cmd : commands) {
+						if (cmd.getName().equals(command[0])) {
+							if (cmd.canUserExecuteCommand(ev.getAuthor())) {
 								cmd.execute(argumentsRaw.split(" "), ev);
 								executed = true;
-							}else hasPermission = false;
+							} else hasPermission = false;
 
 						}
-						for(String alias : cmd.getAliases()) {
-							if(alias.equals(command[0])) {
-								if(cmd.canUserExecuteCommand(ev.getAuthor())) {
+						for (String alias : cmd.getAliases()) {
+							if (alias.equals(command[0])) {
+								if (cmd.canUserExecuteCommand(ev.getAuthor())) {
 									cmd.execute(argumentsRaw.split(" "), ev);
 									executed = true;
-								}else hasPermission = false;
+								} else hasPermission = false;
 							}
 						}
 					}
-					if(!hasPermission) {
+					if (!hasPermission) {
 						sendMessage(Configuration.COMMANDS.MSG_NO_PERMISSION);
 						return;
 					}
-					if(!executed){
+					if (!executed) {
 						sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX));
 					}
 
-				}else
+				} else {
+					final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
+					StringBuilder message = new StringBuilder(ev.getMessage().getContentRaw());
+					for (Message.Attachment a : ev.getMessage().getAttachments()) {
+						//noinspection StringConcatenationInsideStringBufferAppend
+						message.append("\nAttachment: " + a.getProxyUrl());
+					}
+					for (MessageEmbed e : embeds) {
+						if (e.isEmpty()) continue;
+						message.append("\n\n-----[Embed]-----\n");
+						if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty())
+							//noinspection StringConcatenationInsideStringBufferAppend
+							message.append(TextFormatting.BOLD + "" + TextFormatting.ITALIC + e.getAuthor().getName() + "\n");
+						if (e.getTitle() != null && !e.getTitle().trim().isEmpty())
+							//noinspection StringConcatenationInsideStringBufferAppend
+							message.append(TextFormatting.BOLD + e.getTitle() + "\n");
+						if (e.getDescription() != null && !e.getDescription().trim().isEmpty())
+							message.append("Message:\n").append(e.getDescription()).append("\n");
+						if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty())
+							message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
+						message.append("\n-----------------");
+					}
+
 					FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(
 							new TextComponentString(Configuration.MESSAGES.INGAME_DISCORD_MSG
 									.replace("%user%", ev.getAuthor().getName())
 									.replace("%id%", ev.getAuthor().getId())
-									.replace("%msg%", ev.getMessage().getContentRaw())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString("Sent by discord user \""+ev.getAuthor().getAsTag()+"\"")))));
+									.replace("%msg%", message.toString())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+				}
 			}
 
 		}
