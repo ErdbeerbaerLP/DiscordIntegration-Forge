@@ -112,7 +112,6 @@ public class Discord implements EventListener{
 		public void run() {
 			while(true) {
 				final long timeLeft = TimeUnit.MILLISECONDS.toSeconds(FTBUtilitiesUniverseData.shutdownTime-Instant.now().toEpochMilli());
-				System.out.println(timeLeft);
 				if (timeLeft == 120)
 					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_2MINUTES, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
 				else if(timeLeft == 10) {
