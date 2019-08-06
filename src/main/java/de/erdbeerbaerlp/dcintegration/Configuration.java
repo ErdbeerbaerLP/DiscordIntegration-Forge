@@ -88,7 +88,8 @@ public class Configuration {
         public String CHANNEL_DESCRIPTION_STARTING = "Starting...";
         @Comment({"PLACEHOLDERS:", "%player% - The player\u00B4s name"})
         public String PLAYER_TIMEOUT_MSG = "%player% timed out!";
-
+        @Comment("Should /say output be sent to discord?")
+        public boolean ENABLE_SAY_OUTPUT = true;
 
     }
 

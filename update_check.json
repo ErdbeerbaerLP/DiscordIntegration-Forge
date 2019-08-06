@@ -1,6 +1,7 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.12.2": {
+    "1.0.9": "Add config option to enable/disable /say output in discord (requested by Sunconure11)",
     "1.0.8": "REALLY Fix 2 minute shutdown/restart message...",
     "1.0.7": "(not...)Fix 2 minute shutdown/restart message does not appear\nAdd basic attachment and embed parsing",
     "1.0.6": "Fix @everyone working from chat to discord\nReplace 30 second restart line with 2 minutes\nFixed some config entries not being used",
