@@ -127,6 +127,10 @@ dependencies {
 /*mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
 }*/
+reobf {
+    shadowJar { mappingType = 'SEARGE' }
+}
+tasks.build.dependsOn reobfShadowJar
 jar {
     manifest {
         attributes([
