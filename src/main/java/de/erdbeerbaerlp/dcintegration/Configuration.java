@@ -1,5 +1,9 @@
 package de.erdbeerbaerlp.dcintegration;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.fml.config.ModConfig;
@@ -51,6 +55,8 @@ public class Configuration {
     public final ForgeConfigSpec.ConfigValue<String> descriptionOffline;
     public final ForgeConfigSpec.ConfigValue<String> descriptionStarting;
     public final ForgeConfigSpec.ConfigValue<String> msgPlayerTimeout;
+    public final ForgeConfigSpec.BooleanValue sayOutput;
+
     //#########################
     //#       COMMANDS        #
     //#########################
@@ -64,6 +70,9 @@ public class Configuration {
     public final ForgeConfigSpec.ConfigValue<String> msgNotEnoughArgs;
     public final ForgeConfigSpec.ConfigValue<String> msgTooManyArgs;
     public final ForgeConfigSpec.ConfigValue<String> msgPlayerNotFound;
+    public final ForgeConfigSpec.ConfigValue<String> jsonCommands;
+    public final ForgeConfigSpec.ConfigValue<String> senderUUID;
+
     //#########################
     //#    INGAME-COMMAND     #
     //#########################
@@ -163,11 +172,43 @@ public class Configuration {
         msgPlayerTimeout = builder
                 .comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.14!")
                 .define("msgPlayerTimeout", "%player% timed out!");
+        sayOutput = builder.comment("Should /say output be sent to discord?")
+                .define("enableSayOutput", true);
         builder.pop();
         //#########################
         //#       COMMANDS        #
         //#########################
         builder.comment("Configuration for built-in discord commands").push("dc-commands");
+        final String defaultCommandJson;
+        //Default command json
+        {
+            final JsonObject a = new JsonObject();
+            final JsonObject kick = new JsonObject();
+            kick.addProperty("adminOnly", true);
+            kick.addProperty("mcCommand", "kick");
+            kick.addProperty("description", "Kicks a player from the server");
+            kick.addProperty("useArgs", true);
+            kick.addProperty("argText", "<player> [reason]");
+            a.add("kick", kick);
+            final JsonObject stop = new JsonObject();
+            stop.addProperty("adminOnly", true);
+            stop.addProperty("mcCommand", "stop");
+            stop.addProperty("description", "Stops the server");
+            final JsonArray stopAliases = new JsonArray();
+            stopAliases.add("shutdown");
+            stop.add("aliases", stopAliases);
+            stop.addProperty("useArgs", false);
+            a.add("stop", stop);
+            final JsonObject kill = new JsonObject();
+            kill.addProperty("adminOnly", true);
+            kill.addProperty("mcCommand", "kill");
+            kill.addProperty("description", "Kills a player");
+            kill.addProperty("useArgs", true);
+            kill.addProperty("argText", "<player>");
+            a.add("kill", kill);
+            final Gson gson = new GsonBuilder().create();
+            defaultCommandJson = gson.toJson(a);
+        }
         adminRoleId = builder
                 .comment("The Role ID of your Admin Role")
                 .define("adminRoleId", "0");
@@ -198,6 +239,21 @@ public class Configuration {
         msgPlayerNotFound = builder
                 .comment("Message if a player can not be found", "PLACEHOLDERS:", "%player% - The player\u00B4s name")
                 .define("msgPlayerNotFound", "Can not find player \"%player%\"");
+        jsonCommands = builder
+                .comment("Add your Custom commands to this JSON",
+                        "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.",
+                        "You can click on \"Compact JSON Data\" on the website",
+                        "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!",
+                        "",
+                        "mcCommand   -   The command to execute on the server",
+                        "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command",
+                        "description -   Description shown in /help",
+                        "aliases     -   Aliases for the command in a string array",
+                        "useArgs     -   Shows argument text after the command",
+                        "argText     -   Defines custom arg text. Default is <args>")
+                .define("jsonCommands", defaultCommandJson);
+        senderUUID = builder.comment("You MUST op this UUID in the ops.txt or many commands won´t work!!")
+                .define("senderUUID", "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3");
         builder.pop();
         //#########################
         //#    INGAME-COMMAND     #

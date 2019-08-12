@@ -1,6 +1,9 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.commands.*;
 import net.dv8tion.jda.core.entities.Message;
@@ -14,11 +17,10 @@ import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.event.server.*;
@@ -27,6 +29,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @SuppressWarnings("ConstantConditions")
@@ -64,6 +67,15 @@ public class DiscordIntegration {
      */
     private boolean stopped = false;
 
+    /**
+     * Removes Color code formatting
+     *
+     * @param formatted Formatted text with §2 color codes
+     * @return Raw text without color codes
+     */
+    public static String removeFormatting(String formatted) {
+        return formatted.replaceAll("\u00A70", "").replaceAll("\u00A71", "").replaceAll("\u00A72", "").replaceAll("\u00A73", "").replaceAll("\u00A74", "").replaceAll("\u00A75", "").replaceAll("\u00A76", "").replaceAll("\u00A77", "").replaceAll("\u00A78", "").replaceAll("\u00A79", "").replaceAll("\u00A7a", "").replaceAll("\u00A7b", "").replaceAll("\u00A7c", "").replaceAll("\u00A7d", "").replaceAll("\u00A7e", "").replaceAll("\u00A7f", "").replaceAll("\u00A7l", "").replaceAll("\u00A7k", "").replaceAll("\u00A7m", "").replaceAll("\u00A7n", "").replaceAll("\u00A7o", "").replaceAll("\u00A7r", "");
+    }
     public DiscordIntegration() throws SecurityException, IllegalArgumentException {
 
         //Register Config
@@ -83,7 +95,7 @@ public class DiscordIntegration {
     }
 
     @SubscribeEvent
-    public static void playerJoin(final PlayerLoggedInEvent ev) {
+    public static void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (discord_instance != null) discord_instance.sendMessage(
                 Configuration.INSTANCE.msgPlayerJoin.get()
                         .replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
@@ -179,10 +191,31 @@ public class DiscordIntegration {
             discord_instance = new Discord();
             discord_instance.registerCommand(new CommandHelp());
             discord_instance.registerCommand(new CommandList());
-            discord_instance.registerCommand(new CommandKill());
-            discord_instance.registerCommand(new CommandStop());
-            discord_instance.registerCommand(new CommandKick());
             discord_instance.registerCommand(new CommandUptime());
+            final JsonObject commandJson = new JsonParser().parse(Configuration.INSTANCE.jsonCommands.get()).getAsJsonObject();
+            System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
+            for (Map.Entry<String, JsonElement> cmd : commandJson.entrySet()) {
+                final JsonObject cmdVal = cmd.getValue().getAsJsonObject();
+                if (!cmdVal.has("mcCommand")) {
+                    System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
+                    continue;
+                }
+                final String mcCommand = cmdVal.get("mcCommand").getAsString();
+                final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
+                final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
+                final boolean useArgs = !cmdVal.has("useArgs") || cmdVal.get("useArgs").getAsBoolean();
+                String argText = "<args>";
+                if (cmdVal.has("argText")) argText = cmdVal.get("argText").getAsString();
+                String[] aliases = new String[0];
+                if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
+                    aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
+                    for (int i = 0; i < aliases.length; i++)
+                        aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
+                }
+                if (!discord_instance.registerCommand(new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText)))
+                    System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
+            }
+            System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
         } catch (Exception e) {
             System.err.println("Failed to login: " + e.getMessage());
             discord_instance = null;
@@ -283,7 +316,7 @@ public class DiscordIntegration {
     }
 
     @SubscribeEvent
-    public void playerLeave(PlayerLoggedOutEvent ev) {
+    public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
 
         if (discord_instance != null && !ev.getPlayer().equals(lastTimeout))
             discord_instance.sendMessage(
