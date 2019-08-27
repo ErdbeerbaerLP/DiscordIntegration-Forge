@@ -24,6 +24,7 @@ public class McCommandDiscord implements ICommand {
 		opTabComps.add("reload");
 		opTabComps.add("restart");
 	}
+
 	@Override
 	public String getName() {
 		return "discord";
@@ -33,26 +34,38 @@ public class McCommandDiscord implements ICommand {
 	public String getUsage(ICommandSender sender) {
 		return "/discord";
 	}
-	
+
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (sender.canUseCommand(4, "discord") && args.length > 0) {
 			switch (args[0]) {
 				case "reload":
-					ConfigManager.sync(DiscordIntegration.MODID, Config.Type.INSTANCE);
-					sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Config reloaded " + (DiscordIntegration.discord_instance.restart() ? "and discord bot restarted" : (TextFormatting.RED + "but failed to restart the discord bot")) + "!"));
+					new Thread(() -> {
+						ConfigManager.sync(DiscordIntegration.MODID, Config.Type.INSTANCE);
+						sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Config reloaded " + (DiscordIntegration.discord_instance.restart() ? "and discord bot properly restarted" : (TextFormatting.RED + "but failed to properly restart the discord bot")) + "!"));
+					}).start();
 					break;
 				case "restart":
-					if (DiscordIntegration.discord_instance.restart()) {
-						sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Discord bot restarted!"));
-					} else
-						sender.sendMessage(new TextComponentString(TextFormatting.RED + "Failed to restart the discord bot!"));
+					new Thread(() -> {
+						if (DiscordIntegration.discord_instance.restart()) {
+							sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Discord bot restarted!"));
+						} else
+							sender.sendMessage(new TextComponentString(TextFormatting.RED + "Failed to properly restart the discord bot!"));
+					}).start();
 					break;
 				default:
 					break;
 			}
 		} else
-			sender.sendMessage(new TextComponentString(Configuration.DISCORD_COMMAND.MESSAGE).setStyle(new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(Configuration.DISCORD_COMMAND.HOVER))).setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.DISCORD_COMMAND.URL))));
+			sender.sendMessage(new
+
+					TextComponentString(Configuration.DISCORD_COMMAND.MESSAGE).
+
+					setStyle(new Style().
+
+							setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(Configuration.DISCORD_COMMAND.HOVER))).
+
+							setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.DISCORD_COMMAND.URL))));
 	}
 
 	@Override
@@ -72,7 +85,7 @@ public class McCommandDiscord implements ICommand {
 
 	@Override
 	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args,
-			BlockPos targetPos) {
+										  BlockPos targetPos) {
 		return sender.canUseCommand(4, "discord") ? opTabComps : new ArrayList<>();
 	}
 

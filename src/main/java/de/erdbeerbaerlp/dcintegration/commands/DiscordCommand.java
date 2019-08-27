@@ -17,7 +17,7 @@ public abstract class DiscordCommand {
 	/**
 	 * Discord instance for easy use in commands
 	 */
-	final Discord discord = DiscordIntegration.discord_instance;
+	public Discord discord = DiscordIntegration.discord_instance;
 	/**
 	 * Instance of {@link MinecraftServer}
 	 */
@@ -26,6 +26,7 @@ public abstract class DiscordCommand {
 	 * The text channel the bot is working in
 	 */
 	final TextChannel channel = discord.getChannel();
+	boolean isConfigCmd = false;
 	/**
 	 * Sets the name of the command
 	 */
@@ -43,7 +44,8 @@ public abstract class DiscordCommand {
 	 */
 	public boolean adminOnly() {
 		return false;
-	};
+	}
+
 	/**
 	 * Method called when executing this command
 	 * @param args arguments passed by the player
@@ -70,7 +72,7 @@ public abstract class DiscordCommand {
 			}
 		}
 		if(m == null) return false;
-		return this.adminOnly() ? m.getRoles().contains(discord.getAdminRole()) : true;
+		return !this.adminOnly() || m.getRoles().contains(discord.getAdminRole());
 	}
 	/**
 	 * Override to customize the command usage, which is being displayed in help (ex. to add arguments)
@@ -89,5 +91,9 @@ public abstract class DiscordCommand {
 	 */
 	public final String parsePlayerNotFoundMsg(String playerName) {
 		return Configuration.COMMANDS.MSG_PLAYER_NOT_FOUND.replace("%player%", playerName);
+	}
+
+	public boolean isConfigCommand() {
+		return isConfigCmd;
 	}
 }

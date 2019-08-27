@@ -72,7 +72,7 @@ public class DiscordIntegration {
 	/**
 	 * Removes Color code formatting
 	 *
-	 * @param formatted Formatted text with �2 color codes
+	 * @param formatted Formatted text with §2 color codes
 	 * @return Raw text without color codes
 	 */
 	public static String removeFormatting(String formatted) {
@@ -269,6 +269,34 @@ public class DiscordIntegration {
 		return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
 	}
 
+	public static void registerConfigCommands() {
+		final JsonObject commandJson = new JsonParser().parse(Configuration.COMMANDS.JSON_COMMANDS).getAsJsonObject();
+		System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
+		for (Map.Entry<String, JsonElement> cmd : commandJson.entrySet()) {
+			final JsonObject cmdVal = cmd.getValue().getAsJsonObject();
+			if (!cmdVal.has("mcCommand")) {
+				System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
+				continue;
+			}
+			final String mcCommand = cmdVal.get("mcCommand").getAsString();
+			final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
+			final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
+			final boolean useArgs = !cmdVal.has("useArgs") || cmdVal.get("useArgs").getAsBoolean();
+			String argText = "<args>";
+			if (cmdVal.has("argText")) argText = cmdVal.get("argText").getAsString();
+			String[] aliases = new String[0];
+			if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
+				aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
+				for (int i = 0; i < aliases.length; i++)
+					aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
+			}
+			final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText);
+			if (!discord_instance.registerCommand(regCmd))
+				System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
+
+		}
+	}
+
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent ev) {
 		System.out.println("Loading mod");
@@ -278,29 +306,7 @@ public class DiscordIntegration {
 			discord_instance.registerCommand(new CommandHelp());
 			discord_instance.registerCommand(new CommandUptime());
 			discord_instance.registerCommand(new CommandList());
-			final JsonObject commandJson = new JsonParser().parse(Configuration.COMMANDS.JSON_COMMANDS).getAsJsonObject();
-			System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
-			for (Map.Entry<String, JsonElement> cmd : commandJson.entrySet()) {
-				final JsonObject cmdVal = cmd.getValue().getAsJsonObject();
-				if (!cmdVal.has("mcCommand")) {
-					System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
-					continue;
-				}
-				final String mcCommand = cmdVal.get("mcCommand").getAsString();
-				final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
-				final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
-				final boolean useArgs = !cmdVal.has("useArgs") || cmdVal.get("useArgs").getAsBoolean();
-				String argText = "<args>";
-				if (cmdVal.has("argText")) argText = cmdVal.get("argText").getAsString();
-				String[] aliases = new String[0];
-				if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
-					aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
-					for (int i = 0; i < aliases.length; i++)
-						aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
-				}
-				if (!discord_instance.registerCommand(new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText)))
-					System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
-			}
+			registerConfigCommands();
 			System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
 		} catch (Exception e) {
 			System.err.println("Failed to login: " + e.getMessage());
