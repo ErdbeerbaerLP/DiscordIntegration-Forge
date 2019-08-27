@@ -27,6 +27,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Loader;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
@@ -405,7 +406,32 @@ public class Discord implements EventListener{
 		return commands.add(cmd);
     }
 
-    public enum GameTypes {
+	/**
+	 * Restarts the discord bot (used by reload command)
+	 */
+	public boolean restart() {
+		try {
+			kill();
+			DiscordIntegration.discord_instance = new Discord();
+			DiscordIntegration.discord_instance.startThreads();
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Starts all threads if they are not running
+	 */
+	public void startThreads() {
+		if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) updateChannelDesc.start();
+		if (Loader.isModLoaded("ftbutilities")) {
+			if (FTBUtilitiesConfig.auto_shutdown.enabled) ftbUtilitiesShutdownDetectThread.start();
+			if (FTBUtilitiesConfig.afk.enabled) ftbUtilitiesAFKDetectThread.start();
+		}
+	}
+
+	public enum GameTypes {
         WATCHING, PLAYING, LISTENING, DISABLED
     }
 	/**

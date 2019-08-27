@@ -1,7 +1,6 @@
 package de.erdbeerbaerlp.dcintegration;
 
 
-import com.feed_the_beast.ftbutilities.FTBUtilitiesConfig;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -44,7 +43,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-	public static final String VERSION = "1.0.9";
+	public static final String VERSION = "1.0.10";
 	/**
 	 * Modid
 	 */
@@ -103,11 +102,7 @@ public class DiscordIntegration {
 		}
 		else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
 		if(discord_instance != null) {
-			if(Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.updateChannelDesc.start();
-			if(Loader.isModLoaded("ftbutilities")) {
-				if(FTBUtilitiesConfig.auto_shutdown.enabled) discord_instance.ftbUtilitiesShutdownDetectThread.start();
-				if(FTBUtilitiesConfig.afk.enabled) discord_instance.ftbUtilitiesAFKDetectThread.start();
-			}
+			discord_instance.startThreads();
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			if (discord_instance != null) {
@@ -143,7 +138,16 @@ public class DiscordIntegration {
 			
 		}
 	}
-	
+
+	@EventHandler
+	public void imc(FMLInterModComms.IMCEvent ev) {
+		for (FMLInterModComms.IMCMessage e : ev.getMessages()) {
+			System.out.println("[IMC-Message] Sender: " + e.getSender() + " Message: " + e.getStringValue());
+			if (e.key.equals("Discord-Message")) {
+				discord_instance.sendMessage(e.getStringValue());
+			}
+		}
+	}
 	@EventHandler
 	public void serverStopping(FMLServerStoppingEvent ev) {
 		if(discord_instance != null) {
