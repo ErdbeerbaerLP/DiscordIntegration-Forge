@@ -36,6 +36,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.LongStream;
 
 import static de.erdbeerbaerlp.dcintegration.Configuration.GENERAL;
@@ -339,7 +340,7 @@ public class Discord implements EventListener {
 			final MessageReceivedEvent ev = (MessageReceivedEvent) event;
 			if (getChannel().getId().equals(ev.getChannel().getId()) && !ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
 				if (ev.getMessage().getContentRaw().startsWith(Configuration.COMMANDS.CMD_PREFIX)) {
-					final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.COMMANDS.CMD_PREFIX, "").split(" ");
+					final String[] command = ev.getMessage().getContentRaw().replaceFirst(Pattern.quote(Configuration.COMMANDS.CMD_PREFIX), "").split(" ");
 					String argumentsRaw = "";
 					for (int i = 1; i < command.length; i++) {
                         //noinspection StringConcatenationInLoop
