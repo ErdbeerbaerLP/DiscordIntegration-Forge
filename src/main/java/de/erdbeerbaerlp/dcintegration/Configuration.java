@@ -8,9 +8,6 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 import net.minecraftforge.common.config.Config.Name;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Class containing all config entries
  */
@@ -181,7 +178,7 @@ public class Configuration {
         @Comment({"Enable the /uptime command in discord", "Requires server restart"})
         public boolean ENABLE_UPTIME_COMMAND = true;
         @Comment({"A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system"})
-        public List<String> IMC_MOD_ID_BLACKLIST = new ArrayList<>();
+        public String[] IMC_MOD_ID_BLACKLIST = new String[]{"examplemodid"};
 
 
     }

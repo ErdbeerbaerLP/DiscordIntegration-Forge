@@ -30,6 +30,7 @@ import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -164,7 +165,7 @@ public class DiscordIntegration {
 	}
 
 	private boolean isModIDBlacklisted(String sender) {
-		return Configuration.COMMANDS.IMC_MOD_ID_BLACKLIST.contains(sender);
+		return ArrayUtils.contains(Configuration.COMMANDS.IMC_MOD_ID_BLACKLIST, sender);
 	}
 
 	@EventHandler
