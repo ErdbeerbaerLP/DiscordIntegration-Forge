@@ -8,6 +8,9 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 import net.minecraftforge.common.config.Config.Name;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Class containing all config entries
  */
@@ -142,7 +145,7 @@ public class Configuration {
         }
         @Comment("The Role ID of your Admin Role")
         public String ADMIN_ROLE_ID = "0";
-        @Comment("The prefix of the commands like list")
+        @Comment({"The prefix of the commands like list"})
         public String CMD_PREFIX = "/";
         @Comment("The message for 'list' when no player is online")
         public String MSG_LIST_EMPTY = "There is no player online...";
@@ -171,7 +174,14 @@ public class Configuration {
         public String SENDER_UUID = "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3";
         @Comment({"Message if a player provides too many arguments", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
         public String MSG_PLAYER_NOT_FOUND = "Can not find player \"%player%\"";
-
+        @Comment({"Enable the /help command in discord", "Requires server restart"})
+        public boolean ENABLE_HELP_COMMAND = true;
+        @Comment({"Enable the /list command in discord", "Requires server restart"})
+        public boolean ENABLE_LIST_COMMAND = true;
+        @Comment({"Enable the /uptime command in discord", "Requires server restart"})
+        public boolean ENABLE_UPTIME_COMMAND = true;
+        @Comment({"A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system"})
+        public List<String> IMC_MOD_ID_BLACKLIST = new ArrayList<>();
 
 
     }

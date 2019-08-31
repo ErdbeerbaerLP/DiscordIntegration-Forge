@@ -11,6 +11,7 @@ import net.dv8tion.jda.webhook.WebhookClient;
 import net.dv8tion.jda.webhook.WebhookMessageBuilder;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.ForgeVersion;
@@ -24,6 +25,7 @@ import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
@@ -139,15 +141,32 @@ public class DiscordIntegration {
 		}
 	}
 
+	private String getModNameFromID(String modid) {
+		for (ModContainer c : Loader.instance().getModList()) {
+			if (c.getModId().equals(modid)) return c.getName();
+		}
+		return modid;
+	}
 	@EventHandler
 	public void imc(FMLInterModComms.IMCEvent ev) {
 		for (FMLInterModComms.IMCMessage e : ev.getMessages()) {
-			System.out.println("[IMC-Message] Sender: " + e.getSender() + " Message: " + e.getStringValue());
-			if (e.key.equals("Discord-Message")) {
+			System.out.println("[IMC-Message] Sender: " + e.getSender() + "Key: " + e.key);
+			if (isModIDBlacklisted(e.getSender())) continue;
+			if (e.isStringMessage() && (e.key.equals("Discord-Message") || e.key.equals("sendMessage"))) {
 				discord_instance.sendMessage(e.getStringValue());
+			}
+			//Compat with imc from another discord integration mod
+			if (e.isNBTMessage() && e.key.equals("sendMessage")) {
+				final NBTTagCompound msg = e.getNBTValue();
+				discord_instance.sendMessage(msg.getString("message"));
 			}
 		}
 	}
+
+	private boolean isModIDBlacklisted(String sender) {
+		return Configuration.COMMANDS.IMC_MOD_ID_BLACKLIST.contains(sender);
+	}
+
 	@EventHandler
 	public void serverStopping(FMLServerStoppingEvent ev) {
 		if(discord_instance != null) {
@@ -303,9 +322,9 @@ public class DiscordIntegration {
 		try {
 			discord_instance = new Discord();
 			System.out.println("Registering discord commands...");
-			discord_instance.registerCommand(new CommandHelp());
-			discord_instance.registerCommand(new CommandUptime());
-			discord_instance.registerCommand(new CommandList());
+			if (Configuration.COMMANDS.ENABLE_HELP_COMMAND) discord_instance.registerCommand(new CommandHelp());
+			if (Configuration.COMMANDS.ENABLE_UPTIME_COMMAND) discord_instance.registerCommand(new CommandUptime());
+			if (Configuration.COMMANDS.ENABLE_LIST_COMMAND) discord_instance.registerCommand(new CommandList());
 			registerConfigCommands();
 			System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
 		} catch (Exception e) {
