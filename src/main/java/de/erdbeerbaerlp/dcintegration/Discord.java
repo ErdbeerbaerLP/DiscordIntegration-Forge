@@ -93,7 +93,7 @@ public class Discord implements EventListener {
 		}
 
 		public void run() {
-			while (true) {
+			while (!isKilled) {
 				final long timeLeft = TimeUnit.MILLISECONDS.toSeconds(FTBUtilitiesUniverseData.shutdownTime - Instant.now().toEpochMilli());
 				if (timeLeft == 120)
 					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_2MINUTES, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
@@ -124,7 +124,7 @@ public class Discord implements EventListener {
 			if (!Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_ENABLED) return;
             final Map<EntityPlayerMP, Entry<Long, Boolean>> timers = new HashMap<>();
 			final Universe universe = Universe.get();
-			while (true) {
+			while (!isKilled) {
 				for (EntityPlayerMP player : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) {
                     try {
                         final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(Objects.requireNonNull(universe.getPlayer(player)));
