@@ -1,5 +1,7 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
+import de.erdbeerbaerlp.dcintegration.Configuration;
+import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
@@ -72,11 +74,15 @@ public class CommandFromCFG extends DiscordCommand {
                 cmd = cmd + " " + args[i];
             }
         }
+        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this);
+        if (s.canUseCommand(4, "")) {
+            FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(
+                    new DCCommandSender(cmdMsg.getAuthor(), this),
+                    cmd.trim()
+            );
+        } else
+            DiscordIntegration.discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.COMMANDS.SENDER_UUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```");
 
-        FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(
-                new DCCommandSender(cmdMsg.getAuthor(), this),
-                cmd.trim()
-        );
     }
 
 }
