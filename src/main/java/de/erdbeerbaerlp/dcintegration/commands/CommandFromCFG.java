@@ -10,6 +10,7 @@ public class CommandFromCFG extends DiscordCommand {
     private final boolean useArgs;
 
     public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText) {
+        this.isConfigCmd = true;
         this.desc = description;
         this.cmd = cmd;
         this.admin = adminOnly;

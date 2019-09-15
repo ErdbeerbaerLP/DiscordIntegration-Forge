@@ -66,7 +66,7 @@ public class Discord implements EventListener {
                     ).complete();
                     sleep(500);
                 }
-            } catch (InterruptedException | RuntimeException e) {
+            } catch (InterruptedException | RuntimeException ignored) {
 
             }
         }
@@ -117,21 +117,23 @@ public class Discord implements EventListener {
 			setDaemon(true);
 			setPriority(MAX_PRIORITY);
 		}
-		public void run() {
-			while(true) {
-				final long timeLeft = TimeUnit.MILLISECONDS.toSeconds(FTBUtilitiesUniverseData.shutdownTime-Instant.now().toEpochMilli());
 
-				if(timeLeft > 30);
-				else if(timeLeft == 30) sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG.replace("%seconds%", "30"), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
-				else if(timeLeft == 10) {
-					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG.replace("%seconds%", "10"), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+		public void run() {
+			while (!isKilled) {
+				final long timeLeft = TimeUnit.MILLISECONDS.toSeconds(FTBUtilitiesUniverseData.shutdownTime - Instant.now().toEpochMilli());
+				if (timeLeft == 120)
+					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_2MINUTES, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+				else if (timeLeft == 10) {
+					sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_10SECONDS, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
 					break;
 				}
 
 				try {
 					sleep(TimeUnit.SECONDS.toMillis(1));
-				} catch (InterruptedException e) {}
-			} interrupt();
+                } catch (InterruptedException ignored) {
+                }
+			}
+			interrupt();
 		}
 	};
 	/**
@@ -143,32 +145,40 @@ public class Discord implements EventListener {
 			setDaemon(true);
 			setPriority(MAX_PRIORITY);
 		}
-		public void run() {
-			final Map<EntityPlayerMP, Entry<Long, Boolean>> timers = new HashMap<EntityPlayerMP, Entry<Long, Boolean>>();
-			final Universe universe = Universe.get();
-			while(true) {
-				for(EntityPlayerMP player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
-					final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(universe.getPlayer(player));
-					if(timers.containsKey(player) && data.afkTime < timers.get(player).getKey() && timers.get(player).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_END
-							.replace("%player%", player.getName()), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
-					//					System.out.println(player.getName()+": "+data.afkTime+ ". Afk Time:"+ Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis());
-					timers.put(player, new SimpleEntry<Long, Boolean>(data.afkTime, (timers.containsKey(player)? timers.get(player).getValue():false)));
-				}
 
-				timers.keySet().forEach((p)->{
-					if(!ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers().contains(p)) {
-						timers.remove(p); //Clean up
-					}else {
+		public void run() {
+			if (!Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_ENABLED) return;
+            final Map<EntityPlayerMP, Entry<Long, Boolean>> timers = new HashMap<>();
+			final Universe universe = Universe.get();
+			while (!isKilled) {
+				for (EntityPlayerMP player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
+                    try {
+                        final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(Objects.requireNonNull(universe.getPlayer(player)));
+						if (timers.containsKey(player) && data.afkTime < timers.get(player).getKey() && timers.get(player).getValue())
+							sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_END.replace("%player%", player.getName()), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+                        timers.put(player, new SimpleEntry<>(data.afkTime, (timers.containsKey(player) ? timers.get(player).getValue() : false)));
+                    } catch (NullPointerException ignored) {
+                    }
+                }
+                final List<EntityPlayerMP> toRemove = new ArrayList<>();
+				timers.keySet().forEach((p) -> {
+					if (!ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers().contains(p)) {
+						toRemove.add(p);
+					} else {
 						final boolean afk = timers.get(p).getKey() >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
-						if(afk && !timers.get(p).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG
+						if (afk && !timers.get(p).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG
 								.replace("%player%", p.getName()), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
-						timers.put(p, new SimpleEntry<Long, Boolean>(timers.get(p).getKey(), afk));
+                        timers.put(p, new SimpleEntry<>(timers.get(p).getKey(), afk));
 
 					}
 				});
+				for (EntityPlayerMP p : toRemove) {
+					timers.remove(p);
+				}
 				try {
 					sleep(900);
-				} catch (InterruptedException e) {}
+                } catch (InterruptedException ignored) {
+                }
 			}
 		}
 	};
@@ -354,12 +364,51 @@ public class Discord implements EventListener {
      * @return if the registration was successful
      */
     public boolean registerCommand(DiscordCommand cmd) {
+        final ArrayList<DiscordCommand> toRemove = new ArrayList<>();
         for (DiscordCommand c : commands) {
-            if (cmd.equals(c)) return false;
+            if (!cmd.isConfigCommand() && cmd.equals(c)) return false;
+            else if (cmd.isConfigCommand() && cmd.equals(c)) toRemove.add(c);
         }
+        for (DiscordCommand cm : toRemove)
+            commands.remove(cm);
         return commands.add(cmd);
     }
+    private void reRegisterAllCommands(final List<DiscordCommand> cmds) {
+        System.out.println("Reloading " + cmds.size() + " commands");
+        this.commands = cmds;
 
+        for (DiscordCommand cmd : commands) {
+            cmd.discord = DiscordIntegration.discord_instance;
+        }
+
+        System.out.println("Registered " + this.commands.size() + " commands");
+    }
+    /**
+     * Restarts the discord bot (used by reload command)
+     */
+    public boolean restart() {
+        try {
+            kill();
+            DiscordIntegration.discord_instance = new Discord();
+            DiscordIntegration.discord_instance.reRegisterAllCommands(this.commands);
+            DiscordIntegration.registerConfigCommands();
+            DiscordIntegration.discord_instance.startThreads();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    /**
+     * Starts all threads
+     */
+    public void startThreads() {
+        if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) updateChannelDesc.start();
+        if (Loader.isModLoaded("ftbutilities")) {
+            if (FTBUtilitiesConfig.auto_shutdown.enabled) ftbUtilitiesShutdownDetectThread.start();
+            if (FTBUtilitiesConfig.afk.enabled) ftbUtilitiesAFKDetectThread.start();
+        }
+    }
     /**
      * @return an instance of the webhook or null
      */

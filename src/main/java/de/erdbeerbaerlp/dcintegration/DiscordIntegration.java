@@ -51,6 +51,7 @@ public class DiscordIntegration {
     /**
      * The only instance of {@link Discord}
      */
+    @Nullable
     public static Discord discord_instance;
     /**
      * Time when the server was started
@@ -105,30 +106,25 @@ public class DiscordIntegration {
             cfg = config;
         }
     }
-
+    @SuppressWarnings("StringConcatenationInLoop")
     @SubscribeEvent
     public void command(CommandEvent ev) {
-        if (discord_instance != null)
-            try {
-                if (ev.getParseResults().getContext().getRootNode().getName().equals("say")) {
-
-                    String msg = MessageArgument.getMessage(ev.getParseResults().getContext().build("say"), "message").getUnformattedComponentText();
-
-                    System.out.println(ev.getParseResults().getContext().getSource().getClass().getCanonicalName());
-                    //				if(ev.getParseResults().getContext() instanceof DedicatedServer)
-                    //					discord_instance.sendMessage(msg);
-                    //				else if(ev.getSender().getCommandSenderEntity() instanceof EntityPlayer)
-                    //					discord_instance.sendMessage(ev.getSender().getName(), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), msg);
+        if(discord_instance != null)
+            if (ev.getCommand().getName().equals("say") && Configuration.MESSAGES.ENABLE_SAY_OUTPUT) {
+                String msg = "";
+                for(String s : ev.getParameters()) {
+                    msg = msg+s+" ";
                 }
-            } catch (CommandSyntaxException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                if(ev.getSender() instanceof DedicatedServer)
+                    discord_instance.sendMessage(msg);
+                else if(ev.getSender().getCommandSenderEntity() instanceof EntityPlayer)
+                    discord_instance.sendMessage(ev.getSender().getName(), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), msg);
             }
     }
-
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
-        if (discord_instance != null) discord_instance.sendMessage(ev.getPlayer(), ev.getMessage());
+        if (discord_instance != null)
+            discord_instance.sendMessage(ev.getPlayer(), ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
     }
 
     @SubscribeEvent
@@ -241,13 +237,9 @@ public class DiscordIntegration {
             e.printStackTrace();
         }
         else discord_instance.sendMessage(Configuration.INSTANCE.msgServerStarted.get());
-        if (discord_instance != null) {
-            if (Configuration.INSTANCE.botModifyDescription.get()) discord_instance.updateChannelDesc.start();
-            //			if(Loader.isModLoaded("ftbutilities")) {
-            //				if(FTBUtilitiesConfig.auto_shutdown.enabled) discord_instance.ftbUtilitiesShutdownDetectThread.start();
-            //				if(FTBUtilitiesConfig.afk.enabled) discord_instance.ftbUtilitiesAFKDetectThread.start();
-            //			}
-        }
+                    if(discord_instance != null) {
+                        discord_instance.startThreads();
+                    }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (discord_instance != null) {
                 if (!stopped) {
@@ -282,8 +274,32 @@ public class DiscordIntegration {
             //				}
         }
     }
+                private String getModNameFromID(String modid) {
+                    for (ModContainer c : Loader.instance().getModList()) {
+                        if (c.getModId().equals(modid)) return c.getName();
+                    }
+                    return modid;
+                }
+                @EventHandler
+                public void imc(FMLInterModComms.IMCEvent ev) {
+                    for (FMLInterModComms.IMCMessage e : ev.getMessages()) {
+                        System.out.println("[IMC-Message] Sender: " + e.getSender() + "Key: " + e.key);
+                        if (isModIDBlacklisted(e.getSender())) continue;
+                        if (e.isStringMessage() && (e.key.equals("Discord-Message") || e.key.equals("sendMessage"))) {
+                            discord_instance.sendMessage(e.getStringValue());
+                        }
+                        //Compat with imc from another discord integration mod
+                        if (e.isNBTMessage() && e.key.equals("sendMessage")) {
+                            final NBTTagCompound msg = e.getNBTValue();
+                            discord_instance.sendMessage(msg.getString("message"));
+                        }
+                    }
+                }
+                private boolean isModIDBlacklisted(String sender) {
+                    return ArrayUtils.contains(Configuration.COMMANDS.IMC_MOD_ID_BLACKLIST, sender);
+                }
 
-    @SubscribeEvent
+                @SubscribeEvent
     public void serverStopping(final FMLServerStoppingEvent ev) {
         if (discord_instance != null) {
             discord_instance.stopThreads();
