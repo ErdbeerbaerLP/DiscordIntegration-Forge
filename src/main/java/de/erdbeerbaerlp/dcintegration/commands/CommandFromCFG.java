@@ -1,5 +1,8 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import de.erdbeerbaerlp.dcintegration.Configuration;
+import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
@@ -8,6 +11,7 @@ public class CommandFromCFG extends DiscordCommand {
     private final boolean admin;
     private final String[] aliases;
     private final boolean useArgs;
+
 
     public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText) {
         this.isConfigCmd = true;
@@ -72,11 +76,16 @@ public class CommandFromCFG extends DiscordCommand {
                 cmd = cmd + " " + args[i];
             }
         }
-
-        ServerLifecycleHooks.getCurrentServer().getCommandManager().handleCommand(
-                new DCCommandSender(cmdMsg.getAuthor(), this).getCommandSource(),
-                cmd.trim()
-        );
+        System.out.println("Running " + cmd);
+        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this);
+        if (s.hasPermissionLevel(4)) {
+            try {
+                ServerLifecycleHooks.getCurrentServer().getCommandManager().getDispatcher().execute(cmd.trim(), s.getCommandSource());
+            } catch (CommandSyntaxException e) {
+                DiscordIntegration.discord_instance.sendMessage(e.getMessage());
+            }
+        } else
+            DiscordIntegration.discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.INSTANCE.senderUUID.get() + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```");
     }
 
 }

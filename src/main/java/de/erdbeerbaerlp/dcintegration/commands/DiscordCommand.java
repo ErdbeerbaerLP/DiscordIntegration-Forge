@@ -15,12 +15,12 @@ public abstract class DiscordCommand {
     /**
      * Discord instance for easy use in commands
      */
-    final Discord discord = DiscordIntegration.discord_instance;
+    public Discord discord = DiscordIntegration.discord_instance;
     /**
      * The text channel the bot is working in
      */
     final TextChannel channel = discord.getChannel();
-
+    protected boolean isConfigCmd = false;
     /**
      * Sets the name of the command
      */
@@ -95,5 +95,9 @@ public abstract class DiscordCommand {
      */
     public final String parsePlayerNotFoundMsg(String playerName) {
         return Configuration.INSTANCE.msgPlayerNotFound.get().replace("%player%", playerName);
+    }
+
+    public boolean isConfigCommand() {
+        return isConfigCmd;
     }
 }

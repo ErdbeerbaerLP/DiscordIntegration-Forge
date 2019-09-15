@@ -9,11 +9,13 @@ import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Configuration {
     public static final ForgeConfigSpec cfgSpec;
     public static final Configuration INSTANCE;
+
 
     static {
         {
@@ -56,6 +58,7 @@ public class Configuration {
     public final ForgeConfigSpec.ConfigValue<String> descriptionStarting;
     public final ForgeConfigSpec.ConfigValue<String> msgPlayerTimeout;
     public final ForgeConfigSpec.BooleanValue sayOutput;
+    public final ForgeConfigSpec.ConfigValue<String> imcModIdBlacklist;
 
     //#########################
     //#       COMMANDS        #
@@ -172,8 +175,12 @@ public class Configuration {
         msgPlayerTimeout = builder
                 .comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.14!")
                 .define("msgPlayerTimeout", "%player% timed out!");
-        sayOutput = builder.comment("Should /say output be sent to discord?")
+        sayOutput = builder
+                .comment("Should /say output be sent to discord?")
                 .define("enableSayOutput", true);
+        imcModIdBlacklist = builder
+                .comment("A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system")
+                .define("imcModIdBlacklist", parseArray(new String[]{"examplemodid"}));
         builder.pop();
         //#########################
         //#       COMMANDS        #
@@ -294,6 +301,25 @@ public class Configuration {
 //		builder.pop();
     }
 
+    public static String parseArray(String[] array) {
+        String out = "[";
+        for (int i = 0; i < array.length; i++) {
+            out += "\"" + array[i] + "\"";
+            if (i != array.length - 1) out += ", ";
+        }
+        out += "]";
+        return out;
+    }
+
+    public static String[] getArray(String s) {
+        final ArrayList<String> tmpList = new ArrayList<>();
+        if (!s.startsWith("[") && !s.endsWith("]")) return new String[0];
+        s = s.replace("[", "").replace("]", "");
+        for (final String a : s.split(", ")) {
+            tmpList.add(a.replace("\"", ""));
+        }
+        return tmpList.toArray(new String[0]);
+    }
     public static void setValueAndSave(final ModConfig cfg, final List<String> list, final Object newValue) {
         cfg.getConfigData().set(list, newValue);
         cfg.save();

@@ -19,12 +19,15 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.event.server.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,7 +54,6 @@ public class DiscordIntegration {
     /**
      * The only instance of {@link Discord}
      */
-    @Nullable
     public static Discord discord_instance;
     /**
      * Time when the server was started
@@ -106,20 +108,33 @@ public class DiscordIntegration {
             cfg = config;
         }
     }
-    @SuppressWarnings("StringConcatenationInLoop")
-    @SubscribeEvent
-    public void command(CommandEvent ev) {
-        if(discord_instance != null)
-            if (ev.getCommand().getName().equals("say") && Configuration.MESSAGES.ENABLE_SAY_OUTPUT) {
-                String msg = "";
-                for(String s : ev.getParameters()) {
-                    msg = msg+s+" ";
-                }
-                if(ev.getSender() instanceof DedicatedServer)
-                    discord_instance.sendMessage(msg);
-                else if(ev.getSender().getCommandSenderEntity() instanceof EntityPlayer)
-                    discord_instance.sendMessage(ev.getSender().getName(), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), msg);
+
+    public static void registerConfigCommands() {
+        final JsonObject commandJson = new JsonParser().parse(Configuration.INSTANCE.jsonCommands.get()).getAsJsonObject();
+        System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
+        for (Map.Entry<String, JsonElement> cmd : commandJson.entrySet()) {
+            final JsonObject cmdVal = cmd.getValue().getAsJsonObject();
+            if (!cmdVal.has("mcCommand")) {
+                System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
+                continue;
             }
+            final String mcCommand = cmdVal.get("mcCommand").getAsString();
+            final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
+            final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
+            final boolean useArgs = !cmdVal.has("useArgs") || cmdVal.get("useArgs").getAsBoolean();
+            String argText = "<args>";
+            if (cmdVal.has("argText")) argText = cmdVal.get("argText").getAsString();
+            String[] aliases = new String[0];
+            if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
+                aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
+                for (int i = 0; i < aliases.length; i++)
+                    aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
+            }
+            final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText);
+            if (!discord_instance.registerCommand(regCmd))
+                System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
+
+        }
     }
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
@@ -143,7 +158,7 @@ public class DiscordIntegration {
         if (discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
             discord_instance.sendMessage(
                     Configuration.INSTANCE.msgAdvancement.get()
-                            .replace("%player%", ev.getEntityPlayer().getName().getUnformattedComponentText())
+                            .replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
                             .replace("%name%", ev.getAdvancement().getDisplay().getTitle().getUnformattedComponentText())
                             .replace("%desc%", ev.getAdvancement().getDisplay().getDescription().getUnformattedComponentText())
                             .replace("\\n", "\n")
@@ -274,29 +289,32 @@ public class DiscordIntegration {
             //				}
         }
     }
+
+    @SubscribeEvent
+    public void command(CommandEvent ev) {
+        if (discord_instance != null)
+            try {
+                if (ev.getParseResults().getContext().getRootNode().getName().equals("say")) {
+
+                    String msg = MessageArgument.getMessage(ev.getParseResults().getContext().build("say"), "message").getUnformattedComponentText();
+
+                    System.out.println(ev.getParseResults().getContext().getSource().getClass().getCanonicalName());
+                    try {
+                        discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), msg);
+                    } catch (CommandSyntaxException e) {
+                        discord_instance.sendMessage(msg);
+                    }
+                }
+            } catch (CommandSyntaxException e) {
+                e.printStackTrace();
+            }
+    }
+
                 private String getModNameFromID(String modid) {
-                    for (ModContainer c : Loader.instance().getModList()) {
-                        if (c.getModId().equals(modid)) return c.getName();
+                    for (ModInfo c : ModList.get().getMods()) {
+                        if (c.getModId().equals(modid)) return c.getDisplayName();
                     }
                     return modid;
-                }
-                @EventHandler
-                public void imc(FMLInterModComms.IMCEvent ev) {
-                    for (FMLInterModComms.IMCMessage e : ev.getMessages()) {
-                        System.out.println("[IMC-Message] Sender: " + e.getSender() + "Key: " + e.key);
-                        if (isModIDBlacklisted(e.getSender())) continue;
-                        if (e.isStringMessage() && (e.key.equals("Discord-Message") || e.key.equals("sendMessage"))) {
-                            discord_instance.sendMessage(e.getStringValue());
-                        }
-                        //Compat with imc from another discord integration mod
-                        if (e.isNBTMessage() && e.key.equals("sendMessage")) {
-                            final NBTTagCompound msg = e.getNBTValue();
-                            discord_instance.sendMessage(msg.getString("message"));
-                        }
-                    }
-                }
-                private boolean isModIDBlacklisted(String sender) {
-                    return ArrayUtils.contains(Configuration.COMMANDS.IMC_MOD_ID_BLACKLIST, sender);
                 }
 
                 @SubscribeEvent
@@ -330,6 +348,26 @@ public class DiscordIntegration {
             }
             discord_instance.kill();
         }
+    }
+
+    /* TODO Find out more
+    @SubscribeEvent
+    public void imc(InterModEnqueueEvent ev) {
+        for (InterModComms.IMCMessage e : ev.getMessages()) {
+            System.out.println("[IMC-Message] Sender: " + e.getSender() + "Key: " + e.key);
+            if (isModIDBlacklisted(e.getSender())) continue;
+            if (e.isStringMessage() && (e.key.equals("Discord-Message") || e.key.equals("sendMessage"))) {
+                discord_instance.sendMessage(e.getStringValue());
+            }
+            //Compat with imc from another discord integration mod
+            if (e.isNBTMessage() && e.key.equals("sendMessage")) {
+                final CompoundNBT msg = e.getNBTValue();
+                discord_instance.sendMessage(msg.getString("message"));
+            }
+        }
+    } */
+    private boolean isModIDBlacklisted(String sender) {
+        return ArrayUtils.contains(Configuration.getArray(Configuration.INSTANCE.imcModIdBlacklist.get()), sender);
     }
 
     @SubscribeEvent

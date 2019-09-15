@@ -18,6 +18,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
@@ -31,7 +32,7 @@ import java.util.stream.LongStream;
 @SuppressWarnings("ConstantConditions")
 public class Discord implements EventListener {
     private final JDA jda;
-    private final List<DiscordCommand> commands = new ArrayList<>();
+    private List<DiscordCommand> commands = new ArrayList<>();
     public boolean isKilled = false;
     /**
      * This thread is used to update the channel description
@@ -242,7 +243,7 @@ public class Discord implements EventListener {
                                 .replace("%msg%", msg)
                 ).complete();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
@@ -284,7 +285,7 @@ public class Discord implements EventListener {
                 ).complete();
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
@@ -342,12 +343,35 @@ public class Discord implements EventListener {
                         sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()));
                     }
 
-                } else
+                } else {
+                    final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
+                    StringBuilder message = new StringBuilder(ev.getMessage().getContentRaw());
+                    for (Message.Attachment a : ev.getMessage().getAttachments()) {
+                        //noinspection StringConcatenationInsideStringBufferAppend
+                        message.append("\nAttachment: " + a.getProxyUrl());
+                    }
+                    for (MessageEmbed e : embeds) {
+                        if (e.isEmpty()) continue;
+                        message.append("\n\n-----[Embed]-----\n");
+                        if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty())
+                            //noinspection StringConcatenationInsideStringBufferAppend
+                            message.append(TextFormatting.BOLD + "" + TextFormatting.ITALIC + e.getAuthor().getName() + "\n");
+                        if (e.getTitle() != null && !e.getTitle().trim().isEmpty())
+                            //noinspection StringConcatenationInsideStringBufferAppend
+                            message.append(TextFormatting.BOLD + e.getTitle() + "\n");
+                        if (e.getDescription() != null && !e.getDescription().trim().isEmpty())
+                            message.append("Message:\n").append(e.getDescription()).append("\n");
+                        if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty())
+                            message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
+                        message.append("\n-----------------");
+                    }
+
                     ServerLifecycleHooks.getCurrentServer().getPlayerList().sendMessage(
                             new StringTextComponent(Configuration.INSTANCE.ingameDiscordMsg.get()
                                     .replace("%user%", ev.getAuthor().getName())
                                     .replace("%id%", ev.getAuthor().getId())
-                                    .replace("%msg%", ev.getMessage().getContentRaw())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                                    .replace("%msg%", message.toString())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                }
             }
 
         }
@@ -403,12 +427,14 @@ public class Discord implements EventListener {
      * Starts all threads
      */
     public void startThreads() {
-        if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) updateChannelDesc.start();
-        if (Loader.isModLoaded("ftbutilities")) {
+        if (Configuration.INSTANCE.botModifyDescription.get()) updateChannelDesc.start();
+       /* if (Loader.isModLoaded("ftbutilities")) {
             if (FTBUtilitiesConfig.auto_shutdown.enabled) ftbUtilitiesShutdownDetectThread.start();
             if (FTBUtilitiesConfig.afk.enabled) ftbUtilitiesAFKDetectThread.start();
-        }
+        }*/
     }
+
+
     /**
      * @return an instance of the webhook or null
      */
