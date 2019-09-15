@@ -32,4 +32,4 @@ This mod links your server chat with a channel on your discord server.
     mandatory=true
     versionRange="[1.14,1.14.4]"
     ordering="NONE"
-    side="BOTH"
+    side="SERVER"

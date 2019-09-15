@@ -3,6 +3,8 @@ package de.erdbeerbaerlp.dcintegration.commands;
 import de.erdbeerbaerlp.dcintegration.Configuration;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 public class CommandList extends DiscordCommand {
 
@@ -23,6 +25,11 @@ public class CommandList extends DiscordCommand {
 
     @Override
     public void execute(String[] args, MessageReceivedEvent cmdMsg) {
+        final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        System.out.println(server);
+        System.out.println(server.getPlayerList());
+        System.out.println(server.getPlayerList().getPlayers());
+        System.out.println(server.getPlayerList().getPlayers().isEmpty());
         if (server.getPlayerList().getPlayers().isEmpty()) {
             discord.sendMessage(Configuration.INSTANCE.msgListEmpty.get());
             return;

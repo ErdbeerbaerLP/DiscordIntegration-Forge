@@ -7,8 +7,6 @@ import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 /**
  * Abstract class used for discord commands
@@ -18,10 +16,6 @@ public abstract class DiscordCommand {
      * Discord instance for easy use in commands
      */
     final Discord discord = DiscordIntegration.discord_instance;
-    /**
-     * Instance of {@link MinecraftServer}
-     */
-    final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
     /**
      * The text channel the bot is working in
      */

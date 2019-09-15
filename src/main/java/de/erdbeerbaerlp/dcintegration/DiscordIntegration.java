@@ -42,7 +42,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.0.10";
     /**
      * Modid
      */
@@ -84,18 +84,13 @@ public class DiscordIntegration {
 
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverAboutToStart);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStarting);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStarted);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStopping);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverStopped);
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
 
     @SubscribeEvent
-    public static void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
+    public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (discord_instance != null) discord_instance.sendMessage(
                 Configuration.INSTANCE.msgPlayerJoin.get()
                         .replace("%player%", ev.getPlayer().getName().getUnformattedComponentText())
@@ -103,7 +98,7 @@ public class DiscordIntegration {
     }
 
     @SubscribeEvent
-    public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
+    public void onModConfigEvent(final ModConfig.ModConfigEvent event) {
         final ModConfig config = event.getConfig();
         // Rebake the configs when they change
         if (config.getSpec() == Configuration.cfgSpec) {
@@ -112,7 +107,7 @@ public class DiscordIntegration {
     }
 
     @SubscribeEvent
-    public static void command(CommandEvent ev) {
+    public void command(CommandEvent ev) {
         if (discord_instance != null)
             try {
                 if (ev.getParseResults().getContext().getRootNode().getName().equals("say")) {
@@ -132,12 +127,12 @@ public class DiscordIntegration {
     }
 
     @SubscribeEvent
-    public static void chat(ServerChatEvent ev) {
+    public void chat(ServerChatEvent ev) {
         if (discord_instance != null) discord_instance.sendMessage(ev.getPlayer(), ev.getMessage());
     }
 
     @SubscribeEvent
-    public static void death(LivingDeathEvent ev) {
+    public void death(LivingDeathEvent ev) {
         if (ev.getEntity() instanceof PlayerEntity) {
             if (discord_instance != null) discord_instance.sendMessage(
                     Configuration.INSTANCE.msgPlayerDeath.get()
@@ -148,7 +143,7 @@ public class DiscordIntegration {
     }
 
     @SubscribeEvent
-    public static void advancement(AdvancementEvent ev) {
+    public void advancement(AdvancementEvent ev) {
         if (discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
             discord_instance.sendMessage(
                     Configuration.INSTANCE.msgAdvancement.get()
@@ -226,15 +221,19 @@ public class DiscordIntegration {
             discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
     }
 
+    @SubscribeEvent
     public void serverAboutToStart(final FMLServerAboutToStartEvent ev) {
 
     }
 
+    @SubscribeEvent
     public void serverStarting(final FMLServerStartingEvent ev) {
         new McCommandDiscord(ev.getCommandDispatcher());
     }
 
+    @SubscribeEvent
     public void serverStarted(final FMLServerStartedEvent ev) {
+        LOGGER.info("Started");
         started = new Date().getTime();
         if (discord_instance != null) if (startingMsg != null) try {
             this.startingMsg.get().editMessage(Configuration.INSTANCE.msgServerStarted.get()).queue();
@@ -284,6 +283,7 @@ public class DiscordIntegration {
         }
     }
 
+    @SubscribeEvent
     public void serverStopping(final FMLServerStoppingEvent ev) {
         if (discord_instance != null) {
             discord_instance.stopThreads();
@@ -301,6 +301,7 @@ public class DiscordIntegration {
         stopped = true;
     }
 
+    @SubscribeEvent
     public void serverStopped(final FMLServerStoppedEvent ev) {
         if (discord_instance != null) {
             if (!stopped) {
