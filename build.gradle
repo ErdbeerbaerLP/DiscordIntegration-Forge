@@ -38,7 +38,7 @@ repositories {
     }// Maybe needed for other mods in the future
     maven { url "https://maven.latmod.com/" } //FTB
 }
-version = "1.0.11-1.14"
+version = "1.0.12-1.14"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 

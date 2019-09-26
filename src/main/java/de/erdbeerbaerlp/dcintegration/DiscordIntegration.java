@@ -330,7 +330,8 @@ public class DiscordIntegration {
                 cli.send(b.build());
                 cli.close();
             } else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).complete();
-            discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
+            if (Configuration.INSTANCE.botModifyDescription.get())
+                discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
         }
         stopped = true;
     }
