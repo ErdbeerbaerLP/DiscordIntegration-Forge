@@ -181,7 +181,8 @@ public class DiscordIntegration {
 				cli.send(b.build());
 				cli.close();
 			}else discord_instance.getChannel().sendMessage(Configuration.MESSAGES.SERVER_STOPPED_MSG).complete();
-			discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
+			if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION)
+				discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
 		}
 		stopped = true;
 	}
