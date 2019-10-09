@@ -33,8 +33,10 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*", updateJSON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/update_check.json")
@@ -46,7 +48,7 @@ public class DiscordIntegration {
 	/**
 	 * Mod version
 	 */
-    public static final String VERSION = "1.0.11";
+	public static final String VERSION = "1.0.13";
 	/**
 	 * Modid
 	 */
@@ -56,6 +58,7 @@ public class DiscordIntegration {
 	 */
     @Nullable
     public static Discord discord_instance;
+	public static final ArrayList<UUID> timeouts = new ArrayList<>();
 	/**
 	 * Message sent when the server is starting (in non-webhook mode!), stored for editing
 	 */
@@ -206,20 +209,20 @@ public class DiscordIntegration {
 				.replace("%player%", ev.player.getName())
 				);
 	}
-	public static EntityPlayerMP lastTimeout;
+
 	@SubscribeEvent
 	public void playerLeave(PlayerLoggedOutEvent ev) {
-		if(discord_instance != null && !ev.player.equals(lastTimeout))
+		if (discord_instance != null && !timeouts.contains(ev.player.getUniqueID()))
 			discord_instance.sendMessage(
 					Configuration.MESSAGES.PLAYER_LEFT_MSG
 					.replace("%player%", ev.player.getName())
 					);
-		else if(discord_instance != null && ev.player.equals(lastTimeout)) {
+		else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
 			discord_instance.sendMessage(
 					Configuration.MESSAGES.PLAYER_TIMEOUT_MSG
 					.replace("%player%", ev.player.getName())
 					);
-			lastTimeout = null;
+			timeouts.remove(ev.player.getUniqueID());
 		}
 	}
 

@@ -26,6 +26,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 
@@ -398,7 +399,8 @@ public class Discord implements EventListener {
 					}
 
 					FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(
-							new TextComponentString(Configuration.MESSAGES.INGAME_DISCORD_MSG
+                            ForgeHooks.newChatWithLinks(
+                                    Configuration.MESSAGES.INGAME_DISCORD_MSG
 									.replace("%user%", ev.getAuthor().getName())
 									.replace("%id%", ev.getAuthor().getId())
 									.replace("%msg%", message.toString())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
