@@ -21,6 +21,7 @@ import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import javax.annotation.Nullable;
@@ -365,9 +366,8 @@ public class Discord implements EventListener {
                             message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
                         message.append("\n-----------------");
                     }
-
                     ServerLifecycleHooks.getCurrentServer().getPlayerList().sendMessage(
-                            new StringTextComponent(Configuration.INSTANCE.ingameDiscordMsg.get()
+                            ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get()
                                     .replace("%user%", ev.getAuthor().getName())
                                     .replace("%id%", ev.getAuthor().getId())
                                     .replace("%msg%", message.toString())).setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
