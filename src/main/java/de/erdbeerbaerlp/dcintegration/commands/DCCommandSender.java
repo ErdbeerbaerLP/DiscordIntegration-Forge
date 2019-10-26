@@ -19,18 +19,14 @@ import java.util.concurrent.ScheduledExecutorService;
 
 
 @SuppressWarnings("EntityConstructor")
-public class DCCommandSender extends FakePlayer {
-
-    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-            new ThreadFactoryBuilder()
-                    .setNameFormat(DCCommandSender.class.getSimpleName())
-                    .setDaemon(true)
-                    .build()
-    );
+public class DCCommandSender extends FakePlayer
+{
+    
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat(DCCommandSender.class.getSimpleName()).setDaemon(true).build());
     private static final UUID uuid = UUID.fromString(Configuration.INSTANCE.senderUUID.get());
     private final CommandFromCFG command;
-
-
+    
+    
     public DCCommandSender(User user, CommandFromCFG command) {
         super(ServerLifecycleHooks.getCurrentServer().getWorld(DimensionType.OVERWORLD), new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
         this.command = command;
@@ -52,12 +48,12 @@ public class DCCommandSender extends FakePlayer {
         Preconditions.checkNotNull(textComponent);
         DiscordIntegration.discord_instance.sendMessage(textComponentToDiscordMessage(textComponent));
     }
-
+    
     @Override
     public boolean shouldReceiveFeedback() {
         return true;
     }
-
+    
     @Override
     public boolean shouldReceiveErrors() {
         return true;

@@ -158,17 +158,20 @@ jar {
     }
 }
 curseforge {
+    def ver = project.version.toString().tokenize('-')[0]
     // $GRADLE_USER_HOME/gradle.properties
     apiKey = getProperty("curseforge.apikey")
     project {
         id = '324952'
         changelog = project.changelog
         releaseType = 'beta'
-        addGameVersion '1.12.2'
-        addGameVersion '1.12.1'
-        addGameVersion '1.12'
+        addGameVersion '1.14.4'
+        addGameVersion '1.14.3'
+        addGameVersion '1.14.2'
+        addGameVersion '1.14.1'
+        addGameVersion '1.14'
         mainArtifact(jar) {
-            displayName = "DiscordIntegration-$project.version (MC 1.12)"
+            displayName = "DiscordIntegration-"+ver+" (MC 1.14)"
         }
         relations{
             optionalDependency 'ftb-utilities'

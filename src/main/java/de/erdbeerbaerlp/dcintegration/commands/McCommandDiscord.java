@@ -13,10 +13,14 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 
-public class McCommandDiscord {
+
+public class McCommandDiscord
+{
     public McCommandDiscord(CommandDispatcher<CommandSource> dispatcher) {
         LiteralArgumentBuilder l = LiteralArgumentBuilder.<CommandSource>literal("discord").executes((ctx) -> {
-            ctx.getSource().sendFeedback(new StringTextComponent(Configuration.INSTANCE.dcCmdMsg.get()).setStyle(new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.INSTANCE.dcCmdMsgHover.get()))).setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
+            ctx.getSource().sendFeedback(new StringTextComponent(Configuration.INSTANCE.dcCmdMsg.get()).setStyle(
+                    new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.INSTANCE.dcCmdMsgHover.get())))
+                               .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
             return 0;
         });
         l.then(Commands.argument("configuration argument", StringArgumentType.string()).executes((ctx) -> {
@@ -26,8 +30,8 @@ public class McCommandDiscord {
                     new Thread(() -> {
                         if (DiscordIntegration.discord_instance.restart()) {
                             ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.GREEN + "Discord bot restarted!"), false);
-                        } else
-                            ctx.getSource().sendErrorMessage(new StringTextComponent(TextFormatting.RED + "Failed to properly restart the discord bot!"));
+                        }
+                        else ctx.getSource().sendErrorMessage(new StringTextComponent(TextFormatting.RED + "Failed to properly restart the discord bot!"));
                     }).start();
                     break;
                 default:

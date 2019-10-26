@@ -8,22 +8,23 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 
-    public class CommandList extends DiscordCommand
-{@Override
+public class CommandList extends DiscordCommand
+{
+    @Override
     public String getName() {
         return "list";
     }
-
+    
     @Override
     public String[] getAliases() {
         return new String[0];
     }
-
+    
     @Override
     public String getDescription() {
         return "Lists all players currently online";
     }
-
+    
     @Override
     public void execute(String[] args, MessageReceivedEvent cmdMsg) {
         final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
@@ -38,7 +39,7 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
         String out = (server.getPlayerList().getPlayers().size() == 1 ? Configuration.INSTANCE.msgListOne.get() : Configuration.INSTANCE.msgListHeader.get().replace("%amount%", "" + server.getPlayerList().getPlayers().size())) + "\n```\n";
 //		if(!Loader.isModLoaded("ftbutilities") || !FTBUtilitiesConfig.afk.enabled)
         for (final ServerPlayerEntity p : server.getPlayerList().getPlayers()) {
-            out = out + DiscordIntegration.formatPlayerName(p) .getUnformattedComponentText() + ",";
+            out = out + DiscordIntegration.formatPlayerName(p) + ",";
 //			}
 //		else {
 //			final Universe universe = Universe.get();
@@ -47,7 +48,7 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 //				final boolean afk = data.afkTime >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
 //				out = out+(afk?"[AFK]":"")+DiscordIntegration.formatPlayerName(p)+",";
 //			}
-
+    
         }
         out = out.substring(0, out.length() - 1);
         discord.sendMessage(out + "\n```");
