@@ -116,17 +116,22 @@ jar {
     }
 }
 curseforge {
+
     // $GRADLE_USER_HOME/gradle.properties
     apiKey = getProperty("curseforge.apikey")
     project {
         id = '324952'
         changelog = project.changelog
-        releaseType = 'release'
+        releaseType = 'beta'
         addGameVersion '1.12.2'
         addGameVersion '1.12.1'
         addGameVersion '1.12'
-        mainArtifact(jar) {
+        mainArtifact(build) {
             displayName = "DiscordIntegration-$project.version (MC 1.12)"
+        }
+        relations{
+            optionalDependency 'ftb-utilities'
+            optionalDependency 'emojicord'
         }
     }
 }

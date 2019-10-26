@@ -160,8 +160,6 @@ public class Configuration
         @Comment(
                 {"Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.", "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server", "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help", "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Defauult is <args>"})
         public String JSON_COMMANDS = Configuration.defaultCommandJson;
-        
-        
         @Comment("The Role ID of your Admin Role")
         public String ADMIN_ROLE_ID = "0";
         @Comment({"The prefix of the commands like list"})
