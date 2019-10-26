@@ -116,6 +116,7 @@ jar {
     }
 }
 curseforge {
+    def ver = project.version.toString().tokenize('-')[0]
     // $GRADLE_USER_HOME/gradle.properties
     apiKey = getProperty("curseforge.apikey")
     project {
@@ -126,7 +127,7 @@ curseforge {
         addGameVersion '1.12.1'
         addGameVersion '1.12'
         mainArtifact(jar) {
-            displayName = "DiscordIntegration-$project.version (MC 1.12)"
+            displayName = "DiscordIntegration-$ver (MC 1.12)"
         }
         relations{
             optionalDependency 'ftb-utilities'
