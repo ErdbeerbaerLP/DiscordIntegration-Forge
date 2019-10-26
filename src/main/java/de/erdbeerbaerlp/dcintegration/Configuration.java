@@ -8,12 +8,14 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 import net.minecraftforge.common.config.Config.Name;
 
+
 /**
  * Class containing all config entries
  */
 @Config(modid = DiscordIntegration.MODID, name = "Discord-Integration")
-public class Configuration {
-
+public class Configuration
+{
+    
     @Name("General Config")
     @Comment("General bot Configuration")
     public static category_general GENERAL = new category_general();
@@ -30,13 +32,49 @@ public class Configuration {
     @Name("FTB Utilities")
     @Comment("Theese config values will only be used when FTB Utilities is installed!")
     public static category_ftbutilities FTB_UTILITIES = new category_ftbutilities();
-
-    public static class category_general {
-
-        @Comment({
-                "Insert your Bot Token here!",
-                "DO NOT SHARE IT WITH ANYONE!"
-        })
+    
+    @Config.Ignore
+    private static String defaultCommandJson;
+    
+    {
+        final JsonObject a = new JsonObject();
+        final JsonObject kick = new JsonObject();
+        kick.addProperty("adminOnly", true);
+        kick.addProperty("mcCommand", "kick");
+        kick.addProperty("description", "Kicks a player from the server");
+        kick.addProperty("useArgs", true);
+        kick.addProperty("argText", "<player> [reason]");
+        a.add("kick", kick);
+        final JsonObject stop = new JsonObject();
+        stop.addProperty("adminOnly", true);
+        stop.addProperty("mcCommand", "stop");
+        stop.addProperty("description", "Stops the server");
+        final JsonArray stopAliases = new JsonArray();
+        stopAliases.add("shutdown");
+        stop.add("aliases", stopAliases);
+        stop.addProperty("useArgs", false);
+        a.add("stop", stop);
+        final JsonObject kill = new JsonObject();
+        kill.addProperty("adminOnly", true);
+        kill.addProperty("mcCommand", "kill");
+        kill.addProperty("description", "Kills a player");
+        kill.addProperty("useArgs", true);
+        kill.addProperty("argText", "<player>");
+        a.add("kill", kill);
+        final JsonObject tps = new JsonObject();
+        tps.addProperty("adminOnly", false);
+        tps.addProperty("mcCommand", "forge tps");
+        tps.addProperty("description", "Displays TPS");
+        tps.addProperty("useArgs", false);
+        a.add("tps", tps);
+        final Gson gson = new GsonBuilder().create();
+        defaultCommandJson = gson.toJson(a);
+    }
+    
+    public static class category_general
+    {
+        
+        @Comment({"Insert your Bot Token here!", "DO NOT SHARE IT WITH ANYONE!"})
         public String BOT_TOKEN = "INSERT TOKEN HERE!";
         public Discord.GameTypes BOT_GAME_TYPE = Discord.GameTypes.PLAYING;
         @Comment("The Name of the Game")
@@ -48,9 +86,10 @@ public class Configuration {
         @Comment("If you think the update check is annoying disable this")
         public boolean UPDATE_CHECK = true;
     }
-
-    public static class category_webhook {
-
+    
+    public static class category_webhook
+    {
+        
         @Comment("Wether or not the bot should use a webhook (it will create one)")
         public boolean BOT_WEBHOOK = false;
         @Comment("The avatar to be used for server messages")
@@ -58,8 +97,11 @@ public class Configuration {
         @Comment("The username of the server")
         public String SERVER_NAME = "Server";
     }
-
-    public static class category_messages {
+    
+    public static class category_messages
+    {
+        @Comment("Should tamed entity death be visible in discord?")
+        public boolean TAMED_DEATH_ENABLED = false;
         @Comment("This message will edited in / sent when the server finished starting")
         public String SERVER_STARTED_MSG = "Server Started!";
         @Comment({"Message to show while the server is starting", "This will be edited to SERVER_STARTED_MSG when webhook is false"})
@@ -80,7 +122,8 @@ public class Configuration {
         public String PLAYER_ADVANCEMENT_MSG = "%player% just gained the advancement **%name%**\\n_%desc%_";
         @Comment({"Chat message when webhook is disabled", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message"})
         public String PLAYER_CHAT_MSG = "%player%: %msg%";
-        @Comment({"Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS", "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server"})
+        @Comment(
+                {"Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS", "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server"})
         public String CHANNEL_DESCRIPTION = "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%";
         @Comment("Channel description while the server is offline")
         public String CHANNEL_DESCRIPTION_OFFLINE = "Server is Offline!";
@@ -90,10 +133,12 @@ public class Configuration {
         public String PLAYER_TIMEOUT_MSG = "%player% timed out!";
         @Comment("Should /say output be sent to discord?")
         public boolean ENABLE_SAY_OUTPUT = true;
-
+        
+        
     }
-
-    public static class category_ftbutilities {
+    
+    public static class category_ftbutilities
+    {
         @Comment("Print afk messages in discord")
         public boolean DISCORD_AFK_MSG_ENABLED = true;
         @Comment({"Format of the AFK message", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
@@ -106,40 +151,17 @@ public class Configuration {
         public String SHUTDOWN_MSG_10SECONDS = "Server stopping in 10 seconds!";
         @Comment({"Format of the shutdown message printed when the server will shutdown/restart in 2 minutes"})
         public String SHUTDOWN_MSG_2MINUTES = "Server stopping in 2 minutes!";
+        @Comment("Format name like in chat?")
+        public boolean CHAT_FORMATTING = true;
     }
-
-    public static class category_commands {
-        @Config.Ignore
-        private final String defaultCommandJson;
-
-        {
-            final JsonObject a = new JsonObject();
-            final JsonObject kick = new JsonObject();
-            kick.addProperty("adminOnly", true);
-            kick.addProperty("mcCommand", "kick");
-            kick.addProperty("description", "Kicks a player from the server");
-            kick.addProperty("useArgs", true);
-            kick.addProperty("argText", "<player> [reason]");
-            a.add("kick", kick);
-            final JsonObject stop = new JsonObject();
-            stop.addProperty("adminOnly", true);
-            stop.addProperty("mcCommand", "stop");
-            stop.addProperty("description", "Stops the server");
-            final JsonArray stopAliases = new JsonArray();
-            stopAliases.add("shutdown");
-            stop.add("aliases", stopAliases);
-            stop.addProperty("useArgs", false);
-            a.add("stop", stop);
-            final JsonObject kill = new JsonObject();
-            kill.addProperty("adminOnly", true);
-            kill.addProperty("mcCommand", "kill");
-            kill.addProperty("description", "Kills a player");
-            kill.addProperty("useArgs", true);
-            kill.addProperty("argText", "<player>");
-            a.add("kill", kill);
-            final Gson gson = new GsonBuilder().create();
-            defaultCommandJson = gson.toJson(a);
-        }
+    
+    public static class category_commands
+    {
+        @Comment(
+                {"Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.", "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server", "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help", "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Defauult is <args>"})
+        public String JSON_COMMANDS = Configuration.defaultCommandJson;
+        
+        
         @Comment("The Role ID of your Admin Role")
         public String ADMIN_ROLE_ID = "0";
         @Comment({"The prefix of the commands like list"})
@@ -154,19 +176,8 @@ public class Configuration {
         public String MSG_NO_PERMISSION = "You don\u00B4t have permission to execute this command!";
         @Comment({"Message sent when an invalid command was typed", "PLACEHOLDERS:", "%prefix% - Command prefix"})
         public String MSG_UNKNOWN_COMMAND = "Unknown command, try `%prefix%help` for a list of commands";
-        @Comment({
-                "Add your Custom commands to this JSON",
-                "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.",
-                "You can click on \"Compact JSON Data\" on the website",
-                "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!",
-                "",
-                "mcCommand   -   The command to execute on the server",
-                "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command",
-                "description -   Description shown in /help",
-                "aliases     -   Aliases for the command in a string array",
-                "useArgs     -   Shows argument text after the command",
-                "argText     -   Defines custom arg text. Defauult is <args>"})
-        public String JSON_COMMANDS = this.defaultCommandJson;
+        
+        
         @Comment("You MUST op this UUID in the ops.txt or many commands won´t work!!")
         public String SENDER_UUID = "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3";
         @Comment({"Message if a player provides too many arguments", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
@@ -179,11 +190,12 @@ public class Configuration {
         public boolean ENABLE_UPTIME_COMMAND = true;
         @Comment({"A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system"})
         public String[] IMC_MOD_ID_BLACKLIST = new String[]{"examplemodid"};
-
-
+        
+        
     }
-
-    public static class discord_command {
+    
+    public static class discord_command
+    {
         @Comment("Enable the /discord command?")
         public boolean enabled = true;
         @Comment("The message displayed when typing /discord in the server chat")
@@ -193,6 +205,6 @@ public class Configuration {
         @Comment("The url to open when clicking the /discord command text")
         public String URL = "http://discord.gg/myserver";
     }
-
-
+    
+    
 }

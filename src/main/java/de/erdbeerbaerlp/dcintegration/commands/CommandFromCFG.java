@@ -2,15 +2,17 @@ package de.erdbeerbaerlp.dcintegration.commands;
 
 import de.erdbeerbaerlp.dcintegration.Configuration;
 import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
-public class CommandFromCFG extends DiscordCommand {
+
+public class CommandFromCFG extends DiscordCommand
+{
     private final String cmd, desc, mcCmd, argText;
     private final boolean admin;
     private final String[] aliases;
     private final boolean useArgs;
-
+    
     public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText) {
         this.isConfigCmd = true;
         this.desc = description;
@@ -21,7 +23,7 @@ public class CommandFromCFG extends DiscordCommand {
         this.useArgs = useArgs;
         this.argText = argText;
     }
-
+    
     /**
      * Sets the name of the command
      */
@@ -29,12 +31,12 @@ public class CommandFromCFG extends DiscordCommand {
     public String getName() {
         return cmd;
     }
-
+    
     @Override
     public boolean adminOnly() {
         return admin;
     }
-
+    
     /**
      * Sets the aliases of the command
      */
@@ -42,7 +44,7 @@ public class CommandFromCFG extends DiscordCommand {
     public String[] getAliases() {
         return aliases;
     }
-
+    
     /**
      * Sets the description for the help command
      */
@@ -50,15 +52,13 @@ public class CommandFromCFG extends DiscordCommand {
     public String getDescription() {
         return desc;
     }
-
+    
     @Override
     public String getCommandUsage() {
-        if (useArgs)
-            return super.getCommandUsage() + " " + argText;
-        else
-            return super.getCommandUsage();
+        if (useArgs) return super.getCommandUsage() + " " + argText;
+        else return super.getCommandUsage();
     }
-
+    
     /**
      * Method called when executing this command
      *
@@ -70,19 +70,17 @@ public class CommandFromCFG extends DiscordCommand {
         String cmd = mcCmd;
         int argsCount = useArgs ? args.length : 0;
         if (argsCount > 0) {
-            for (int i = 0; i < argsCount; i++) {
+            for (int i = 0 ; i < argsCount ; i++) {
                 cmd = cmd + " " + args[i];
             }
         }
         final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this);
         if (s.canUseCommand(4, "")) {
-            FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(
-                    new DCCommandSender(cmdMsg.getAuthor(), this),
-                    cmd.trim()
-            );
-        } else
-            DiscordIntegration.discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.COMMANDS.SENDER_UUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```");
-
+            FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(new DCCommandSender(cmdMsg.getAuthor(), this), cmd.trim());
+        }
+        else DiscordIntegration.discord_instance.sendMessage(
+                "Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.COMMANDS.SENDER_UUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```");
+        
     }
-
+    
 }

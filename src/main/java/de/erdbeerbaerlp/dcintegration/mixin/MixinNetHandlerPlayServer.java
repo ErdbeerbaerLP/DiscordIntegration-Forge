@@ -11,18 +11,20 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+
 /**
  * Mixin used to detect player timeouts
  */
-@Mixin(value=NetHandlerPlayServer.class, priority = 1001)
-public abstract class MixinNetHandlerPlayServer{
-	@Shadow
-	public EntityPlayerMP player;
-	@Inject(method = "disconnect", at = @At("HEAD"))
-	private void onDisconnect(final ITextComponent textComponent, CallbackInfo ci) {
-		if (textComponent.equals(new TextComponentTranslation("disconnect.timeout")))
-			DiscordIntegration.timeouts.add(this.player.getUniqueID());
-	}
-
-	
+@Mixin(value = NetHandlerPlayServer.class, priority = 1001)
+public abstract class MixinNetHandlerPlayServer
+{
+    @Shadow
+    public EntityPlayerMP player;
+    
+    @Inject(method = "disconnect", at = @At("HEAD"))
+    private void onDisconnect(final ITextComponent textComponent, CallbackInfo ci) {
+        if (textComponent.equals(new TextComponentTranslation("disconnect.timeout"))) DiscordIntegration.timeouts.add(this.player.getUniqueID());
+    }
+    
+    
 }
