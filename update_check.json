@@ -1,6 +1,15 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
+  "1.14.4": {
+    "1.0.13": "Add clickable URLs in chat",
+    "1.0.12": "Fix bug which still modified the channel description on server stop",
+    "1.0.11": "Initial update to 1.14"
+  },
   "1.12.2": {
+    "1.0.15": "Now using FTB Utilities Nicknames and name format",
+    "1.0.13": "Add clickable URLs in chat. Updated the timeout detection so it might work better",
+    "1.0.12": "Fix bug which still modified the channel description on server stop",
+    "1.0.11": "Detect if bot can execute command and send message if not",
     "1.0.9": "Add config option to enable/disable /say output in discord (requested by Sunconure11)",
     "1.0.8": "REALLY Fix 2 minute shutdown/restart message...",
     "1.0.7": "(not...)Fix 2 minute shutdown/restart message does not appear\nAdd basic attachment and embed parsing",
@@ -12,7 +21,9 @@
     "1.0.0": "Initial release"
   },
   "promos": {
-    "1.12.2-latest": "1.0.8",
-    "1.12.2-recommended": "1.0.8"
+    "1.12.2-latest": "1.0.13",
+    "1.12.2-recommended": "1.0.13",
+    "1.14.4-latest": "1.0.13",
+    "1.14.4-recommended": "1.0.13"
   }
 }

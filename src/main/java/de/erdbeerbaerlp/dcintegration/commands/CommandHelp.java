@@ -1,10 +1,10 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
-public class CommandHelp extends DiscordCommand {
 
-    @Override
+    public class CommandHelp extends DiscordCommand
+{@Override
     public String getName() {
         return "help";
     }
@@ -29,5 +29,4 @@ public class CommandHelp extends DiscordCommand {
         discord.sendMessage(out + "\n```");
 
     }
-
 }

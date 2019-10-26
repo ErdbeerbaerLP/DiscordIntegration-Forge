@@ -1,11 +1,11 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
 import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
-public class CommandUptime extends DiscordCommand {
 
-    @Override
+    public class CommandUptime extends DiscordCommand
+{@Override
     public String getName() {
         return "uptime";
     }
@@ -24,5 +24,4 @@ public class CommandUptime extends DiscordCommand {
     public void execute(String[] args, MessageReceivedEvent cmdMsg) {
         discord.sendMessage("The server is running for " + DiscordIntegration.getUptime());
     }
-
 }

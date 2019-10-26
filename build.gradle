@@ -20,6 +20,9 @@ buildscript {
         classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
     }
 }
+plugins {
+    id "com.matthewprenger.cursegradle" version "1.1.0"
+}
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
@@ -38,7 +41,7 @@ repositories {
     }// Maybe needed for other mods in the future
     maven { url "https://maven.latmod.com/" } //FTB
 }
-version = "1.0.13-1.14"
+version = "1.0.15-1.14"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -114,14 +117,16 @@ shadowJar {
     relocate 'org.intellij', 'dcshadow.intellij'
     relocate 'org.jetbrains', 'dcshadow.jetbrains'
     relocate 'tomp2p', 'dcshadow.tomp2p'
+    relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
     minecraft 'net.minecraftforge:forge:1.14.4-28.0.45'
     /*embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         transitive = false
     }*/
-    embed("net.dv8tion:JDA:3.8.3_463")
-    //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.4.0.97"
+    embed("net.dv8tion:JDA:4.0.0_39")
+    embed 'club.minnced:discord-webhooks:0.1.8'
+    //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     // deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
 }
 /*mixin {
@@ -152,3 +157,23 @@ jar {
         ])
     }
 }
+curseforge {
+    // $GRADLE_USER_HOME/gradle.properties
+    apiKey = getProperty("curseforge.apikey")
+    project {
+        id = '324952'
+        changelog = project.changelog
+        releaseType = 'beta'
+        addGameVersion '1.12.2'
+        addGameVersion '1.12.1'
+        addGameVersion '1.12'
+        mainArtifact(jar) {
+            displayName = "DiscordIntegration-$project.version (MC 1.12)"
+        }
+        relations{
+            optionalDependency 'ftb-utilities'
+            optionalDependency 'emojicord'
+        }
+    }
+}
+tasks.curseforge.dependsOn(build)
