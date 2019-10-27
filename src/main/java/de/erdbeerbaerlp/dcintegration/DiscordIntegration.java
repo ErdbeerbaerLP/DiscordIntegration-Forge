@@ -35,7 +35,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 
 
 @SuppressWarnings("ConstantConditions")
@@ -354,7 +353,8 @@ public class DiscordIntegration
     
     @SubscribeEvent
     public void serverStopped(final FMLServerStoppedEvent ev) {
-        if (discord_instance != null) {
+        ev.getServer().runImmediately(() -> {
+            if (discord_instance != null) {
             if (!stopped) {
                 if (!discord_instance.isKilled) {
                     discord_instance.stopThreads();
@@ -363,7 +363,9 @@ public class DiscordIntegration
                 }
             }
             discord_instance.kill();
-        }
+            }
+        });
+       
     }
     
     /* TODO Find out more
