@@ -26,6 +26,7 @@ import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 
 @Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*",
@@ -55,7 +57,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.1.2";
     /**
      * Modid
      */
@@ -190,7 +192,7 @@ public class DiscordIntegration
         }
         final Thread discordShutdownThread = new Thread(this::stopDiscord);
         discordShutdownThread.setDaemon(false);
-        Runtime.getRuntime().addShutdownHook(discordShutdownThread);
+        //Runtime.getRuntime().addShutdownHook(discordShutdownThread);
         
         if (Configuration.GENERAL.UPDATE_CHECK) {
             CheckResult result = ForgeVersion.getResult(Loader.instance().getIndexedModList().get(DiscordIntegration.MODID));
@@ -264,7 +266,7 @@ public class DiscordIntegration
     
     @EventHandler
     public void serverStopped(FMLServerStoppedEvent ev) {
-        stopDiscord();
+        FMLCommonHandler.instance().getMinecraftServerInstance().callFromMainThread(Executors.callable(this::stopDiscord)); //Attempt to force send the messages before server finally closes
     }
     
     private void stopDiscord() {
@@ -272,8 +274,8 @@ public class DiscordIntegration
             if (!stopped) {
                 if (!discord_instance.isKilled) {
                     discord_instance.stopThreads();
-                    if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
                     discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
+                    if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
                 }
             }
             discord_instance.kill();
@@ -283,7 +285,6 @@ public class DiscordIntegration
     @SubscribeEvent
     public void playerJoin(PlayerLoggedInEvent ev) {
         if (discord_instance != null) discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_JOINED_MSG.replace("%player%", formatPlayerName(ev.player, false)));
-        
     }
     
     @SubscribeEvent
@@ -298,6 +299,8 @@ public class DiscordIntegration
     @SuppressWarnings("StringConcatenationInLoop")
     @SubscribeEvent
     public void command(CommandEvent ev) {
+        //Uncomment below to crash the server on console command (used to test crash detection)
+        //((World)null).setBlockState(null, null);
         if (ev.isCanceled()) return;
         if (discord_instance != null) if ((ev.getCommand().getName().equals("say") && Configuration.MESSAGES.ENABLE_SAY_OUTPUT) || (ev.getCommand().getName().equals("me") && Configuration.MESSAGES.ENABLE_ME_OUTPUT)) {
             String msg = "";
@@ -342,7 +345,6 @@ public class DiscordIntegration
                                                                                                                                                                                                                                   .getUnformattedText())
                                                                                                                                                                                                                        .replace("\\n", "\n"));
     }
-    
     @EventHandler
     public void preInit(FMLPreInitializationEvent ev) {
         System.out.println("Loading mod");

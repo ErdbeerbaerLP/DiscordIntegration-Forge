@@ -205,6 +205,7 @@ public class Discord implements EventListener
                 b.setActivity(Activity.watching(GENERAL.BOT_GAME_NAME));
                 break;
         }
+        b.setEnableShutdownHook(false);
         this.jda = b.build().awaitReady();
         System.out.println("Bot Ready");
         this.messageSender.start();

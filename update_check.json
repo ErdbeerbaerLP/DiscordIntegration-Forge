@@ -1,12 +1,14 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.14.4": {
+    "1.1.2": "Fixed error messages on shutdown\nEnhance server crash detection",
     "1.1.1": "Discord nicknames will now be shown ingame\nFixed an bad placeholder comment\nSmall bugfix with /say and /me\n ... And more ...",
     "1.0.13": "Add clickable URLs in chat",
     "1.0.12": "Fix bug which still modified the channel description on server stop",
     "1.0.11": "Initial update to 1.14"
   },
   "1.12.2": {
+    "1.1.2": "Fixed error messages on shutdown\nEnhance server crash detection",
     "1.1.1": "Now supporting votifier messages\nDiscord nicknames will now be shown ingame\nNow using FTB Utilities Nicknames and name format\nFixed an bad placeholder comment\nSmall bugfix with /say and /me\n ... And more ...",
     "1.0.15": "Now using FTB Utilities Nicknames and name format",
     "1.0.13": "Add clickable URLs in chat. Updated the timeout detection so it might work better",
