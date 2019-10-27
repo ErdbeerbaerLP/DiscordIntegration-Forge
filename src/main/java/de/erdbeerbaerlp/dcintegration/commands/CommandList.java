@@ -21,7 +21,7 @@ public class CommandList extends DiscordCommand
     
     @Override
     public String[] getAliases() {
-        return new String[0];
+        return new String[]{"online"};
     }
     
     @Override

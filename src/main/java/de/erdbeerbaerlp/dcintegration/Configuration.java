@@ -32,6 +32,9 @@ public class Configuration
     @Name("FTB Utilities")
     @Comment("Theese config values will only be used when FTB Utilities is installed!")
     public static category_ftbutilities FTB_UTILITIES = new category_ftbutilities();
+    @Name("Votifier")
+    @Comment("Configure votifier integration here")
+    public static votifier VOTIFIER = new votifier();
     
     @Config.Ignore
     private static String defaultCommandJson;
@@ -116,7 +119,7 @@ public class Configuration
         public String PLAYER_DEATH_MSG = "%player% %msg%";
         @Comment({"The message to print to discord when it was possible to detect a server crash", "Will also be used in the channel description"})
         public String SERVER_CRASHED_MSG = "Server Crash Detected :thinking:";
-        @Comment({"This is what will be displayed ingame when someone types into the bot\u00B4s channel", "PLACEHOLDERS:", "%name% - The username", "%id% - The user ID", "%msg% - The Message"})
+        @Comment({"This is what will be displayed ingame when someone types into the bot\u00B4s channel", "PLACEHOLDERS:", "%user% - The username", "%id% - The user ID", "%msg% - The Message"})
         public String INGAME_DISCORD_MSG = "\u00A76[\u00A75DISCORD\u00A76]\u00A7r <%user%> %msg%";
         @Comment({"Supports MulitLined messages using \\n", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%name% - The advancement name", "%desc% - The advancement description"})
         public String PLAYER_ADVANCEMENT_MSG = "%player% just gained the advancement **%name%**\\n_%desc%_";
@@ -133,6 +136,8 @@ public class Configuration
         public String PLAYER_TIMEOUT_MSG = "%player% timed out!";
         @Comment("Should /say output be sent to discord?")
         public boolean ENABLE_SAY_OUTPUT = true;
+        @Comment("Should /me output be sent to discord?")
+        public boolean ENABLE_ME_OUTPUT = true;
         
         
     }
@@ -195,7 +200,7 @@ public class Configuration
     public static class discord_command
     {
         @Comment("Enable the /discord command?")
-        public boolean enabled = true;
+        public boolean ENABLED = true;
         @Comment("The message displayed when typing /discord in the server chat")
         public String MESSAGE = "Join our discord! http://discord.gg/myserver";
         @Comment("The message shown when hovering the /discord command message")
@@ -204,5 +209,15 @@ public class Configuration
         public String URL = "http://discord.gg/myserver";
     }
     
-    
+    public static class votifier
+    {
+        @Comment("Should votifier messages be sent to discord?")
+        public boolean ENABLED = true;
+        @Comment({"The message format of the votifier message", "", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%site% - The name of the vote site", "%addr% - (IP) Address of the site"})
+        public String MESSAGE = "%player% voted on %site%";
+        @Comment("Name of the webhook author")
+        public String NAME = "Votifier";
+        @Comment("URL of the webhook avatar image")
+        public String AVATAR_URL = "https://media.forgecdn.net/avatars/158/149/636650534005921456.png";
+    }
 }

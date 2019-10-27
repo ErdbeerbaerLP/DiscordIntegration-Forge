@@ -10,6 +10,9 @@
   "authorList": ["ErdbeerbaerLP"],
   "logoFile": "",
   "screenshots": [],
-  "dependencies": ["ftbutilities"]
+  "dependencies": [
+    "ftbutilities",
+    "votifier"
+  ]
 }
 ]

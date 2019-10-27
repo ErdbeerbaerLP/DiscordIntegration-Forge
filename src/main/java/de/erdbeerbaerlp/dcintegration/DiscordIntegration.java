@@ -21,6 +21,7 @@ import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.ForgeVersion.CheckResult;
 import net.minecraftforge.common.ForgeVersion.Status;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -54,7 +55,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.0.15";
+    public static final String VERSION = "1.1.0";
     /**
      * Modid
      */
@@ -162,6 +163,7 @@ public class DiscordIntegration
     public void init(FMLInitializationEvent ev) {
         if (discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord_instance.sendMessageReturns(Configuration.MESSAGES.SERVER_STARTING_MSG);
         if (discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
+    
     }
     
     @EventHandler
@@ -171,7 +173,7 @@ public class DiscordIntegration
     
     @EventHandler
     public void serverStarting(FMLServerStartingEvent ev) {
-        if (Configuration.DISCORD_COMMAND.enabled) ev.registerServerCommand(new McCommandDiscord());
+        if (Configuration.DISCORD_COMMAND.ENABLED) ev.registerServerCommand(new McCommandDiscord());
     }
     
     @EventHandler
@@ -296,13 +298,15 @@ public class DiscordIntegration
     @SuppressWarnings("StringConcatenationInLoop")
     @SubscribeEvent
     public void command(CommandEvent ev) {
-        if (discord_instance != null) if (ev.getCommand().getName().equals("say") && Configuration.MESSAGES.ENABLE_SAY_OUTPUT) {
+        if (ev.isCanceled()) return;
+        if (discord_instance != null) if ((ev.getCommand().getName().equals("say") && Configuration.MESSAGES.ENABLE_SAY_OUTPUT) || (ev.getCommand().getName().equals("me") && Configuration.MESSAGES.ENABLE_ME_OUTPUT)) {
             String msg = "";
             for (String s : ev.getParameters()) {
                 msg = msg + s + " ";
             }
-            if (ev.getSender() instanceof DedicatedServer) discord_instance.sendMessage(msg);
-            else if (ev.getSender().getCommandSenderEntity() instanceof EntityPlayer) discord_instance.sendMessage(formatPlayerName((EntityPlayer) ev.getSender()), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), msg);
+            if (ev.getSender() instanceof DedicatedServer) discord_instance.sendMessage("*" + msg + "*");
+            else if (ev.getSender() instanceof EntityPlayer || ev.getSender() instanceof FakePlayer) discord_instance.sendMessage(formatPlayerName((EntityPlayer) ev.getSender()),
+                                                                                                                                  ev.getSender().getCommandSenderEntity().getUniqueID().toString(), "*" + msg + "*");
         }
     }
     
@@ -354,5 +358,8 @@ public class DiscordIntegration
             discord_instance = null;
         }
         MinecraftForge.EVENT_BUS.register(this);
+        if (Loader.isModLoaded("votifier")) {
+            MinecraftForge.EVENT_BUS.register(new VotifierEventHandler());
+        }
     }
 }
