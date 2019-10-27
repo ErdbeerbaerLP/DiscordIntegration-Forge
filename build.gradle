@@ -42,7 +42,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.1.0-1.14"
+version = "1.1.1"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -103,7 +103,7 @@ configurations {
     compile.extendsFrom(embed)
 }
 shadowJar {
-    classifier = ''
+    classifier = '1.14'
     configurations = [project.configurations.embed]
     relocate 'okhttp3', 'dcshadow.okhttp'
     relocate 'okio', 'dcshadow.okio'
@@ -145,6 +145,7 @@ artifacts {
     archives tasks.shadowJar
 }
 jar {
+    classifier = "1.14"
     manifest {
         attributes([
                 'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -160,7 +161,6 @@ jar {
     }
 }
 curseforge {
-    def ver = project.version.toString().tokenize('-')[0]
     // $GRADLE_USER_HOME/gradle.properties
     apiKey = getProperty("curseforge.apikey")
     project {
@@ -173,7 +173,7 @@ curseforge {
         addGameVersion '1.14.1'
         addGameVersion '1.14'
         mainArtifact(jar) {
-            displayName = "DiscordIntegration-$ver (MC 1.14)"
+            displayName = "DiscordIntegration-$version) (MC 1.14)"
         }
         relations{
             optionalDependency 'ftb-utilities'

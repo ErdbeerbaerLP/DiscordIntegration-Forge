@@ -60,6 +60,7 @@ public class Configuration
     public final ForgeConfigSpec.ConfigValue<String> descriptionStarting;
     public final ForgeConfigSpec.ConfigValue<String> msgPlayerTimeout;
     public final ForgeConfigSpec.BooleanValue sayOutput;
+    public final ForgeConfigSpec.BooleanValue meOutput;
     public final ForgeConfigSpec.ConfigValue<String> imcModIdBlacklist;
     public final ForgeConfigSpec.BooleanValue tamedDeathEnabled;
     
@@ -126,7 +127,7 @@ public class Configuration
         msgPlayerLeave = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name").define("msgPlayerLeave", "%player% left");
         msgPlayerDeath = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The death message").define("msgPlayerDeath", "%player% %msg%");
         msgServerCrash = builder.comment("The message to print to discord when it was possible to detect a server crash", "Will also be used in the channel description").define("msgServerCrash", "Server Crash Detected :thinking:");
-        ingameDiscordMsg = builder.comment("This is what will be displayed ingame when someone types into the bot\u00B4s channel", "PLACEHOLDERS:", "%name% - The username", "%id% - The user ID", "%msg% - The Message").define(
+        ingameDiscordMsg = builder.comment("This is what will be displayed ingame when someone types into the bot\u00B4s channel", "PLACEHOLDERS:", "%user% - The username", "%id% - The user ID", "%msg% - The Message").define(
                 "ingameDiscordMsg", "\u00A76[\u00A75DISCORD\u00A76]\u00A7r <%user%> %msg%");
         msgAdvancement = builder.comment("Supports MulitLined messages using \\n", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%name% - The advancement name", "%desc% - The advancement description").define("msgAdvancement",
                                                                                                                                                                                                                          "%player% just gained the advancement **%name%**\\n_%desc%_");
@@ -137,6 +138,7 @@ public class Configuration
         descriptionStarting = builder.comment("Channel description while the server is starting").define("descriptionStarting", "Starting...");
         msgPlayerTimeout = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.14!").define("msgPlayerTimeout", "%player% timed out!");
         sayOutput = builder.comment("Should /say output be sent to discord?").define("enableSayOutput", true);
+        meOutput = builder.comment("Should /me output be sent to discord?").define("enableMeOutput", true);
         imcModIdBlacklist = builder.comment("A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system").define("imcModIdBlacklist", parseArray(new String[]{"examplemodid"}));
         tamedDeathEnabled = builder.comment("Should tamed entity death be visible in discord?").define("tamedDeathEnabled", false);
         builder.pop();

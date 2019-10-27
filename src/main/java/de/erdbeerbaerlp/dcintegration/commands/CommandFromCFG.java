@@ -80,7 +80,7 @@ public class CommandFromCFG extends DiscordCommand
             try {
                 ServerLifecycleHooks.getCurrentServer().getCommandManager().getDispatcher().execute(cmd.trim(), s.getCommandSource());
             } catch (CommandSyntaxException e) {
-                DiscordIntegration.discord_instance.sendMessage(e.getMessage());
+                discord.sendMessage(e.getMessage());
             }
         }
         else discord.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.INSTANCE.senderUUID

@@ -9,12 +9,10 @@ import com.google.gson.JsonParser;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.commands.*;
 import net.dv8tion.jda.api.entities.Message;
-import net.minecraft.command.arguments.MessageArgument;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -312,20 +310,18 @@ public class DiscordIntegration
     
     @SubscribeEvent
     public void command(CommandEvent ev) {
-        if (discord_instance != null) try {
-            if (ev.getParseResults().getContext().getRootNode().getName().equals("say")) {
-                
-                String msg = MessageArgument.getMessage(ev.getParseResults().getContext().build("say"), "message").getUnformattedComponentText();
-                
-                System.out.println(ev.getParseResults().getContext().getSource().getClass().getCanonicalName());
+        String command = ev.getParseResults().getReader().getString();
+        if (discord_instance != null) {
+            if (((command.startsWith("/say") || command.startsWith("say")) && Configuration.INSTANCE.sayOutput.get()) || ((command.startsWith("/me") || command.startsWith("me")) && Configuration.INSTANCE.meOutput.get())) {
+                String msg = command.replace("/say ", "").replace("/me ", "");
+                if (command.startsWith("say") || command.startsWith("me")) msg = msg.replaceFirst("say ", "").replaceFirst("me ", "");
+                if (command.startsWith("/me") || command.startsWith("me")) msg = "*" + msg.trim() + "*";
                 try {
                     discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), msg);
                 } catch (CommandSyntaxException e) {
                     discord_instance.sendMessage(msg);
                 }
             }
-        } catch (CommandSyntaxException e) {
-            e.printStackTrace();
         }
     }
     
