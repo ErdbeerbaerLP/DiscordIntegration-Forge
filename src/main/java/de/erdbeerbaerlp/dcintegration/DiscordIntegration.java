@@ -14,6 +14,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -49,7 +50,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.0.15";
+    public static final String VERSION = "1.1.0";
     /**
      * Modid
      */
@@ -249,6 +250,7 @@ public class DiscordIntegration
         }
         if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get()) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
         if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
+    
     }
     
     @SubscribeEvent
@@ -395,5 +397,8 @@ public class DiscordIntegration
             discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerTimeout.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
             lastTimeout = null;
         }
+        /*if (Loader.isModLoaded("votifier")) {
+            MinecraftForge.EVENT_BUS.register(new VotifierEventHandler());
+        }*/
     }
 }

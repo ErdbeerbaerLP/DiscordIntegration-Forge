@@ -383,7 +383,9 @@ public class Discord implements EventListener
                         if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty()) message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
                         message.append("\n-----------------");
                     }
-                    ServerLifecycleHooks.getCurrentServer().getPlayerList().sendMessage(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", ev.getAuthor().getName())
+                    ServerLifecycleHooks.getCurrentServer().getPlayerList().sendMessage(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", ev.getMember() != null ? ev.getMember()
+                                                                                                                                                                                                                            .getEffectiveName() : ev
+                            .getAuthor().getName())
                                                                                                                                                            .replace("%id%", ev.getAuthor().getId()).replace("%msg%", message.toString()))
                                                                                                   .setStyle(new Style().setHoverEvent(
                                                                                                           new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
