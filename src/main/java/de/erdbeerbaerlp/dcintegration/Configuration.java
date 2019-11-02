@@ -1,9 +1,5 @@
 package de.erdbeerbaerlp.dcintegration;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 import net.minecraftforge.common.config.Config.Name;
@@ -36,43 +32,7 @@ public class Configuration
     @Comment("Configure votifier integration here")
     public static votifier VOTIFIER = new votifier();
     
-    @Config.Ignore
-    private static String defaultCommandJson;
     
-    {
-        final JsonObject a = new JsonObject();
-        final JsonObject kick = new JsonObject();
-        kick.addProperty("adminOnly", true);
-        kick.addProperty("mcCommand", "kick");
-        kick.addProperty("description", "Kicks a player from the server");
-        kick.addProperty("useArgs", true);
-        kick.addProperty("argText", "<player> [reason]");
-        a.add("kick", kick);
-        final JsonObject stop = new JsonObject();
-        stop.addProperty("adminOnly", true);
-        stop.addProperty("mcCommand", "stop");
-        stop.addProperty("description", "Stops the server");
-        final JsonArray stopAliases = new JsonArray();
-        stopAliases.add("shutdown");
-        stop.add("aliases", stopAliases);
-        stop.addProperty("useArgs", false);
-        a.add("stop", stop);
-        final JsonObject kill = new JsonObject();
-        kill.addProperty("adminOnly", true);
-        kill.addProperty("mcCommand", "kill");
-        kill.addProperty("description", "Kills a player");
-        kill.addProperty("useArgs", true);
-        kill.addProperty("argText", "<player>");
-        a.add("kill", kill);
-        final JsonObject tps = new JsonObject();
-        tps.addProperty("adminOnly", false);
-        tps.addProperty("mcCommand", "forge tps");
-        tps.addProperty("description", "Displays TPS");
-        tps.addProperty("useArgs", false);
-        a.add("tps", tps);
-        final Gson gson = new GsonBuilder().create();
-        defaultCommandJson = gson.toJson(a);
-    }
     
     public static class category_general
     {
@@ -164,7 +124,7 @@ public class Configuration
     {
         @Comment(
                 {"Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.", "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server", "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help", "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Defauult is <args>"})
-        public String JSON_COMMANDS = Configuration.defaultCommandJson;
+        public String JSON_COMMANDS = DiscordIntegration.defaultCommandJson;
         @Comment("The Role ID of your Admin Role")
         public String ADMIN_ROLE_ID = "0";
         @Comment({"The prefix of the commands like list"})

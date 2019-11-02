@@ -5,9 +5,7 @@ import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import com.feed_the_beast.ftblib.lib.data.Universe;
 import com.feed_the_beast.ftbutilities.data.FTBUtilitiesPlayerData;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import de.erdbeerbaerlp.dcintegration.commands.*;
 import net.dv8tion.jda.api.entities.Message;
 import net.minecraft.entity.Entity;
@@ -57,7 +55,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.2";
+    public static final String VERSION = "1.1.3";
     /**
      * Modid
      */
@@ -83,6 +81,42 @@ public class DiscordIntegration
     
     public DiscordIntegration() {}
     
+    static String defaultCommandJson;
+    
+    static {
+        final JsonObject a = new JsonObject();
+        final JsonObject kick = new JsonObject();
+        kick.addProperty("adminOnly", true);
+        kick.addProperty("mcCommand", "kick");
+        kick.addProperty("description", "Kicks a player from the server");
+        kick.addProperty("useArgs", true);
+        kick.addProperty("argText", "<player> [reason]");
+        a.add("kick", kick);
+        final JsonObject stop = new JsonObject();
+        stop.addProperty("adminOnly", true);
+        stop.addProperty("mcCommand", "stop");
+        stop.addProperty("description", "Stops the server");
+        final JsonArray stopAliases = new JsonArray();
+        stopAliases.add("shutdown");
+        stop.add("aliases", stopAliases);
+        stop.addProperty("useArgs", false);
+        a.add("stop", stop);
+        final JsonObject kill = new JsonObject();
+        kill.addProperty("adminOnly", true);
+        kill.addProperty("mcCommand", "kill");
+        kill.addProperty("description", "Kills a player");
+        kill.addProperty("useArgs", true);
+        kill.addProperty("argText", "<player>");
+        a.add("kill", kill);
+        final JsonObject tps = new JsonObject();
+        tps.addProperty("adminOnly", false);
+        tps.addProperty("mcCommand", "forge tps");
+        tps.addProperty("description", "Displays TPS");
+        tps.addProperty("useArgs", false);
+        a.add("tps", tps);
+        final Gson gson = new GsonBuilder().create();
+        defaultCommandJson = gson.toJson(a);
+    }
     /**
      * Removes Color code formatting
      *
