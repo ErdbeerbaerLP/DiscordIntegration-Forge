@@ -63,6 +63,10 @@ public class Configuration
     
     public static class category_messages
     {
+        @Comment("Disable removal of color codes from chat to discord?")
+        public boolean DISCORD_COLOR_CODES = false;
+        @Comment("Enable removal of color codes from discord to chat?")
+        public boolean PREVENT_MC_COLOR_CODES = false;
         @Comment("Should tamed entity death be visible in discord?")
         public boolean TAMED_DEATH_ENABLED = false;
         @Comment("This message will edited in / sent when the server finished starting")

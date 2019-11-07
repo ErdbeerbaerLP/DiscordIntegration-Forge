@@ -1,6 +1,7 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.14.4": {
+    "1.1.4": "Add options for color codes",
     "1.1.2": "Fixed error messages on shutdown\nEnhance server crash detection",
     "1.1.1": "Discord nicknames will now be shown ingame\nFixed an bad placeholder comment\nSmall bugfix with /say and /me\n ... And more ...",
     "1.0.13": "Add clickable URLs in chat",
@@ -8,6 +9,8 @@
     "1.0.11": "Initial update to 1.14"
   },
   "1.12.2": {
+    "1.1.4": "Maybe fix error code on shutown with players\nAdd options for color codes",
+    "1.1.3": "Fix crash when generating new config",
     "1.1.2": "Fixed error messages on shutdown\nEnhance server crash detection",
     "1.1.1": "Now supporting votifier messages\nDiscord nicknames will now be shown ingame\nNow using FTB Utilities Nicknames and name format\nFixed an bad placeholder comment\nSmall bugfix with /say and /me\n ... And more ...",
     "1.0.15": "Now using FTB Utilities Nicknames and name format",
@@ -25,8 +28,8 @@
     "1.0.0": "Initial release"
   },
   "promos": {
-    "1.12.2-latest": "1.1.2",
-    "1.12.2-recommended": "1.1.2",
+    "1.12.2-latest": "1.1.3",
+    "1.12.2-recommended": "1.1.3",
     "1.14.4-latest": "1.1.2",
     "1.14.4-recommended": "1.1.2"
   }

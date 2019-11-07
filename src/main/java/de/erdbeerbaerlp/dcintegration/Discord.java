@@ -307,6 +307,7 @@ public class Discord implements EventListener
      */
     @SuppressWarnings("ConstantConditions")
     public void sendMessage(String playerName, String UUID, String msg) {
+        if (!Configuration.MESSAGES.DISCORD_COLOR_CODES) msg = DiscordIntegration.stripControlCodes(msg);
         try {
             if (isKilled) return;
             if (WEBHOOK.BOT_WEBHOOK) {
@@ -315,7 +316,7 @@ public class Discord implements EventListener
                     b.setContent(msg);
                     b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
                     b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
-                
+    
                     final WebhookClient cli = WebhookClient.withUrl(getWebhook().getUrl());
                     cli.send(b.build());
                     cli.close();
@@ -417,13 +418,11 @@ public class Discord implements EventListener
                         if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty()) message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
                         message.append("\n-----------------");
                     }
-    
                     FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(ForgeHooks.newChatWithLinks(Configuration.MESSAGES.INGAME_DISCORD_MSG.replace("%user%", ev.getMember() != null ? ev.getMember()
                                                                                                                                                                                                                             .getEffectiveName() : ev
-                            .getAuthor().getName())
-                                                                                                                                                                              .replace("%id%", ev.getAuthor().getId())
-                                                                                                                                                                              .replace("%msg%", message.toString())).setStyle(
-                            new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                            .getAuthor().getName()).replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.MESSAGES.PREVENT_MC_COLOR_CODES ? DiscordIntegration.stripControlCodes(message.toString()) : message.toString())))
+                                                                                                                   .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString(
+                                                                                                                           "Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                 }
             }
             

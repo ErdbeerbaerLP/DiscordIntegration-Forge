@@ -42,6 +42,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 
 @Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*",
@@ -55,7 +56,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.3";
+    public static final String VERSION = "1.1.4";
     /**
      * Modid
      */
@@ -362,6 +363,11 @@ public class DiscordIntegration
         }
     }
     
+    private static final Pattern PATTERN_CONTROL_CODE = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
+    
+    public static String stripControlCodes(String text) {
+        return PATTERN_CONTROL_CODE.matcher(text).replaceAll("");
+    }
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
         if (discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat()) discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_ADVANCEMENT_MSG.replace("%player%",
