@@ -323,7 +323,7 @@ public class DiscordIntegration
     
     @SubscribeEvent
     public void playerLeave(PlayerLoggedOutEvent ev) {
-        if (discord_instance != null && !timeouts.contains(ev.player.getUniqueID())) discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_LEFT_MSG.replace("%player%", formatPlayerName(ev.player, false)));
+        if (discord_instance != null && !timeouts.contains(ev.player.getUniqueID())) discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_LEFT_MSG.replace("%player%", ev.player.getName()));
         else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
             discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_TIMEOUT_MSG.replace("%player%", ev.player.getName()));
             timeouts.remove(ev.player.getUniqueID());
