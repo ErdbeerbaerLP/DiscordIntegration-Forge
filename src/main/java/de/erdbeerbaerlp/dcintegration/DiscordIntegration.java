@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 
 
 @SuppressWarnings("ConstantConditions")
@@ -48,7 +49,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.2";
+    public static final String VERSION = "1.1.4";
     /**
      * Modid
      */
@@ -368,6 +369,11 @@ public class DiscordIntegration
        
     }
     
+    private static final Pattern PATTERN_CONTROL_CODE = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
+    
+    public static String stripControlCodes(String text) {
+        return PATTERN_CONTROL_CODE.matcher(text).replaceAll("");
+    }
     /* TODO Find out more
     @SubscribeEvent
     public void imc(InterModEnqueueEvent ev) {

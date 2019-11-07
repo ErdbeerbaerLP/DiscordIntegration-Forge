@@ -45,6 +45,8 @@ public class Configuration
     //#########################
     //#       MESSAGES        #
     //#########################
+    public final ForgeConfigSpec.BooleanValue discordColorCodes;
+    public final ForgeConfigSpec.BooleanValue preventMcColorCodes;
     public final ForgeConfigSpec.ConfigValue<String> msgServerStarted;
     public final ForgeConfigSpec.ConfigValue<String> msgServerStarting;
     public final ForgeConfigSpec.ConfigValue<String> msgServerStopped;
@@ -120,6 +122,8 @@ public class Configuration
         //#       MESSAGES        #
         //#########################
         builder.comment("Customize messages of this mod").push("messages");
+        discordColorCodes = builder.comment("Disable removal of color codes from chat to discord?").define("discordColorCodes", false);
+        preventMcColorCodes = builder.comment("Enable removal of color codes from discord to chat?").define("preventMcColorCodes", false);
         msgServerStarted = builder.comment("This message will edited in / sent when the server finished starting").define("msgServerStarted", "Server Started!");
         msgServerStarting = builder.comment("Message to show while the server is starting", "This will be edited to SERVER_STARTED_MSG when webhook is false").define("msgServerStarting", "Server Starting...");
         msgServerStopped = builder.comment("This message will be sent when the server was stopped").define("msgServerStopped", "Server Stopped!");

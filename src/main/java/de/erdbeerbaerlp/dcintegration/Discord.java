@@ -274,6 +274,7 @@ public class Discord implements EventListener
      */
     public void sendMessage(String playerName, String UUID, String msg) {
         if (isKilled) return;
+        if (!Configuration.INSTANCE.discordColorCodes.get()) msg = DiscordIntegration.stripControlCodes(msg);
         try {
             if (Configuration.INSTANCE.enableWebhook.get()) {
                 if (playerName.equals(Configuration.INSTANCE.serverName.get()) && UUID.equals("0000000")) {
@@ -386,8 +387,8 @@ public class Discord implements EventListener
                     }
                     ServerLifecycleHooks.getCurrentServer().getPlayerList().sendMessage(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", ev.getMember() != null ? ev.getMember()
                                                                                                                                                                                                                             .getEffectiveName() : ev
-                            .getAuthor().getName())
-                                                                                                                                                           .replace("%id%", ev.getAuthor().getId()).replace("%msg%", message.toString()))
+                            .getAuthor().getName()).replace("%id%", ev.getAuthor().getId()).replace("%msg%",
+                                                                                                    (Configuration.INSTANCE.preventMcColorCodes.get() ? DiscordIntegration.stripControlCodes(message.toString()) : message.toString())))
                                                                                                   .setStyle(new Style().setHoverEvent(
                                                                                                           new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                 }
