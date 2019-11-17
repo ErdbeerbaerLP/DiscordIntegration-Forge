@@ -124,7 +124,7 @@ curseforge {
     project {
         id = '324952'
         changelog = project.changelog
-        releaseType = 'beta'
+        releaseType = 'release'
         addGameVersion '1.12.2'
         addGameVersion '1.12.1'
         addGameVersion '1.12'
