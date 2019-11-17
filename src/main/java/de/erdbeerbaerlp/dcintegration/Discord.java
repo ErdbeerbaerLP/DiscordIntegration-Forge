@@ -316,7 +316,6 @@ public class Discord implements EventListener
                     b.setContent(msg);
                     b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
                     b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
-    
                     final WebhookClient cli = WebhookClient.withUrl(getWebhook().getUrl());
                     cli.send(b.build());
                     cli.close();
@@ -394,7 +393,7 @@ public class Discord implements EventListener
                         return;
                     }
                     if (!executed) {
-                        sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX));
+                        if (Configuration.COMMANDS.ENABLE_HELP_COMMAND) sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX));
                     }
                     
                 }

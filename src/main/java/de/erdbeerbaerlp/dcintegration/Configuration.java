@@ -149,7 +149,7 @@ public class Configuration
         public String SENDER_UUID = "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3";
         @Comment({"Message if a player provides too many arguments", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})
         public String MSG_PLAYER_NOT_FOUND = "Can not find player \"%player%\"";
-        @Comment({"Enable the /help command in discord", "Requires server restart"})
+        @Comment({"Enable the /help command in discord", "Disabling also removes response when you entered an invalid command", "Requires server restart"})
         public boolean ENABLE_HELP_COMMAND = true;
         @Comment({"Enable the /list command in discord", "Requires server restart"})
         public boolean ENABLE_LIST_COMMAND = true;
