@@ -102,8 +102,6 @@ public class Configuration
         public boolean ENABLE_SAY_OUTPUT = true;
         @Comment("Should /me output be sent to discord?")
         public boolean ENABLE_ME_OUTPUT = true;
-        @Comment("Should names be color coded with the role color ingame?")
-        public boolean COLOR_CODE_NAMES = true;
         
     }
     
