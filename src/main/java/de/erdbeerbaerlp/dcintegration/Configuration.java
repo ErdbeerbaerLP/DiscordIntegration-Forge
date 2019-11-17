@@ -102,7 +102,8 @@ public class Configuration
         public boolean ENABLE_SAY_OUTPUT = true;
         @Comment("Should /me output be sent to discord?")
         public boolean ENABLE_ME_OUTPUT = true;
-        
+        @Comment("Should names be color coded with the role color ingame?")
+        public boolean COLOR_CODE_NAMES = true;
         
     }
     
@@ -143,8 +144,6 @@ public class Configuration
         public String MSG_NO_PERMISSION = "You don\u00B4t have permission to execute this command!";
         @Comment({"Message sent when an invalid command was typed", "PLACEHOLDERS:", "%prefix% - Command prefix"})
         public String MSG_UNKNOWN_COMMAND = "Unknown command, try `%prefix%help` for a list of commands";
-        
-        
         @Comment("You MUST op this UUID in the ops.txt or many commands won´t work!!")
         public String SENDER_UUID = "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3";
         @Comment({"Message if a player provides too many arguments", "PLACEHOLDERS:", "%player% - The player\u00B4s name"})

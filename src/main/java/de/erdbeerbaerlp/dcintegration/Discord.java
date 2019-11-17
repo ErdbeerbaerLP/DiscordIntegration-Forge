@@ -398,8 +398,17 @@ public class Discord implements EventListener
                     
                 }
                 else {
+    
                     final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
-                    StringBuilder message = new StringBuilder(ev.getMessage().getContentRaw());
+                    String msg = ev.getMessage().getContentRaw();
+    
+                    for (final Member u : ev.getMessage().getMentionedMembers()) {
+                        msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
+                    }
+                    for (final Role r : ev.getMessage().getMentionedRoles()) {
+                        msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
+                    }
+                    StringBuilder message = new StringBuilder(msg);
                     for (Message.Attachment a : ev.getMessage().getAttachments()) {
                         //noinspection StringConcatenationInsideStringBufferAppend
                         message.append("\nAttachment: " + a.getProxyUrl());
@@ -417,9 +426,9 @@ public class Discord implements EventListener
                         if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty()) message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
                         message.append("\n-----------------");
                     }
-                    FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(ForgeHooks.newChatWithLinks(Configuration.MESSAGES.INGAME_DISCORD_MSG.replace("%user%", ev.getMember() != null ? ev.getMember()
-                                                                                                                                                                                                                            .getEffectiveName() : ev
-                            .getAuthor().getName()).replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.MESSAGES.PREVENT_MC_COLOR_CODES ? DiscordIntegration.stripControlCodes(message.toString()) : message.toString())))
+                    FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(ForgeHooks.newChatWithLinks(Configuration.MESSAGES.INGAME_DISCORD_MSG.replace("%user%", (ev.getMember() != null ? ev.getMember()
+                                                                                                                                                                                                                             .getEffectiveName() : ev
+                            .getAuthor().getName())).replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.MESSAGES.PREVENT_MC_COLOR_CODES ? DiscordIntegration.stripControlCodes(message.toString()) : message.toString())))
                                                                                                                    .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString(
                                                                                                                            "Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                 }
@@ -427,7 +436,6 @@ public class Discord implements EventListener
             
         }
     }
-    
     public ChannelManager getChannelManager() {
         return new ChannelManagerImpl(getChannel());
     }
