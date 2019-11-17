@@ -403,10 +403,10 @@ public class Discord implements EventListener
                     String msg = ev.getMessage().getContentRaw();
     
                     for (final Member u : ev.getMessage().getMentionedMembers()) {
-                        msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
+                        msg = msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
                     }
                     for (final Role r : ev.getMessage().getMentionedRoles()) {
-                        msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
+                        msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
                     }
                     StringBuilder message = new StringBuilder(msg);
                     for (Message.Attachment a : ev.getMessage().getAttachments()) {
