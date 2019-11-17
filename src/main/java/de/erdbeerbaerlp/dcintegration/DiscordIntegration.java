@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
-import java.util.regex.Pattern;
 
 
 @SuppressWarnings("ConstantConditions")
@@ -251,9 +250,9 @@ public class DiscordIntegration
         System.out.println("Loading mod");
         try {
             discord_instance = new Discord();
-            discord_instance.registerCommand(new CommandHelp());
-            discord_instance.registerCommand(new CommandList());
-            discord_instance.registerCommand(new CommandUptime());
+            if (Configuration.INSTANCE.cmdHelpEnabled.get()) discord_instance.registerCommand(new CommandHelp());
+            if (Configuration.INSTANCE.cmdListEnabled.get()) discord_instance.registerCommand(new CommandList());
+            if (Configuration.INSTANCE.cmdUptimeEnabled.get()) discord_instance.registerCommand(new CommandUptime());
             final JsonObject commandJson = new JsonParser().parse(Configuration.INSTANCE.jsonCommands.get()).getAsJsonObject();
             System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
             for (Map.Entry<String, JsonElement> cmd : commandJson.entrySet()) {
@@ -404,11 +403,6 @@ public class DiscordIntegration
        
     }
     
-    private static final Pattern PATTERN_CONTROL_CODE = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
-    
-    public static String stripControlCodes(String text) {
-        return PATTERN_CONTROL_CODE.matcher(text).replaceAll("");
-    }
     /* TODO Find out more
     @SubscribeEvent
     public void imc(InterModEnqueueEvent ev) {

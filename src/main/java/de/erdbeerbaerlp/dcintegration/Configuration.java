@@ -1,5 +1,9 @@
 package de.erdbeerbaerlp.dcintegration;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.fml.config.ModConfig;
@@ -77,6 +81,10 @@ public class Configuration
     public final ForgeConfigSpec.ConfigValue<String> msgPlayerNotFound;
     public final ForgeConfigSpec.ConfigValue<String> jsonCommands;
     public final ForgeConfigSpec.ConfigValue<String> senderUUID;
+    public final ForgeConfigSpec.BooleanValue cmdHelpEnabled;
+    public final ForgeConfigSpec.BooleanValue cmdListEnabled;
+    public final ForgeConfigSpec.BooleanValue cmdUptimeEnabled;
+    
     
     //#########################
     //#    INGAME-COMMAND     #
@@ -192,6 +200,9 @@ public class Configuration
         msgNotEnoughArgs = builder.comment("Message if a player provides less arguments than required").define("msgNotEnoughArgs", "Not enough arguments");
         msgTooManyArgs = builder.comment("Message if a player provides too many arguments").define("msgTooManyArgs", "Too many arguments");
         msgPlayerNotFound = builder.comment("Message if a player can not be found", "PLACEHOLDERS:", "%player% - The player\u00B4s name").define("msgPlayerNotFound", "Can not find player \"%player%\"");
+        cmdHelpEnabled = builder.comment("Enable help command?", "Disabling also removes response when you entered an invalid command", "Requires server restart").define("enableHelpCommand", true);
+        cmdListEnabled = builder.comment("Enable the list command in discord", "Requires server restart").define("enableListCommand", true);
+        cmdUptimeEnabled = builder.comment("Enable the iptime command in discord", "Requires server restart").define("enableUptimeCommand", true);
         jsonCommands = builder.comment("Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.",
                                        "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server",
                                        "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help",
