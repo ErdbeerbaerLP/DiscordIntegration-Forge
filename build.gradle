@@ -42,7 +42,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.1.4"
+version = "1.1.5"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -166,7 +166,7 @@ curseforge {
     project {
         id = '324952'
         changelog = project.changelog
-        releaseType = 'beta'
+        releaseType = 'release'
         addGameVersion '1.14.4'
         addGameVersion '1.14.3'
         addGameVersion '1.14.2'

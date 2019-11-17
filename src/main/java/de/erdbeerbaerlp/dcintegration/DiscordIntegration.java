@@ -3,9 +3,7 @@ package de.erdbeerbaerlp.dcintegration;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.commands.*;
 import net.dv8tion.jda.api.entities.Message;
@@ -36,6 +34,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+import java.util.regex.Pattern;
 
 
 @SuppressWarnings("ConstantConditions")
@@ -49,7 +48,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.4";
+    public static final String VERSION = "1.1.5";
     /**
      * Modid
      */
@@ -87,6 +86,42 @@ public class DiscordIntegration
         MinecraftForge.EVENT_BUS.register(this);
     }
     
+    static String defaultCommandJson;
+    
+    static {
+        final JsonObject a = new JsonObject();
+        final JsonObject kick = new JsonObject();
+        kick.addProperty("adminOnly", true);
+        kick.addProperty("mcCommand", "kick");
+        kick.addProperty("description", "Kicks a player from the server");
+        kick.addProperty("useArgs", true);
+        kick.addProperty("argText", "<player> [reason]");
+        a.add("kick", kick);
+        final JsonObject stop = new JsonObject();
+        stop.addProperty("adminOnly", true);
+        stop.addProperty("mcCommand", "stop");
+        stop.addProperty("description", "Stops the server");
+        final JsonArray stopAliases = new JsonArray();
+        stopAliases.add("shutdown");
+        stop.add("aliases", stopAliases);
+        stop.addProperty("useArgs", false);
+        a.add("stop", stop);
+        final JsonObject kill = new JsonObject();
+        kill.addProperty("adminOnly", true);
+        kill.addProperty("mcCommand", "kill");
+        kill.addProperty("description", "Kills a player");
+        kill.addProperty("useArgs", true);
+        kill.addProperty("argText", "<player>");
+        a.add("kill", kill);
+        final JsonObject tps = new JsonObject();
+        tps.addProperty("adminOnly", false);
+        tps.addProperty("mcCommand", "forge tps");
+        tps.addProperty("description", "Displays TPS");
+        tps.addProperty("useArgs", false);
+        a.add("tps", tps);
+        final Gson gson = new GsonBuilder().create();
+        defaultCommandJson = gson.toJson(a);
+    }
     /**
      * Removes Color code formatting
      *
@@ -394,6 +429,11 @@ public class DiscordIntegration
         return ArrayUtils.contains(Configuration.getArray(Configuration.INSTANCE.imcModIdBlacklist.get()), sender);
     }
     
+    private static final Pattern PATTERN_CONTROL_CODE = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
+    
+    public static String stripControlCodes(String text) {
+        return PATTERN_CONTROL_CODE.matcher(text).replaceAll("");
+    }
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         

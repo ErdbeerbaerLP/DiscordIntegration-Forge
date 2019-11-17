@@ -361,13 +361,22 @@ public class Discord implements EventListener
                         return;
                     }
                     if (!executed) {
-                        sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()));
+                        if (Configuration.COMMANDS.ENABLE_HELP_COMMAND) sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()));
                     }
     
                 }
                 else {
+    
                     final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
-                    StringBuilder message = new StringBuilder(ev.getMessage().getContentRaw());
+                    String msg = ev.getMessage().getContentRaw();
+    
+                    for (final Member u : ev.getMessage().getMentionedMembers()) {
+                        msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
+                    }
+                    for (final Role r : ev.getMessage().getMentionedRoles()) {
+                        msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
+                    }
+                    StringBuilder message = new StringBuilder(msg);
                     for (Message.Attachment a : ev.getMessage().getAttachments()) {
                         //noinspection StringConcatenationInsideStringBufferAppend
                         message.append("\nAttachment: " + a.getProxyUrl());
@@ -391,6 +400,11 @@ public class Discord implements EventListener
                                                                                                     (Configuration.INSTANCE.preventMcColorCodes.get() ? DiscordIntegration.stripControlCodes(message.toString()) : message.toString())))
                                                                                                   .setStyle(new Style().setHoverEvent(
                                                                                                           new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                    FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendMessage(ForgeHooks.newChatWithLinks(Configuration.MESSAGES.INGAME_DISCORD_MSG.replace("%user%", (ev.getMember() != null ? ev.getMember()
+                                                                                                                                                                                                                             .getEffectiveName() : ev
+                            .getAuthor().getName())).replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.MESSAGES.PREVENT_MC_COLOR_CODES ? DiscordIntegration.stripControlCodes(message.toString()) : message.toString())))
+                                                                                                                   .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString(
+                                                                                                                           "Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                 }
             }
     
