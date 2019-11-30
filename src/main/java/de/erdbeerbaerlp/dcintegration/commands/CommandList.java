@@ -13,6 +13,9 @@ import net.minecraftforge.fml.common.Loader;
 
 public class CommandList extends DiscordCommand
 {
+    public CommandList() {
+        super(Configuration.COMMANDS.LIST_CMD_CHANNEL_ID);
+    }
     
     @Override
     public String getName() {
@@ -30,9 +33,9 @@ public class CommandList extends DiscordCommand
     }
     
     @Override
-    public void execute(String[] args, MessageReceivedEvent cmdMsg) {
+    public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
         if (server.getPlayerList().getPlayers().isEmpty()) {
-            discord.sendMessage(Configuration.COMMANDS.MSG_LIST_EMPTY);
+            discord.sendMessage(Configuration.COMMANDS.MSG_LIST_EMPTY, cmdMsg.getTextChannel());
             return;
         }
         String out = (server.getPlayerList().getPlayers().size() == 1 ? Configuration.COMMANDS.MSG_LIST_ONE : Configuration.COMMANDS.MSG_LIST_HEADER.replace("%amount%", "" + server.getPlayerList().getPlayers().size())) + "\n```\n";
@@ -49,7 +52,7 @@ public class CommandList extends DiscordCommand
             
         }
         out = out.substring(0, out.length() - 1);
-        discord.sendMessage(out + "\n```");
+        discord.sendMessage(out + "\n```", cmdMsg.getTextChannel());
     }
     
 }

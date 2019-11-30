@@ -125,8 +125,12 @@ public class Configuration
     
     public static class category_commands
     {
+        @Comment("Set to false to completely disable the \"Unknown Command\" message")
+        public boolean ENABLE_UNKNOWN_COMMAND_MESSAGE = true;
+        @Comment("Set to true to enable the \"Unknown Command\" message in all channels")
+        public boolean ENABLE_UNKNOWN_COMMAND_MESSAGE_EVERYWHERE = false;
         @Comment(
-                {"Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.", "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server", "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help", "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Defauult is <args>"})
+                {"Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.", "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server", "adminOnly   -   True: Only allows users with the Admin role to use this command. " + "False: @everyone can use the command", "description -   Description shown in /help", "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText " + "    -   Defines custom arg text. Default is <args>", "channelID    -    Allows you to set an specific text channel outside of the server channel to use this command (STRING!), Set to \"00\" to allow from all " + "channels"})
         public String JSON_COMMANDS = DiscordIntegration.defaultCommandJson;
         @Comment("The Role ID of your Admin Role")
         public String ADMIN_ROLE_ID = "0";
@@ -148,14 +152,20 @@ public class Configuration
         public String MSG_PLAYER_NOT_FOUND = "Can not find player \"%player%\"";
         @Comment({"Enable the /help command in discord", "Disabling also removes response when you entered an invalid command", "Requires server restart"})
         public boolean ENABLE_HELP_COMMAND = true;
+        @Comment("Custom Channel ID for the help command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
+        public String HELP_CMD_CHANNEL_ID = "00";
+        @Comment("Custom Channel ID for the list command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
+        public String LIST_CMD_CHANNEL_ID = "0";
+        @Comment("Custom Channel ID for the uptime command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
+        public String UPTIME_CMD_CHANNEL_ID = "0";
         @Comment({"Enable the /list command in discord", "Requires server restart"})
         public boolean ENABLE_LIST_COMMAND = true;
         @Comment({"Enable the /uptime command in discord", "Requires server restart"})
         public boolean ENABLE_UPTIME_COMMAND = true;
         @Comment({"A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system"})
         public String[] IMC_MOD_ID_BLACKLIST = new String[]{"examplemodid"};
-        
-        
+        @Comment("Header of the help command")
+        public String HELP_HEADER = "Your available commands in this channel:";
     }
     
     public static class discord_command

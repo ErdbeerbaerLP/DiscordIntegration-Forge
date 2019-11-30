@@ -102,9 +102,9 @@ public class Discord implements EventListener
         public void run() {
             while (!isKilled) {
                 final long timeLeft = TimeUnit.MILLISECONDS.toSeconds(FTBUtilitiesUniverseData.shutdownTime - Instant.now().toEpochMilli());
-                if (timeLeft == 120) sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_2MINUTES, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+                if (timeLeft == 120) sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_2MINUTES, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities");
                 else if (timeLeft == 10) {
-                    sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_10SECONDS, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+                    sendMessage(Configuration.FTB_UTILITIES.SHUTDOWN_MSG_10SECONDS, Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities");
                     break;
                 }
                 
@@ -136,7 +136,7 @@ public class Discord implements EventListener
                     try {
                         final FTBUtilitiesPlayerData data = FTBUtilitiesPlayerData.get(Objects.requireNonNull(universe.getPlayer(player)));
                         if (timers.containsKey(player) && data.afkTime < timers.get(player).getKey() && timers.get(player).getValue()) sendMessage(
-                                Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_END.replace("%player%", DiscordIntegration.formatPlayerName(player)), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities", null);
+                                Configuration.FTB_UTILITIES.DISCORD_AFK_MSG_END.replace("%player%", DiscordIntegration.formatPlayerName(player)), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities");
                         timers.put(player, new SimpleEntry<>(data.afkTime, (timers.containsKey(player) ? timers.get(player).getValue() : false)));
                     } catch (NullPointerException ignored) {
                     }
@@ -148,10 +148,10 @@ public class Discord implements EventListener
                     }
                     else {
                         final boolean afk = timers.get(p).getKey() >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
-                        if (afk && !timers.get(p).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG.replace("%player%", DiscordIntegration.formatPlayerName(p)), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON, "FTB Utilities",
-                                                                          null);
+                        if (afk && !timers.get(p).getValue()) sendMessage(Configuration.FTB_UTILITIES.DISCORD_AFK_MSG.replace("%player%", DiscordIntegration.formatPlayerName(p)), Configuration.FTB_UTILITIES.FTB_AVATAR_ICON,
+                                                                          "FTB " + "Utilities");
                         timers.put(p, new SimpleEntry<>(timers.get(p).getKey(), afk));
-                        
+    
                     }
                 });
                 for (EntityPlayerMP p : toRemove) {
@@ -210,15 +210,15 @@ public class Discord implements EventListener
         System.out.println("Bot Ready");
         this.messageSender.start();
         jda.addEventListener(this);
-        if (!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS, Permission.MESSAGE_MANAGE)) {
+        if (!PermissionUtil.checkPermission(getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS, Permission.MESSAGE_MANAGE)) {
             System.err.println("ERROR! Bot does not have all permissions to work!");
             throw new PermissionException("Bot requires message read, message write, embed links and manage messages");
         }
-        if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) if (!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_CHANNEL)) {
+        if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) if (!PermissionUtil.checkPermission(getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_CHANNEL)) {
             Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION = false;
             System.err.println("ERROR! Bot does not have permission to manage channel, disabling channel description");
         }
-        if (Configuration.WEBHOOK.BOT_WEBHOOK) if (!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
+        if (Configuration.WEBHOOK.BOT_WEBHOOK) if (!PermissionUtil.checkPermission(getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
             Configuration.WEBHOOK.BOT_WEBHOOK = false;
             System.err.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
         }
@@ -228,19 +228,19 @@ public class Discord implements EventListener
      * @return an instance of the webhook or null
      */
     @Nullable
-    public Webhook getWebhook() {
+    public Webhook getWebhook(TextChannel c) {
         if (!Configuration.WEBHOOK.BOT_WEBHOOK) return null;
-        if (!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
+        if (!PermissionUtil.checkPermission(c, c.getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
             Configuration.WEBHOOK.BOT_WEBHOOK = false;
             System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
             return null;
         }
-        for (Webhook web : getChannel().retrieveWebhooks().complete()) {
+        for (Webhook web : c.retrieveWebhooks().complete()) {
             if (web.getName().equals("MC_DISCORD_INTEGRATION")) {
                 return web;
             }
         }
-        return getChannel().createWebhook("MC_DISCORD_INTEGRATION").complete();
+        return c.createWebhook("MC_DISCORD_INTEGRATION").complete();
     }
     
     /**
@@ -261,7 +261,7 @@ public class Discord implements EventListener
      * @param msg    Message
      */
     public void sendMessage(EntityPlayerMP player, String msg) {
-        sendMessage(DiscordIntegration.formatPlayerName(player), player.getUniqueID().toString(), msg);
+        sendMessage(DiscordIntegration.formatPlayerName(player), player.getUniqueID().toString(), msg, getChannel());
     }
     
     /**
@@ -270,7 +270,7 @@ public class Discord implements EventListener
      * @param msg Message
      */
     public void sendMessage(String msg) {
-        sendMessage(Configuration.WEBHOOK.SERVER_NAME, "0000000", msg);
+        sendMessage(Configuration.WEBHOOK.SERVER_NAME, "0000000", msg, getChannel());
     }
     
     /**
@@ -279,9 +279,8 @@ public class Discord implements EventListener
      * @param msg       Message
      * @param avatarURL URL of the avatar image
      * @param name      Name of the fake player
-     * @param nullMe    Just pass null, required to differ from a different method
      */
-    public void sendMessage(String msg, String avatarURL, String name, @Nullable Void nullMe) {
+    public void sendMessage(String msg, String avatarURL, String name) {
         try {
             if (isKilled) return;
             if (WEBHOOK.BOT_WEBHOOK) {
@@ -289,7 +288,7 @@ public class Discord implements EventListener
                 b.setContent(msg);
                 b.setUsername(name);
                 b.setAvatarUrl(avatarURL);
-                final WebhookClient cli = WebhookClient.withUrl(getWebhook().getUrl());
+                final WebhookClient cli = WebhookClient.withUrl(getWebhook(getChannel()).getUrl());
                 cli.send(b.build());
                 cli.close();
             }
@@ -306,7 +305,7 @@ public class Discord implements EventListener
      * @param msg        the message to send
      */
     @SuppressWarnings("ConstantConditions")
-    public void sendMessage(String playerName, String UUID, String msg) {
+    public void sendMessage(String playerName, String UUID, String msg, TextChannel channel) {
         if (!Configuration.MESSAGES.DISCORD_COLOR_CODES) msg = DiscordIntegration.stripControlCodes(msg);
         try {
             if (isKilled) return;
@@ -316,7 +315,7 @@ public class Discord implements EventListener
                     b.setContent(msg);
                     b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
                     b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
-                    final WebhookClient cli = WebhookClient.withUrl(getWebhook().getUrl());
+                    final WebhookClient cli = WebhookClient.withUrl(getWebhook(channel).getUrl());
                     cli.send(b.build());
                     cli.close();
                 }
@@ -325,16 +324,16 @@ public class Discord implements EventListener
                     b.setContent(msg);
                     b.setUsername(playerName);
                     b.setAvatarUrl("https://minotar.net/avatar/" + UUID);
-                    final WebhookClient cli = WebhookClient.withUrl(getWebhook().getUrl());
+                    final WebhookClient cli = WebhookClient.withUrl(getWebhook(channel).getUrl());
                     cli.send(b.build());
                     cli.close();
                 }
             }
             else if (playerName.equals(WEBHOOK.SERVER_NAME) && UUID.equals("0000000")) {
-                getChannel().sendMessage(msg).complete();
+                channel.sendMessage(msg).complete();
             }
             else {
-                getChannel().sendMessage(Configuration.MESSAGES.PLAYER_CHAT_MSG.replace("%player%", playerName).replace("%msg%", msg)).complete();
+                channel.sendMessage(Configuration.MESSAGES.PLAYER_CHAT_MSG.replace("%player%", playerName).replace("%msg%", msg)).complete();
             }
         } catch (Exception ignored) {
         }
@@ -358,7 +357,7 @@ public class Discord implements EventListener
         if (isKilled) return;
         if (event instanceof MessageReceivedEvent) {
             final MessageReceivedEvent ev = (MessageReceivedEvent) event;
-            if (getChannel().getId().equals(ev.getChannel().getId()) && !ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
+            if (!ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
                 if (ev.getMessage().getContentRaw().startsWith(Configuration.COMMANDS.CMD_PREFIX)) {
                     final String[] command = ev.getMessage().getContentRaw().replaceFirst(Pattern.quote(Configuration.COMMANDS.CMD_PREFIX), "").split(" ");
                     String argumentsRaw = "";
@@ -369,16 +368,16 @@ public class Discord implements EventListener
                     argumentsRaw = argumentsRaw.trim();
                     boolean hasPermission = true;
                     boolean executed = false;
-                    for (DiscordCommand cmd : commands) {
+                    for (final DiscordCommand cmd : commands) {
+                        if (!cmd.worksInChannel(ev.getTextChannel())) continue;
                         if (cmd.getName().equals(command[0])) {
                             if (cmd.canUserExecuteCommand(ev.getAuthor())) {
                                 cmd.execute(argumentsRaw.split(" "), ev);
                                 executed = true;
                             }
                             else hasPermission = false;
-                            
                         }
-                        for (String alias : cmd.getAliases()) {
+                        for (final String alias : cmd.getAliases()) {
                             if (alias.equals(command[0])) {
                                 if (cmd.canUserExecuteCommand(ev.getAuthor())) {
                                     cmd.execute(argumentsRaw.split(" "), ev);
@@ -389,19 +388,18 @@ public class Discord implements EventListener
                         }
                     }
                     if (!hasPermission) {
-                        sendMessage(Configuration.COMMANDS.MSG_NO_PERMISSION);
+                        sendMessage(Configuration.COMMANDS.MSG_NO_PERMISSION, ev.getTextChannel());
                         return;
                     }
-                    if (!executed) {
-                        if (Configuration.COMMANDS.ENABLE_HELP_COMMAND) sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX));
+                    if (!executed && (Configuration.COMMANDS.ENABLE_UNKNOWN_COMMAND_MESSAGE_EVERYWHERE || ev.getTextChannel().getId().equals(getChannel().getId())) && Configuration.COMMANDS.ENABLE_UNKNOWN_COMMAND_MESSAGE) {
+                        if (Configuration.COMMANDS.ENABLE_HELP_COMMAND) sendMessage(Configuration.COMMANDS.MSG_UNKNOWN_COMMAND.replace("%prefix%", Configuration.COMMANDS.CMD_PREFIX), ev.getTextChannel());
                     }
-                    
+            
                 }
-                else {
-    
+                else if (getChannel().getId().equals(ev.getChannel().getId())) {
                     final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
                     String msg = ev.getMessage().getContentRaw();
-    
+            
                     for (final Member u : ev.getMessage().getMentionedMembers()) {
                         msg = msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
                     }
@@ -433,9 +431,9 @@ public class Discord implements EventListener
                                                                                                                            "Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                 }
             }
-            
         }
     }
+    
     public ChannelManager getChannelManager() {
         return new ChannelManagerImpl(getChannel());
     }
@@ -534,6 +532,10 @@ public class Discord implements EventListener
      */
     public void sendMessageFuture(String msg) {
         this.messages.add(msg);
+    }
+    
+    public void sendMessage(String msg, TextChannel textChannel) {
+        this.sendMessage(Configuration.WEBHOOK.SERVER_NAME, "0000000", msg, textChannel);
     }
     
     public enum GameTypes

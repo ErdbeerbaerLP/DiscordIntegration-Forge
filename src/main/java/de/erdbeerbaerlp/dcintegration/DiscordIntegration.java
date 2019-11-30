@@ -34,6 +34,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONString;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -56,7 +57,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.5";
+    public static final String VERSION = "1.1.6";
     /**
      * Modid
      */
@@ -190,9 +191,10 @@ public class DiscordIntegration
                 for (int i = 0 ; i < aliases.length ; i++)
                     aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
             }
-            final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText);
+            String channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JSONString) ? cmdVal.get("channelID").getAsString() : "0";
+            final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
             if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
-            
+    
         }
     }
     
@@ -289,7 +291,7 @@ public class DiscordIntegration
                 b.setContent(Configuration.MESSAGES.SERVER_STOPPED_MSG);
                 b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
                 b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
-                @SuppressWarnings("ConstantConditions") final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook().getUrl());
+                @SuppressWarnings("ConstantConditions") final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(discord_instance.getChannel()).getUrl());
                 cli.send(b.build());
                 cli.close();
             }

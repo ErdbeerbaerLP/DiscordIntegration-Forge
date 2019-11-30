@@ -25,10 +25,30 @@ public abstract class DiscordCommand
      */
     public Discord discord = DiscordIntegration.discord_instance;
     /**
-     * The text channel the bot is working in
+     * The channel ID the command listens to
      */
-    final TextChannel channel = discord.getChannel();
+    private final String channelID;
     boolean isConfigCmd = false;
+    
+    protected DiscordCommand(String channelID) {this.channelID = channelID;}
+    
+    /**
+     * Checks if this command works from this channel
+     *
+     * @param channel TextChannel to check for
+     */
+    public final boolean worksInChannel(final TextChannel channel) {
+        return worksInChannel(channel.getId());
+    }
+    
+    /**
+     * Checks if this command works from this channel
+     *
+     * @param channelID Channel ID of the current channel
+     */
+    public final boolean worksInChannel(String channelID) {
+        return this.channelID.equals("00") || (channelID.equals(this.channelID.equals("0") ? Configuration.GENERAL.CHANNEL_ID : this.channelID));
+    }
     
     /**
      * Sets the name of the command
@@ -58,7 +78,7 @@ public abstract class DiscordCommand
      * @param args   arguments passed by the player
      * @param cmdMsg the {@link MessageReceivedEvent} of the message
      */
-    public abstract void execute(String[] args, MessageReceivedEvent cmdMsg);
+    public abstract void execute(String[] args, final MessageReceivedEvent cmdMsg);
     
     /**
      * Wether or not this command should be visible in help
@@ -75,7 +95,7 @@ public abstract class DiscordCommand
      */
     public boolean canUserExecuteCommand(User user) {
         Member m = null;
-        for (Member me : channel.getMembers()) {
+        for (final Member me : discord.getChannel().getMembers()) {
             if (me.getUser().equals(user)) {
                 m = me;
                 break;
