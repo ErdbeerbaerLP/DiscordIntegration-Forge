@@ -34,7 +34,6 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONString;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -191,18 +190,26 @@ public class DiscordIntegration
                 for (int i = 0 ; i < aliases.length ; i++)
                     aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
             }
-            String channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JSONString) ? cmdVal.get("channelID").getAsString() : "0";
+            String[] channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelID").getAsJsonArray()) : new String[]{"0"};
             final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
             if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
     
         }
     }
     
+    private static String[] makeStringArray(final JsonArray channelID) {
+        final String[] out = new String[channelID.size()];
+        for (int i = 0 ; i < out.length ; i++) {
+            out[i] = channelID.get(i).getAsString();
+        }
+        return out;
+    }
+    
     @EventHandler
     public void init(FMLInitializationEvent ev) {
         if (discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord_instance.sendMessageReturns(Configuration.MESSAGES.SERVER_STARTING_MSG);
         if (discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
-    
+        
     }
     
     @EventHandler

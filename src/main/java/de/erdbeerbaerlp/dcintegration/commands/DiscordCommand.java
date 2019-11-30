@@ -9,6 +9,9 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.util.Arrays;
 
 
 /**
@@ -27,10 +30,10 @@ public abstract class DiscordCommand
     /**
      * The channel ID the command listens to
      */
-    private final String channelID;
+    private final String[] channelIDs;
     boolean isConfigCmd = false;
     
-    protected DiscordCommand(String channelID) {this.channelID = channelID;}
+    protected DiscordCommand(String[] channelIDs) {this.channelIDs = channelIDs;}
     
     /**
      * Checks if this command works from this channel
@@ -47,7 +50,7 @@ public abstract class DiscordCommand
      * @param channelID Channel ID of the current channel
      */
     public final boolean worksInChannel(String channelID) {
-        return this.channelID.equals("00") || (channelID.equals(this.channelID.equals("0") ? Configuration.GENERAL.CHANNEL_ID : this.channelID));
+        return Arrays.equals(this.channelIDs, new String[]{"00"}) || Arrays.equals(this.channelIDs, new String[]{"0"}) || ArrayUtils.contains(channelIDs, channelID);
     }
     
     /**
