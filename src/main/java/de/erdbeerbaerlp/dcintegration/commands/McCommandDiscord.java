@@ -4,6 +4,7 @@ import de.erdbeerbaerlp.dcintegration.Configuration;
 import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.Style;
@@ -21,10 +22,17 @@ import java.util.List;
 public class McCommandDiscord implements ICommand
 {
     private final ArrayList<String> opTabComps = new ArrayList<>();
+    private final ArrayList<String> normalTabComps = new ArrayList<>();
+    private final ArrayList<String> aliases = new ArrayList<>();
     
     public McCommandDiscord() {
+        aliases.add("dc");
+        aliases.add("disc");
+        normalTabComps.add("ignore");
+        
         opTabComps.add("reload");
         opTabComps.add("restart");
+        opTabComps.addAll(normalTabComps);
     }
     
     @Override
@@ -39,34 +47,39 @@ public class McCommandDiscord implements ICommand
     
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-        if (sender.canUseCommand(4, "discord") && args.length > 0) {
+        if (args.length > 0 && sender instanceof EntityPlayer) {
+            if (sender.canUseCommand(4, "discord")) {
+                switch (args[0]) {
+                    case "reload":
+                        new Thread(() -> {
+                            ConfigManager.sync(DiscordIntegration.MODID, Config.Type.INSTANCE);
+                            sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Config reloaded " + (DiscordIntegration.discord_instance
+                                    .restart() ? "and discord bot properly restarted" : (TextFormatting.RED + "but failed to properly restart the discord bot")) + "!"));
+                        }).start();
+                        return;
+                    case "restart":
+                        new Thread(() -> {
+                            if (DiscordIntegration.discord_instance.restart()) {
+                                sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Discord bot restarted!"));
+                            }
+                            else sender.sendMessage(new TextComponentString(TextFormatting.RED + "Failed to properly restart the discord bot!"));
+                        }).start();
+                        return;
+                    default:
+                        break;
+                }
+            }
             switch (args[0]) {
-                case "reload":
-                    new Thread(() -> {
-                        ConfigManager.sync(DiscordIntegration.MODID, Config.Type.INSTANCE);
-                        sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Config reloaded " + (DiscordIntegration.discord_instance
-                                .restart() ? "and discord bot properly restarted" : (TextFormatting.RED + "but failed to properly restart the discord bot")) + "!"));
-                    }).start();
-                    break;
-                case "restart":
-                    new Thread(() -> {
-                        if (DiscordIntegration.discord_instance.restart()) {
-                            sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Discord bot restarted!"));
-                        }
-                        else sender.sendMessage(new TextComponentString(TextFormatting.RED + "Failed to properly restart the discord bot!"));
-                    }).start();
-                    break;
+                case "ignore":
+                    sender.sendMessage(
+                            new TextComponentString(DiscordIntegration.discord_instance.togglePlayerIgnore((EntityPlayer) sender) ? Configuration.DISCORD_COMMAND.IGNORECMD_UNIGNORE : Configuration.DISCORD_COMMAND.IGNORECMD_IGNORE));
+                    return;
                 default:
                     break;
             }
         }
-        else sender.sendMessage(new
-                
-                                        TextComponentString(Configuration.DISCORD_COMMAND.MESSAGE).
-                                                                                                          setStyle(new Style().
-                                                                                                                                      setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                                                                                                                                                   new TextComponentString(Configuration.DISCORD_COMMAND.HOVER))).
-                                                                                                                                      setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.DISCORD_COMMAND.URL))));
+        sender.sendMessage(new TextComponentString(Configuration.DISCORD_COMMAND.MESSAGE).setStyle(new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(Configuration.DISCORD_COMMAND.HOVER)))
+                                                                                                              .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.DISCORD_COMMAND.URL))));
     }
     
     @Override
@@ -76,7 +89,7 @@ public class McCommandDiscord implements ICommand
     
     @Override
     public List<String> getAliases() {
-        return new ArrayList<>();
+        return aliases;
     }
     
     @Override
@@ -86,7 +99,8 @@ public class McCommandDiscord implements ICommand
     
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos) {
-        return sender.canUseCommand(4, "discord") ? opTabComps : new ArrayList<>();
+    
+        return sender.canUseCommand(4, "discord") ? opTabComps : normalTabComps;
     }
     
     @Override

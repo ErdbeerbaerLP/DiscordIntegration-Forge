@@ -219,7 +219,7 @@ public class DiscordIntegration
     
     @EventHandler
     public void serverStarting(FMLServerStartingEvent ev) {
-        if (Configuration.DISCORD_COMMAND.ENABLED) ev.registerServerCommand(new McCommandDiscord());
+        ev.registerServerCommand(new McCommandDiscord());
     }
     
     @EventHandler

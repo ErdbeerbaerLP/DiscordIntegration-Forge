@@ -169,14 +169,16 @@ public class Configuration
     
     public static class discord_command
     {
-        @Comment("Enable the /discord command?")
-        public boolean ENABLED = true;
         @Comment("The message displayed when typing /discord in the server chat")
         public String MESSAGE = "Join our discord! http://discord.gg/myserver";
         @Comment("The message shown when hovering the /discord command message")
         public String HOVER = "Click to open the invite url";
         @Comment("The url to open when clicking the /discord command text")
         public String URL = "http://discord.gg/myserver";
+        @Comment("Message sent when unignoring discord messages")
+        public String IGNORECMD_UNIGNORE = "You are no longer ignoring Discord messages!";
+        @Comment("Message sent when ignoring discord messages")
+        public String IGNORECMD_IGNORE = "You are now ignoring Discord messages!";
     }
     
     public static class votifier
