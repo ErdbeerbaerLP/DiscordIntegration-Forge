@@ -9,6 +9,9 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.util.Arrays;
 
 
 /**
@@ -25,10 +28,30 @@ public abstract class DiscordCommand
      */
     public Discord discord = DiscordIntegration.discord_instance;
     /**
-     * The text channel the bot is working in
+     * The channel ID the command listens to
      */
-    final TextChannel channel = discord.getChannel();
+    private final String[] channelIDs;
     protected boolean isConfigCmd = false;
+    
+    protected DiscordCommand(String[] channelIDs) {this.channelIDs = channelIDs;}
+    
+    /**
+     * Checks if this command works from this channel
+     *
+     * @param channel TextChannel to check for
+     */
+    public final boolean worksInChannel(final TextChannel channel) {
+        return worksInChannel(channel.getId());
+    }
+    
+    /**
+     * Checks if this command works from this channel
+     *
+     * @param channelID Channel ID of the current channel
+     */
+    public final boolean worksInChannel(String channelID) {
+        return Arrays.equals(this.channelIDs, new String[]{"00"}) || Arrays.equals(this.channelIDs, new String[]{"0"}) || ArrayUtils.contains(channelIDs, channelID);
+    }
     
     /**
      * Sets the name of the command
@@ -59,7 +82,7 @@ public abstract class DiscordCommand
      *
      * @param cmdMsg the {@link MessageReceivedEvent} of the message
      */
-    public abstract void execute(String[] args, MessageReceivedEvent cmdMsg);
+    public abstract void execute(String[] args, final MessageReceivedEvent cmdMsg);
     
     /**
      * Wether or not this command should be visible in help
@@ -77,7 +100,7 @@ public abstract class DiscordCommand
      */
     public boolean canUserExecuteCommand(User user) {
         Member m = null;
-        for (Member me : channel.getMembers()) {
+        for (final Member me : discord.getChannel().getMembers()) {
             if (me.getUser().equals(user)) {
                 m = me;
                 break;

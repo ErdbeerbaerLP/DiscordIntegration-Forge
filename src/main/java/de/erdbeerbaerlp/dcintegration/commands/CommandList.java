@@ -10,6 +10,10 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 public class CommandList extends DiscordCommand
 {
+    public CommandList() {
+        super(Configuration.COMMANDS.LIST_CMD_CHANNEL_ID);
+    }
+    
     @Override
     public String getName() {
         return "list";
@@ -26,14 +30,10 @@ public class CommandList extends DiscordCommand
     }
     
     @Override
-    public void execute(String[] args, MessageReceivedEvent cmdMsg) {
+    public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
         final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        System.out.println(server);
-        System.out.println(server.getPlayerList());
-        System.out.println(server.getPlayerList().getPlayers());
-        System.out.println(server.getPlayerList().getPlayers().isEmpty());
         if (server.getPlayerList().getPlayers().isEmpty()) {
-            discord.sendMessage(Configuration.INSTANCE.msgListEmpty.get());
+            discord.sendMessage(Configuration.COMMANDS.MSG_LIST_EMPTY, cmdMsg.getTextChannel());
             return;
         }
         String out = (server.getPlayerList().getPlayers().size() == 1 ? Configuration.INSTANCE.msgListOne.get() : Configuration.INSTANCE.msgListHeader.get().replace("%amount%", "" + server.getPlayerList().getPlayers().size())) + "\n```\n";
@@ -51,6 +51,6 @@ public class CommandList extends DiscordCommand
     
         }
         out = out.substring(0, out.length() - 1);
-        discord.sendMessage(out + "\n```");
+        discord.sendMessage(out + "\n```", cmdMsg.getTextChannel());
     }
 }

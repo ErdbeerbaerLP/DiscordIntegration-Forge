@@ -13,7 +13,8 @@ public class CommandFromCFG extends DiscordCommand
     private final String[] aliases;
     private final boolean useArgs;
     
-    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText) {
+    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText, String[] channelID) {
+        super(channelID);
         this.isConfigCmd = true;
         this.desc = description;
         this.cmd = cmd;
@@ -66,7 +67,7 @@ public class CommandFromCFG extends DiscordCommand
      * @param cmdMsg the {@link MessageReceivedEvent} of the message
      */
     @Override
-    public void execute(String[] args, MessageReceivedEvent cmdMsg) {
+    public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
         String cmd = mcCmd;
         int argsCount = useArgs ? args.length : 0;
         if (argsCount > 0) {
@@ -84,7 +85,8 @@ public class CommandFromCFG extends DiscordCommand
             }
         }
         else discord.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.INSTANCE.senderUUID
-                .get() + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```");
+                .get() + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```",
+                cmdMsg.getTextChannel());
     }
     
 }

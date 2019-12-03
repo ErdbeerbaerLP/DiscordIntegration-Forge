@@ -47,7 +47,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.5";
+    public static final String VERSION = "1.1.6";
     /**
      * Modid
      */
@@ -273,8 +273,9 @@ public class DiscordIntegration
                     for (int i = 0 ; i < aliases.length ; i++)
                         aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
                 }
-                if (!discord_instance.registerCommand(new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText))) System.err.println(
-                        "Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
+                String[] channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelID").getAsJsonArray()) : new String[]{"0"};
+                final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
+                if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
             }
             System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
         } catch (Exception e) {
@@ -376,7 +377,7 @@ public class DiscordIntegration
                 b.setContent(Configuration.INSTANCE.msgServerStopped.get());
                 b.setUsername(Configuration.INSTANCE.serverName.get());
                 b.setAvatarUrl(Configuration.INSTANCE.serverAvatar.get());
-                final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook().getUrl());
+                final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(discord_instance.getChannel()).getUrl());
                 cli.send(b.build());
                 cli.close();
             }
