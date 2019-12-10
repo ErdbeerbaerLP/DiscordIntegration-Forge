@@ -258,7 +258,7 @@ public class Discord implements EventListener
                 cli.send(b.build());
                 cli.close();
             }
-            else getChannel().sendMessage(Configuration.MESSAGES.PLAYER_CHAT_MSG.replace("%player%", name).replace("%msg%", msg)).complete();
+            else getChannel().sendMessage(Configuration.MESSAGES.PLAYER_CHAT_MSG.replace("%player%", name).replace("%msg%", msg)).queue();
         } catch (Exception ignored) {
         }
     }
@@ -296,10 +296,10 @@ public class Discord implements EventListener
                 }
             }
             else if (playerName.equals(WEBHOOK.SERVER_NAME) && UUID.equals("0000000")) {
-                channel.sendMessage(msg).complete();
+                channel.sendMessage(msg).queue();
             }
             else {
-                channel.sendMessage(Configuration.MESSAGES.PLAYER_CHAT_MSG.replace("%player%", playerName).replace("%msg%", msg)).complete();
+                channel.sendMessage(Configuration.MESSAGES.PLAYER_CHAT_MSG.replace("%player%", playerName).replace("%msg%", msg)).queue();
             }
         } catch (Exception ignored) {
         }
