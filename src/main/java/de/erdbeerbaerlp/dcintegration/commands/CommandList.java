@@ -11,7 +11,7 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 public class CommandList extends DiscordCommand
 {
     public CommandList() {
-        super(Configuration.COMMANDS.LIST_CMD_CHANNEL_ID);
+        super(Configuration.INSTANCE.listCmdChannelID.get());
     }
     
     @Override
@@ -33,7 +33,7 @@ public class CommandList extends DiscordCommand
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
         final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server.getPlayerList().getPlayers().isEmpty()) {
-            discord.sendMessage(Configuration.COMMANDS.MSG_LIST_EMPTY, cmdMsg.getTextChannel());
+            discord.sendMessage(Configuration.INSTANCE.msgListEmpty.get(), cmdMsg.getTextChannel());
             return;
         }
         String out = (server.getPlayerList().getPlayers().size() == 1 ? Configuration.INSTANCE.msgListOne.get() : Configuration.INSTANCE.msgListHeader.get().replace("%amount%", "" + server.getPlayerList().getPlayers().size())) + "\n```\n";

@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 public class CommandUptime extends DiscordCommand
 {
     public CommandUptime() {
-        super(Configuration.COMMANDS.UPTIME_CMD_CHANNEL_ID);
+        super(Configuration.INSTANCE.uptimeCmdChannelID.get());
     }
     
     @Override

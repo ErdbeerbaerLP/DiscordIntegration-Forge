@@ -47,7 +47,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.6";
+    public static final String VERSION = "1.1.7";
     /**
      * Modid
      */
@@ -158,10 +158,19 @@ public class DiscordIntegration
                 for (int i = 0 ; i < aliases.length ; i++)
                     aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
             }
-            final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText);
+            String[] channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelID").getAsJsonArray()) : new String[]{"0"};
+            final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
             if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
-            
+    
         }
+    }
+    
+    private static String[] makeStringArray(final JsonArray channelID) {
+        final String[] out = new String[channelID.size()];
+        for (int i = 0 ; i < out.length ; i++) {
+            out[i] = channelID.get(i).getAsString();
+        }
+        return out;
     }
     
     public static String getUptime() {
@@ -261,6 +270,7 @@ public class DiscordIntegration
                     System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
                     continue;
                 }
+    
                 final String mcCommand = cmdVal.get("mcCommand").getAsString();
                 final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
                 final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
@@ -273,7 +283,7 @@ public class DiscordIntegration
                     for (int i = 0 ; i < aliases.length ; i++)
                         aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
                 }
-                String[] channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelID").getAsJsonArray()) : new String[]{"0"};
+                String[] channelID = (cmdVal.has("channelIDs") && cmdVal.get("channelIDs") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelIDs").getAsJsonArray()) : new String[]{"0"};
                 final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
                 if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
             }
@@ -284,7 +294,6 @@ public class DiscordIntegration
         }
         if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get()) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
         if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
-    
     }
     
     @SubscribeEvent
@@ -381,7 +390,7 @@ public class DiscordIntegration
                 cli.send(b.build());
                 cli.close();
             }
-            else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).complete();
+            else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
             if (Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
         }
         stopped = true;

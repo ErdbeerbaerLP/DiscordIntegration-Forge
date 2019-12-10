@@ -8,7 +8,7 @@ public class CommandHelp extends DiscordCommand
 {
     
     public CommandHelp() {
-        super(Configuration.COMMANDS.HELP_CMD_CHANNEL_ID);
+        super(Configuration.INSTANCE.helpCmdChannelID.get());
     }
     
     @Override
@@ -28,7 +28,7 @@ public class CommandHelp extends DiscordCommand
     
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
-        String out = Configuration.COMMANDS.HELP_HEADER + " \n```\n";
+        String out = Configuration.INSTANCE.helpHeader.get() + " \n```\n";
         for (final DiscordCommand cmd : discord.getCommandList()) {
             if (cmd.canUserExecuteCommand(cmdMsg.getAuthor()) && cmd.includeInHelp() && cmd.worksInChannel(cmdMsg.getTextChannel())) out = out + cmd.getCommandUsage() + " - " + cmd.getDescription() + "\n";
         }

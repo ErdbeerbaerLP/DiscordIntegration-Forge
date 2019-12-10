@@ -13,8 +13,8 @@ public class CommandFromCFG extends DiscordCommand
     private final String[] aliases;
     private final boolean useArgs;
     
-    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText, String[] channelID) {
-        super(channelID);
+    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText, String[] channelIDs) {
+        super(channelIDs);
         this.isConfigCmd = true;
         this.desc = description;
         this.cmd = cmd;

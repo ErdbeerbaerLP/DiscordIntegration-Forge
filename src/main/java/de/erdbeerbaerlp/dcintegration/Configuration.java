@@ -65,6 +65,8 @@ public class Configuration
     public final ForgeConfigSpec.BooleanValue meOutput;
     public final ForgeConfigSpec.ConfigValue<String> imcModIdBlacklist;
     public final ForgeConfigSpec.BooleanValue tamedDeathEnabled;
+    public final ConfigValue<String> msgIgnoreUnignore;
+    public final ConfigValue<String> msgIgnoreIgnore;
     
     //#########################
     //#       COMMANDS        #
@@ -84,7 +86,12 @@ public class Configuration
     public final ForgeConfigSpec.BooleanValue cmdHelpEnabled;
     public final ForgeConfigSpec.BooleanValue cmdListEnabled;
     public final ForgeConfigSpec.BooleanValue cmdUptimeEnabled;
-    
+    public final ForgeConfigSpec.BooleanValue enableUnknownCommandEverywhere;
+    public final ForgeConfigSpec.BooleanValue enableUnknownCommandMsg;
+    public final ForgeConfigSpec.ConfigValue<String> helpCmdChannelID;
+    public final ForgeConfigSpec.ConfigValue<String> listCmdChannelID;
+    public final ForgeConfigSpec.ConfigValue<String> uptimeCmdChannelID;
+    public final ForgeConfigSpec.ConfigValue<String> helpHeader;
     
     //#########################
     //#    INGAME-COMMAND     #
@@ -139,7 +146,7 @@ public class Configuration
                 "ingameDiscordMsg", "\u00A76[\u00A75DISCORD\u00A76]\u00A7r <%user%> %msg%");
         msgAdvancement = builder.comment("Supports MulitLined messages using \\n", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%name% - The advancement name", "%desc% - The advancement description").define("msgAdvancement",
                                                                                                                                                                                                                          "%player% just gained the advancement **%name%**\\n_%desc%_");
-        msgChatMessage = builder.comment("Chat message when webhook is disabled", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message").define("msgChatMessage", "%player%: %msg%");
+        msgChatMessage = builder.comment("Chat message", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message").define("msgChatMessage", "%player%: %msg%");
         description = builder.comment("Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS",
                                       "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server").define("description", "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%");
         descriptionOffline = builder.comment("Channel description while the server is offline").define("descriptionOffline", "Server is Offline!");
@@ -149,6 +156,8 @@ public class Configuration
         meOutput = builder.comment("Should /me output be sent to discord?").define("enableMeOutput", true);
         imcModIdBlacklist = builder.comment("A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system").define("imcModIdBlacklist", parseArray(new String[]{"examplemodid"}));
         tamedDeathEnabled = builder.comment("Should tamed entity death be visible in discord?").define("tamedDeathEnabled", false);
+        msgIgnoreIgnore = builder.comment("Message sent when ignoring Discord messages").define("msgIgnoreIgnore", "You are now ignoring Discord messages!");
+        msgIgnoreUnignore = builder.comment("Message sent when unignoring Discord messages").define("msgIgnoreUnignore", "You are no longer ignoring Discord messages!");
         builder.pop();
         //#########################
         //#       COMMANDS        #
@@ -193,7 +202,7 @@ public class Configuration
         adminRoleId = builder.comment("The Role ID of your Admin Role").define("adminRoleId", "0");
         prefix = builder.comment("The prefix of the commands like list").define("prefix", "/");
         msgListEmpty = builder.comment("The message for 'list' when no player is online").define("msgListEmpty", "There is no player online...");
-        msgListOne = builder.comment("The message for 'list' when one player is online").define("msgListOne", "There is 1 player online:");
+        msgListOne = builder.comment("The header for 'list' when one player is online").define("msgListOne", "There is 1 player online:");
         msgListHeader = builder.comment("The header for 'list'", "PLACEHOLDERS:", "%amount% - The amount of players online").define("msgListHeader", "There are %amount% players online:");
         msgNoPermission = builder.comment("Message sent when user does not have permission to run a command").define("msgNoPermission", "You don\u00B4t have permission to execute this command!");
         msgUnknownCommand = builder.comment("Message sent when an invalid command was typed", "PLACEHOLDERS:", "%prefix% - Command prefix").define("msgUnknownCommand", "Unknown command, try `%prefix%help` for a list of commands");
@@ -204,11 +213,20 @@ public class Configuration
         cmdListEnabled = builder.comment("Enable the list command in discord", "Requires server restart").define("enableListCommand", true);
         cmdUptimeEnabled = builder.comment("Enable the iptime command in discord", "Requires server restart").define("enableUptimeCommand", true);
         jsonCommands = builder.comment("Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.",
-                                       "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server",
+                                       "You can click on \"Compact JSON Data\" on the website", "NOTE: The JSON string must be escaped. You can use this website to escape or unescape: https://www.freeformatter.com/java-dotnet-escape.html",
+                                       "NOTE 2: You MUST op the uuid set at SENDER_UUID in the " + "ops.txt !!!", "", "mcCommand   -   The command to" + " " + "execute on the " + "server",
                                        "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help",
-                                       "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Default is <args>").define(
+                                       "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Default is <args>",
+                                       "channelIDs  -   Allows you to set specific text channels outside" + " of the server channel to use this command (make it an string array), Set to [\"00\"] to allow from all channels").define(
                 "jsonCommands", defaultCommandJson);
-        senderUUID = builder.comment("You MUST op this UUID in the ops.txt or many commands won´t work!!").define("senderUUID", "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3");
+        senderUUID = builder.comment("You MUST op this UUID in the ops.txt or many commands won't work!!").define("senderUUID", "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3");
+        enableUnknownCommandEverywhere = builder.comment("Set to true to enable the \"Unknown Command\" message in all channels").define("enableUnknownCommandEverywhere", false);
+        enableUnknownCommandMsg = builder.comment("Set to false to completely disable the \"Unknown Command\" message").define("enableUnknownCommandMsg", true);
+        helpHeader = builder.comment("Header of the help command").define("helpHeader", "Your available commands in this channel:");
+        helpCmdChannelID = builder.comment("Custom Channel ID list for the help command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "00");
+        uptimeCmdChannelID = builder.comment("Custom Channel ID list for the uptime command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "0");
+        listCmdChannelID = builder.comment("Custom Channel ID list for the list command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "0");
+    
         builder.pop();
         //#########################
         //#    INGAME-COMMAND     #

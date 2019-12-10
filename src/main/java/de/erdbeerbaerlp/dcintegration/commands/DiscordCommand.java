@@ -31,9 +31,11 @@ public abstract class DiscordCommand
      * The channel ID the command listens to
      */
     private final String[] channelIDs;
-    protected boolean isConfigCmd = false;
+    boolean isConfigCmd = false;
     
     protected DiscordCommand(String[] channelIDs) {this.channelIDs = channelIDs;}
+    
+    protected DiscordCommand(String channelID) {this.channelIDs = new String[]{channelID};}
     
     /**
      * Checks if this command works from this channel
@@ -50,7 +52,8 @@ public abstract class DiscordCommand
      * @param channelID Channel ID of the current channel
      */
     public final boolean worksInChannel(String channelID) {
-        return Arrays.equals(this.channelIDs, new String[]{"00"}) || Arrays.equals(this.channelIDs, new String[]{"0"}) || ArrayUtils.contains(channelIDs, channelID);
+        return Arrays.equals(this.channelIDs, new String[]{"00"}) || (Arrays.equals(this.channelIDs, new String[]{"0"}) && channelID.toLowerCase().equals(Configuration.INSTANCE.botChannel.get().toLowerCase())) || ArrayUtils.contains(
+                channelIDs, channelID);
     }
     
     /**
@@ -78,8 +81,8 @@ public abstract class DiscordCommand
     /**
      * Method called when executing this command
      * <p>
-     * * @param args   arguments passed by the player
      *
+     * @param args   arguments passed by the player
      * @param cmdMsg the {@link MessageReceivedEvent} of the message
      */
     public abstract void execute(String[] args, final MessageReceivedEvent cmdMsg);
@@ -92,10 +95,10 @@ public abstract class DiscordCommand
     }
     
     /**
-     * Should the user be able to execute this command
+     * Should the user be able to execute this command?
      * <p>
-     * * @param user The user being handled
      *
+     * @param user The user being handled
      * @return wether or not the user can execute this command
      */
     public boolean canUserExecuteCommand(User user) {
@@ -133,7 +136,7 @@ public abstract class DiscordCommand
         return Configuration.INSTANCE.msgPlayerNotFound.get().replace("%player%", playerName);
     }
     
-    public boolean isConfigCommand() {
+    public final boolean isConfigCommand() {
         return isConfigCmd;
     }
 }

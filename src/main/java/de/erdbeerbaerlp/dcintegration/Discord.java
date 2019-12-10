@@ -14,9 +14,10 @@ import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.managers.ChannelManager;
 import net.dv8tion.jda.internal.managers.ChannelManagerImpl;
 import net.dv8tion.jda.internal.utils.PermissionUtil;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
@@ -27,6 +28,7 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -172,6 +174,7 @@ public class Discord implements EventListener
     
     
     private static final File IGNORED_PLAYERS = new File("./players_ignoring_discord");
+    
     /**
      * Constructor for this class
      */
@@ -209,6 +212,11 @@ public class Discord implements EventListener
             Configuration.INSTANCE.enableWebhook.set(false);
             System.err.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
         }
+        try {
+            loadIgnoreList();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -216,9 +224,9 @@ public class Discord implements EventListener
      */
     @Nullable
     public Webhook getWebhook(TextChannel c) {
-        if (!Configuration.WEBHOOK.BOT_WEBHOOK) return null;
+        if (!Configuration.INSTANCE.enableWebhook.get()) return null;
         if (!PermissionUtil.checkPermission(c, c.getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
-            Configuration.WEBHOOK.BOT_WEBHOOK = false;
+            Configuration.setValueAndSave(DiscordIntegration.cfg, Configuration.INSTANCE.enableWebhook.getPath(), false);
             System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
             return null;
         }
@@ -279,7 +287,7 @@ public class Discord implements EventListener
                 cli.send(b.build());
                 cli.close();
             }
-            else getChannel().sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", name).replace("%msg%", msg)).complete();
+            else getChannel().sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", name).replace("%msg%", msg)).queue();
         } catch (Exception ignored) {
         }
     }
@@ -317,10 +325,10 @@ public class Discord implements EventListener
                 }
             }
             else if (playerName.equals(Configuration.INSTANCE.serverName.get()) && UUID.equals("0000000")) {
-                channel.sendMessage(msg).complete();
+                channel.sendMessage(msg).queue();
             }
             else {
-                channel.sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", playerName).replace("%msg%", msg)).complete();
+                channel.sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", playerName).replace("%msg%", msg)).queue();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -337,50 +345,6 @@ public class Discord implements EventListener
     }
     
     final ArrayList<String> ignoringPlayers = new ArrayList<>();
-    
-    /**
-     * Constructor for this class
-     */
-    Discord() throws LoginException, InterruptedException {
-        final JDABuilder b = new JDABuilder(GENERAL.BOT_TOKEN);
-        b.setAutoReconnect(true);
-        
-        switch (GENERAL.BOT_GAME_TYPE) {
-            case DISABLED:
-                break;
-            case LISTENING:
-                b.setActivity(Activity.listening(GENERAL.BOT_GAME_NAME));
-                break;
-            case PLAYING:
-                b.setActivity(Activity.playing(GENERAL.BOT_GAME_NAME));
-                break;
-            case WATCHING:
-                b.setActivity(Activity.watching(GENERAL.BOT_GAME_NAME));
-                break;
-        }
-        b.setEnableShutdownHook(false);
-        this.jda = b.build().awaitReady();
-        System.out.println("Bot Ready");
-        this.messageSender.start();
-        jda.addEventListener(this);
-        if (!PermissionUtil.checkPermission(getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS, Permission.MESSAGE_MANAGE)) {
-            System.err.println("ERROR! Bot does not have all permissions to work!");
-            throw new PermissionException("Bot requires message read, message write, embed links and manage messages");
-        }
-        if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) if (!PermissionUtil.checkPermission(getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_CHANNEL)) {
-            Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION = false;
-            System.err.println("ERROR! Bot does not have permission to manage channel, disabling channel description");
-        }
-        if (Configuration.WEBHOOK.BOT_WEBHOOK) if (!PermissionUtil.checkPermission(getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
-            Configuration.WEBHOOK.BOT_WEBHOOK = false;
-            System.err.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
-        }
-        try {
-            loadIgnoreList();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
     
     /**
      * Event handler to handle messages
@@ -400,8 +364,8 @@ public class Discord implements EventListener
                     argumentsRaw = argumentsRaw.trim();
                     boolean hasPermission = true;
                     boolean executed = false;
-                    for (finalDiscordCommand cmd : commands) {
-    if (!cmd.worksInChannel(ev.getTextChannel())) continue;
+                    for (final DiscordCommand cmd : commands) {
+                        if (!cmd.worksInChannel(ev.getTextChannel())) continue;
                         if (cmd.getName().equals(command[0])) {
                             if (cmd.canUserExecuteCommand(ev.getAuthor())) {
                                 cmd.execute(argumentsRaw.split(" "), ev);
@@ -409,7 +373,7 @@ public class Discord implements EventListener
                             }
                             else hasPermission = false;
                         }
-    
+        
                         for (final String alias : cmd.getAliases()) {
                             if (alias.equals(command[0])) {
                                 if (cmd.canUserExecuteCommand(ev.getAuthor())) {
@@ -421,10 +385,10 @@ public class Discord implements EventListener
                         }
                     }
                     if (!hasPermission) {
-                        sendMessage(Configuration.COMMANDS.MSG_NO_PERMISSION, ev.getTextChannel());
+                        sendMessage(Configuration.INSTANCE.msgNoPermission.get(), ev.getTextChannel());
                         return;
                     }
-                    if (!executed && (Configuration.COMMANDS.ENABLE_UNKNOWN_COMMAND_MESSAGE_EVERYWHERE || ev.getTextChannel().getId().equals(getChannel().getId())) && Configuration.COMMANDS.ENABLE_UNKNOWN_COMMAND_MESSAGE) {
+                    if (!executed && (Configuration.INSTANCE.enableUnknownCommandEverywhere.get() || ev.getTextChannel().getId().equals(getChannel().getId())) && Configuration.INSTANCE.enableUnknownCommandMsg.get()) {
                         if (Configuration.INSTANCE.cmdHelpEnabled.get()) sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()), ev.getTextChannel());
                     }
     
@@ -432,7 +396,7 @@ public class Discord implements EventListener
                 else if (getChannel().getId().equals(ev.getChannel().getId())) {
                     final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
                     String msg = ev.getMessage().getContentRaw();
-            
+    
                     for (final Member u : ev.getMessage().getMentionedMembers()) {
                         msg = msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
                     }
@@ -457,18 +421,18 @@ public class Discord implements EventListener
                         if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty()) message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
                         message.append("\n-----------------");
                     }
-                    sendMcMsg(ForgeHooks.newChatWithLinks(Configuration.MESSAGES.INGAME_DISCORD_MSG.replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
-                                                                                                   .replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.MESSAGES.PREVENT_MC_COLOR_CODES ? DiscordIntegration
+                    sendMcMsg(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.msgChatMessage.get().replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
+                                                                                               .replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.INSTANCE.preventMcColorCodes.get() ? DiscordIntegration
                                     .stripControlCodes(message.toString()) : message.toString())))
-                                        .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new TextComponentString("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                                        .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                 }
             }
-    }
+        }
     }
     
-    public boolean togglePlayerIgnore(EntityPlayer sender) {
-        if (ignoringPlayers.contains(sender.getName())) {
-            ignoringPlayers.remove(sender.getName());
+    public boolean togglePlayerIgnore(PlayerEntity sender) {
+        if (ignoringPlayers.contains(sender.getName().getUnformattedComponentText())) {
+            ignoringPlayers.remove(sender.getName().getUnformattedComponentText());
             try {
                 saveIgnoreList();
             } catch (IOException e) {
@@ -477,7 +441,7 @@ public class Discord implements EventListener
             return true;
         }
         else {
-            ignoringPlayers.add(sender.getName());
+            ignoringPlayers.add(sender.getName().getUnformattedComponentText());
             return false;
         }
     }
@@ -497,7 +461,6 @@ public class Discord implements EventListener
     }
     
     
-    
     public void loadIgnoreList() throws IOException {
         if (IGNORED_PLAYERS.exists()) {
             BufferedReader r = new BufferedReader(new FileReader(IGNORED_PLAYERS));
@@ -507,9 +470,9 @@ public class Discord implements EventListener
     }
     
     private void sendMcMsg(final ITextComponent msg) {
-        final List<EntityPlayerMP> l = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
-        for (final EntityPlayerMP p : l) {
-            if (!ignoringPlayers.contains(p.getName())) p.sendMessage(msg);
+        final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
+        for (final ServerPlayerEntity p : l) {
+            if (!ignoringPlayers.contains(p.getName().getUnformattedComponentText())) p.sendMessage(msg);
         }
     }
     
@@ -575,24 +538,6 @@ public class Discord implements EventListener
     }
     
     
-    /**
-     * @return an instance of the webhook or null
-     */
-    @Nullable
-    public Webhook getWebhook() {
-        if (!Configuration.INSTANCE.enableWebhook.get()) return null;
-        if (!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
-            Configuration.setValueAndSave(DiscordIntegration.cfg, Configuration.INSTANCE.enableWebhook.getPath(), false);
-            System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
-            return null;
-        }
-        for (Webhook web : getChannel().retrieveWebhooks().complete()) {
-            if (web.getName().equals("MC_DISCORD_INTEGRATION")) {
-                return web;
-            }
-        }
-        return getChannel().createWebhook("MC_DISCORD_INTEGRATION").complete();
-    }
     
     
     /**
@@ -638,7 +583,7 @@ public class Discord implements EventListener
     }
     
     public void sendMessage(String msg, TextChannel textChannel) {
-        this.sendMessage(Configuration.WEBHOOK.SERVER_NAME, "0000000", msg, textChannel);
+        this.sendMessage(Configuration.INSTANCE.serverName.get(), "0000000", msg, textChannel);
     }
     
     
