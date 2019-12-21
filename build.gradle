@@ -103,7 +103,7 @@ configurations {
     compile.extendsFrom(embed)
 }
 shadowJar {
-    classifier = '1.14'
+    classifier = '1.15'
     configurations = [project.configurations.embed]
     relocate 'okhttp3', 'dcshadow.okhttp'
     relocate 'okio', 'dcshadow.okio'
@@ -121,7 +121,7 @@ shadowJar {
     relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.14.4-28.0.45'
+    minecraft 'net.minecraftforge:forge:1.15.1-30.0.15'
     /*embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         transitive = false
     }*/
@@ -145,7 +145,7 @@ artifacts {
     archives tasks.shadowJar
 }
 jar {
-    classifier = "1.14"
+    classifier = "1.15"
     manifest {
         attributes([
                 'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -167,13 +167,9 @@ curseforge {
         id = '324952'
         changelog = project.changelog
         releaseType = 'beta'
-        addGameVersion '1.14.4'
-        addGameVersion '1.14.3'
-        addGameVersion '1.14.2'
-        addGameVersion '1.14.1'
-        addGameVersion '1.14'
+        addGameVersion '1.15.1'
         mainArtifact(jar) {
-            displayName = "DiscordIntegration-$version (MC 1.14)"
+            displayName = "DiscordIntegration-$version (MC 1.15)"
         }
         relations{
             optionalDependency 'ftb-utilities'

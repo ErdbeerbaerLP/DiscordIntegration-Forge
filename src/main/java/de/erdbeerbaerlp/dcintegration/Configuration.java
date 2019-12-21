@@ -151,7 +151,7 @@ public class Configuration
                                       "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server").define("description", "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%");
         descriptionOffline = builder.comment("Channel description while the server is offline").define("descriptionOffline", "Server is Offline!");
         descriptionStarting = builder.comment("Channel description while the server is starting").define("descriptionStarting", "Starting...");
-        msgPlayerTimeout = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.14!").define("msgPlayerTimeout", "%player% timed out!");
+        msgPlayerTimeout = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.15!").define("msgPlayerTimeout", "%player% timed out!");
         sayOutput = builder.comment("Should /say output be sent to discord?").define("enableSayOutput", true);
         meOutput = builder.comment("Should /me output be sent to discord?").define("enableMeOutput", true);
         imcModIdBlacklist = builder.comment("A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system").define("imcModIdBlacklist", parseArray(new String[]{"examplemodid"}));
