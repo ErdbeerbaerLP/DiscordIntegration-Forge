@@ -46,32 +46,37 @@ public class Discord implements EventListener
      */
     Thread updateChannelDesc = new Thread()
     {
+        private String cachedDescription = "";
         {
             this.setName("[DC INTEGRATION] Channel Description Updater");
             this.setDaemon(false);
             this.setPriority(MAX_PRIORITY);
         }
-    
+
         private double getAverageTickCount() {
             MinecraftServer minecraftServer = ServerLifecycleHooks.getCurrentServer();
             //noinspection IntegerDivisionInFloatingPointContext
             return LongStream.of(minecraftServer.tickTimeArray).sum() / minecraftServer.tickTimeArray.length * 1.0E-6D;
         }
-    
+
         private double getAverageTPS() {
             return Math.min(1000.0 / getAverageTickCount(), 20);
         }
-    
+
         public void run() {
             try {
                 while (true) {
-                    getChannelManager().setTopic(Configuration.INSTANCE.description.get().replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
-                                                                                   .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers()).replace("%motd%", ServerLifecycleHooks.getCurrentServer().getMOTD())
-                                                                                   .replace("%uptime%", DiscordIntegration.getUptime())).complete();
+                    final String newDesc = Configuration.INSTANCE.description.get().replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
+                            .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers()).replace("%motd%", ServerLifecycleHooks.getCurrentServer().getMOTD())
+                            .replace("%uptime%", DiscordIntegration.getUptime());
+                    if (!newDesc.equals(cachedDescription)) {
+                        getChannelManager().setTopic(newDesc).complete();
+                        cachedDescription = newDesc;
+                    }
                     sleep(500);
                 }
             } catch (InterruptedException | RuntimeException ignored) {
-    
+
             }
         }
     };
