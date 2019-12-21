@@ -46,6 +46,7 @@ public class Discord implements EventListener
      */
     Thread updateChannelDesc = new Thread()
     {
+        private String cachedDescription = "";
         {
             this.setName("[DC INTEGRATION] Channel Description Updater");
             this.setDaemon(false);
@@ -65,9 +66,13 @@ public class Discord implements EventListener
         public void run() {
             try {
                 while (true) {
-                    getChannelManager().setTopic(Configuration.INSTANCE.description.get().replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
-                                                                                   .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers()).replace("%motd%", ServerLifecycleHooks.getCurrentServer().getMOTD())
-                                                                                   .replace("%uptime%", DiscordIntegration.getUptime())).complete();
+                    final String newDesc = Configuration.INSTANCE.description.get().replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
+                            .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers()).replace("%motd%", ServerLifecycleHooks.getCurrentServer().getMOTD())
+                            .replace("%uptime%", DiscordIntegration.getUptime());
+                    if (!newDesc.equals(cachedDescription)) {
+                        getChannelManager().setTopic(newDesc).complete();
+                        cachedDescription = newDesc;
+                    }
                     sleep(500);
                 }
             } catch (InterruptedException | RuntimeException ignored) {

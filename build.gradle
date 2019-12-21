@@ -42,7 +42,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.1.9"
+version = "1.1.10"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
