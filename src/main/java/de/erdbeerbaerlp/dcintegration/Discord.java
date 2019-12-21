@@ -57,6 +57,7 @@ public class Discord implements EventListener
      */
     Thread updateChannelDesc = new Thread()
     {
+        private String cachedDescription = "";
         {
             this.setName("[DC INTEGRATION] Channel Description Updater");
             this.setDaemon(false);
@@ -76,14 +77,17 @@ public class Discord implements EventListener
         public void run() {
             try {
                 while (true) {
-                    getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION.replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + FMLCommonHandler.instance().getMinecraftServerInstance()
-                                                                                                                                                                                        .getOnlinePlayerProfiles().length).replace("%max%",
-                                                                                                                                                                                                                                   "" + FMLCommonHandler
-                                                                                                                                                                                                                                           .instance()
-                                                                                                                                                                                                                                           .getMinecraftServerInstance()
-                                                                                                                                                                                                                                           .getMaxPlayers())
-                                                                                           .replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD()).replace("%uptime%", DiscordIntegration.getUptime()))
-                                       .complete();
+                    final String newDesc = Configuration.MESSAGES.CHANNEL_DESCRIPTION.replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + FMLCommonHandler.instance().getMinecraftServerInstance()
+                            .getOnlinePlayerProfiles().length).replace("%max%",
+                            "" + FMLCommonHandler
+                                    .instance()
+                                    .getMinecraftServerInstance()
+                                    .getMaxPlayers())
+                            .replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD()).replace("%uptime%", DiscordIntegration.getUptime());
+                    if (!newDesc.equals(cachedDescription)) {
+                        getChannelManager().setTopic(newDesc).complete();
+                        cachedDescription = newDesc;
+                    }
                     sleep(500);
                 }
             } catch (InterruptedException | RuntimeException ignored) {
