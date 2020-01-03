@@ -162,23 +162,25 @@ jar {
 }
 curseforge {
     // $GRADLE_USER_HOME/gradle.properties
-    apiKey = getProperty("curseforge.apikey")
-    project {
-        id = '324952'
-        changelog = project.changelog
-        releaseType = 'beta'
-        addGameVersion '1.14.4'
-        addGameVersion '1.14.3'
-        addGameVersion '1.14.2'
-        addGameVersion '1.14.1'
-        addGameVersion '1.14'
-        mainArtifact(jar) {
-            displayName = "DiscordIntegration-$version (MC 1.14)"
-        }
-        relations{
-            optionalDependency 'ftb-utilities'
-            optionalDependency 'emojicord'
-            optionalDependency 'voting'
+    if (project.hasProperty('curseforge.apikey')) {
+        apiKey = getProperty("curseforge.apikey")
+        project {
+            id = '324952'
+            changelog = project.changelog
+            releaseType = 'beta'
+            addGameVersion '1.14.4'
+            addGameVersion '1.14.3'
+            addGameVersion '1.14.2'
+            addGameVersion '1.14.1'
+            addGameVersion '1.14'
+            mainArtifact(jar) {
+                displayName = "DiscordIntegration-$version (MC 1.14)"
+            }
+            relations {
+                optionalDependency 'ftb-utilities'
+                optionalDependency 'emojicord'
+                optionalDependency 'voting'
+            }
         }
     }
 }
