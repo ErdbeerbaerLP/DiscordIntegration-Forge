@@ -1,16 +1,9 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
-  "1.14.4": {
-    "1.1.8": "Add discord ignore subcommand, Commands can now be run in different channels too (configurable!). Maybe fixed crash when discord is down",
-    "1.1.6": "Specific commands can now be executed from another channel ID or every channel",
-    "1.1.4": "Add options for color codes",
-    "1.1.2": "Fixed error messages on shutdown\nEnhance server crash detection",
-    "1.1.1": "Discord nicknames will now be shown ingame\nFixed an bad placeholder comment\nSmall bugfix with /say and /me\n ... And more ...",
-    "1.0.13": "Add clickable URLs in chat",
-    "1.0.12": "Fix bug which still modified the channel description on server stop",
-    "1.0.11": "Initial update to 1.14"
-  },
   "1.12.2": {
+    "1.1.11": "Added an way to toggle join/leave messages\nYou can now specify the rate of the description updates\nFormatting of %uptime% is now possible\n\nLAST FEATURE UPDATE FOR 1.12",
+    "1.1.10": "",
+    "1.1.9": "Filling up the json",
     "1.1.8": "Added discord ignore subcommand, Commands can now be run in different channels too (configurable!). Maybe fixed crash when discord is down",
     "1.1.6": "Specific commands can now be executed from another channel ID or every channel",
     "1.1.4": "Maybe fix error code on shutown with players\nAdd options for color codes",
@@ -32,9 +25,7 @@
     "1.0.0": "Initial release"
   },
   "promos": {
-    "1.12.2-latest": "1.1.4",
-    "1.12.2-recommended": "1.1.4",
-    "1.14.4-latest": "1.1.4",
-    "1.14.4-recommended": "1.1.4"
+    "1.12.2-latest": "1.1.10",
+    "1.12.2-recommended": "1.1.10"
   }
 }
