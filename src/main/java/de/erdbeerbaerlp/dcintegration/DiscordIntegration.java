@@ -33,8 +33,11 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
@@ -56,7 +59,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.10";
+    public static final String VERSION = "1.1.11";
     /**
      * Modid
      */
@@ -138,37 +141,43 @@ public class DiscordIntegration
         }
         return p.getName();
     }
-    
+
     public static String formatPlayerName(Entity p) {
         return formatPlayerName(p, true);
     }
-    
-    public static String getUptime() {
+
+    public static String getFullUptime() {
         if (started == 0) {
             return "?????";
         }
-        
-        long diff = new Date().getTime() - started;
-        
-        int seconds = (int) Math.floorDiv(diff, 1000);
-        if (seconds < 60) {
-            return seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int minutes = Math.floorDiv(seconds, 60);
-        seconds -= minutes * 60;
-        if (minutes < 60) {
-            return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int hours = Math.floorDiv(minutes, 60);
-        minutes -= hours * 60;
-        if (hours < 24) {
-            return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int days = Math.floorDiv(hours, 24);
-        hours -= days * 24;
-        return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+        final Duration duration = Duration.between(Instant.ofEpochMilli(started), Instant.now());
+        return DurationFormatUtils.formatDuration(duration.toMillis(), Configuration.MESSAGES.UPTIME_FORMAT);
     }
-    
+
+    public static int getUptimeSeconds() {
+        long diff = new Date().getTime() - started;
+        int seconds = (int) Math.floorDiv(diff, 1000);
+        return seconds;
+    }
+
+    public static int getUptimeMinutes() {
+        int seconds = getUptimeSeconds();
+        int minutes = Math.floorDiv(seconds, 60);
+        return minutes;
+    }
+
+    public static int getUptimeHours() {
+        int minutes = getUptimeMinutes();
+        int hours = Math.floorDiv(minutes, 60);
+        return hours;
+    }
+
+    public static int getUptimeDays() {
+        int hours = getUptimeHours();
+        int days = Math.floorDiv(hours, 24);
+        return days;
+    }
+
     public static void registerConfigCommands() {
         final JsonObject commandJson = new JsonParser().parse(Configuration.COMMANDS.JSON_COMMANDS).getAsJsonObject();
         System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
@@ -231,8 +240,11 @@ public class DiscordIntegration
             e.printStackTrace();
         }
         else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
+        System.out.println("Pre-Pre-Start");
         if (discord_instance != null) {
+            System.out.println("Pre-Start");
             discord_instance.startThreads();
+            System.out.println("Post Start");
         }
         final Thread discordShutdownThread = new Thread(this::stopDiscord);
         discordShutdownThread.setDaemon(false);

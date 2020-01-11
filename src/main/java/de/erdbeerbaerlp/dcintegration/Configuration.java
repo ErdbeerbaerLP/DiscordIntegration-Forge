@@ -47,11 +47,12 @@ public class Configuration
         public boolean MODIFY_CHANNEL_DESCRIPTRION = true;
         @Comment("If you think the update check is annoying disable this")
         public boolean UPDATE_CHECK = true;
+        @Comment({"When description updates are enabled, how long should it wait before updating? (in milliseconds)", "Setting this too low can cause RateLimits from discord"})
+        public int DESCRIPTION_UPDATE_DELAY = 500;
     }
-    
-    public static class category_webhook
-    {
-        
+
+    public static class category_webhook {
+
         @Comment("Wether or not the bot should use a webhook (it will create one)")
         public boolean BOT_WEBHOOK = false;
         @Comment("The avatar to be used for server messages")
@@ -59,9 +60,10 @@ public class Configuration
         @Comment("The username of the server")
         public String SERVER_NAME = "Server";
     }
-    
-    public static class category_messages
-    {
+
+    public static class category_messages {
+        @Comment({"The format of the uptime command and %uptime% placeholder", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html"})
+        public String UPTIME_FORMAT = "dd 'days' HH 'hours' mm 'minutes' ss 'seconds'";
         @Comment("Disable removal of color codes from chat to discord?")
         public boolean DISCORD_COLOR_CODES = false;
         @Comment("Enable removal of color codes from discord to chat?")
@@ -89,7 +91,7 @@ public class Configuration
         @Comment({"Chat message when webhook is disabled", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message"})
         public String PLAYER_CHAT_MSG = "%player%: %msg%";
         @Comment(
-                {"Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS", "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server"})
+                {"Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS", "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server", "%days% - The amount of days the server has been online", "%hours% - The amount of hours the server has been online", "%minutes% - The amount of minutes the server has been online", "%seconds% - The amount of seconds the server has been online"})
         public String CHANNEL_DESCRIPTION = "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%";
         @Comment("Channel description while the server is offline")
         public String CHANNEL_DESCRIPTION_OFFLINE = "Server is Offline!";
@@ -151,12 +153,12 @@ public class Configuration
         public String MSG_PLAYER_NOT_FOUND = "Can not find player \"%player%\"";
         @Comment({"Enable the /help command in discord", "Disabling also removes response when you entered an invalid command", "Requires server restart"})
         public boolean ENABLE_HELP_COMMAND = true;
-        @Comment("Custom Channel ID list for the help command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
-        public String[] HELP_CMD_CHANNEL_ID = new String[]{"00"};
-        @Comment("Custom Channel ID list for the list command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
-        public String[] LIST_CMD_CHANNEL_ID = new String[]{"0"};
-        @Comment("Custom Channel ID list for the uptime command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
-        public String[] UPTIME_CMD_CHANNEL_ID = new String[]{"0"};
+        @Comment("Custom Channel ID for the help command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
+        public String HELP_CMD_CHANNEL_ID = "00";
+        @Comment("Custom Channel ID for the list command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
+        public String LIST_CMD_CHANNEL_ID = "0";
+        @Comment("Custom Channel ID for the uptime command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel")
+        public String UPTIME_CMD_CHANNEL_ID = "0";
         @Comment({"Enable the /list command in discord", "Requires server restart"})
         public boolean ENABLE_LIST_COMMAND = true;
         @Comment({"Enable the /uptime command in discord", "Requires server restart"})

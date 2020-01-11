@@ -65,7 +65,7 @@ public class Discord implements EventListener
         }
         
         private double getAverageTickCount() {
-            MinecraftServer minecraftServer = FMLCommonHandler.instance().getMinecraftServerInstance();
+            final MinecraftServer minecraftServer = FMLCommonHandler.instance().getMinecraftServerInstance();
             //noinspection IntegerDivisionInFloatingPointContext
             return LongStream.of(minecraftServer.tickTimeArray).sum() / minecraftServer.tickTimeArray.length * 1.0E-6D;
         }
@@ -77,21 +77,24 @@ public class Discord implements EventListener
         public void run() {
             try {
                 while (true) {
-                    final String newDesc = Configuration.MESSAGES.CHANNEL_DESCRIPTION.replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + FMLCommonHandler.instance().getMinecraftServerInstance()
-                            .getOnlinePlayerProfiles().length).replace("%max%",
-                            "" + FMLCommonHandler
-                                    .instance()
-                                    .getMinecraftServerInstance()
-                                    .getMaxPlayers())
-                            .replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD()).replace("%uptime%", DiscordIntegration.getUptime());
+                    System.out.println("update");
+                    final String newDesc = Configuration.MESSAGES.CHANNEL_DESCRIPTION
+                            .replace("%tps%", "" + Math.round(getAverageTPS()))
+                            .replace("%online%", "" + FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerProfiles().length)
+                            .replace("%max%", "" + FMLCommonHandler.instance().getMinecraftServerInstance().getMaxPlayers())
+                            .replace("%motd%", FMLCommonHandler.instance().getMinecraftServerInstance().getMOTD())
+                            .replace("%uptime%", DiscordIntegration.getFullUptime())
+                            .replace("%seconds%", DiscordIntegration.getUptimeSeconds() + "")
+                            .replace("%minutes%", DiscordIntegration.getUptimeMinutes() + "")
+                            .replace("%hours%", DiscordIntegration.getUptimeHours() + "")
+                            .replace("%days%", DiscordIntegration.getUptimeDays() + "");
                     if (!newDesc.equals(cachedDescription)) {
                         getChannelManager().setTopic(newDesc).complete();
                         cachedDescription = newDesc;
                     }
-                    sleep(500);
+                    sleep(GENERAL.DESCRIPTION_UPDATE_DELAY);
                 }
             } catch (InterruptedException | RuntimeException ignored) {
-            
             }
         }
     };
@@ -383,6 +386,7 @@ public class Discord implements EventListener
                     argumentsRaw = argumentsRaw.trim();
                     boolean hasPermission = true;
                     boolean executed = false;
+                    System.out.println(command[0]);
                     for (final DiscordCommand cmd : commands) {
                         if (!cmd.worksInChannel(ev.getTextChannel())) continue;
                         if (cmd.getName().equals(command[0])) {
@@ -544,6 +548,7 @@ public class Discord implements EventListener
      * Starts all threads
      */
     public void startThreads() {
+        System.out.println("Starting threads");
         if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) updateChannelDesc.start();
         if (!messageSender.isAlive()) messageSender.start();
         if (Loader.isModLoaded("ftbutilities")) {

@@ -3,17 +3,21 @@ package de.erdbeerbaerlp.dcintegration.commands;
 import de.erdbeerbaerlp.dcintegration.Configuration;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.util.Arrays;
 
 
-public class CommandFromCFG extends DiscordCommand
-{
+public class CommandFromCFG extends DiscordCommand {
     private final String cmd, desc, mcCmd, argText;
     private final boolean admin;
     private final String[] aliases;
     private final boolean useArgs;
-    
-    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText, String[] channelID) {
-        super(channelID);
+    private final String[] channelIDs;
+
+    public CommandFromCFG(String cmd, String description, String mcCommand, boolean adminOnly, String[] aliases, boolean useArgs, String argText, String[] channelIDs) {
+        super("");
+        this.channelIDs = channelIDs;
         this.isConfigCmd = true;
         this.desc = description;
         this.cmd = cmd;
@@ -23,7 +27,12 @@ public class CommandFromCFG extends DiscordCommand
         this.useArgs = useArgs;
         this.argText = argText;
     }
-    
+
+    @Override
+    public boolean worksInChannel(String channelID) {
+        return Arrays.equals(channelIDs, new String[]{"00"}) || Arrays.equals(channelIDs, new String[]{"0"}) && channelID.equals(Configuration.GENERAL.CHANNEL_ID) || ArrayUtils.contains(channelIDs, channelID);
+    }
+
     /**
      * Sets the name of the command
      */
@@ -31,7 +40,7 @@ public class CommandFromCFG extends DiscordCommand
     public String getName() {
         return cmd;
     }
-    
+
     @Override
     public boolean adminOnly() {
         return admin;
