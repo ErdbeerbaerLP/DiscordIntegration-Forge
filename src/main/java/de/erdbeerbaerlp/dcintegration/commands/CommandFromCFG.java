@@ -83,9 +83,9 @@ public class CommandFromCFG extends DiscordCommand {
                 cmd = cmd + " " + args[i];
             }
         }
-        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this);
+        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this, cmdMsg.getTextChannel().getId());
         if (s.canUseCommand(4, "")) {
-            FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(new DCCommandSender(cmdMsg.getAuthor(), this), cmd.trim());
+            FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(new DCCommandSender(cmdMsg.getAuthor(), this, cmdMsg.getTextChannel().getId()), cmd.trim());
         }
         else discord.sendMessage(
                 "Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.COMMANDS.SENDER_UUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```",

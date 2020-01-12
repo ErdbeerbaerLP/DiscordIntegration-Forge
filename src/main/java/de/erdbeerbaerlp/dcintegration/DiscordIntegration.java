@@ -237,11 +237,8 @@ public class DiscordIntegration
             e.printStackTrace();
         }
         else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
-        System.out.println("Pre-Pre-Start");
         if (discord_instance != null) {
-            System.out.println("Pre-Start");
             discord_instance.startThreads();
-            System.out.println("Post Start");
         }
         final Thread discordShutdownThread = new Thread(this::stopDiscord);
         discordShutdownThread.setDaemon(false);

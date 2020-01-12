@@ -76,7 +76,6 @@ public class Discord implements EventListener {
         public void run() {
             try {
                 while (true) {
-                    System.out.println("update");
                     final String newDesc = Configuration.MESSAGES.CHANNEL_DESCRIPTION
                             .replace("%tps%", "" + Math.round(getAverageTPS()))
                             .replace("%online%", "" + FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerProfiles().length)
@@ -416,7 +415,6 @@ public class Discord implements EventListener {
                     argumentsRaw = argumentsRaw.trim();
                     boolean hasPermission = true;
                     boolean executed = false;
-                    System.out.println(command[0]);
                     for (final DiscordCommand cmd : commands) {
                         if (!cmd.worksInChannel(ev.getTextChannel())) continue;
                         if (cmd.getName().equals(command[0])) {
@@ -577,7 +575,6 @@ public class Discord implements EventListener {
      * Starts all threads
      */
     public void startThreads() {
-        System.out.println("Starting threads");
         if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) updateChannelDesc.start();
         if (!messageSender.isAlive()) messageSender.start();
         if (Loader.isModLoaded("ftbutilities")) {
