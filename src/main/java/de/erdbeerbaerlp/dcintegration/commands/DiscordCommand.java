@@ -9,9 +9,6 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.Arrays;
 
 
 /**
@@ -30,11 +27,12 @@ public abstract class DiscordCommand
     /**
      * The channel ID the command listens to
      */
-    private final String[] channelIDs;
+    private final String channelID;
     boolean isConfigCmd = false;
-    
-    protected DiscordCommand(String[] channelIDs) {this.channelIDs = channelIDs;}
-    
+
+    protected DiscordCommand(String channelID) {
+        this.channelID = channelID;}
+
     protected DiscordCommand(String channelID) {this.channelIDs = new String[]{channelID};}
     
     /**
@@ -45,15 +43,14 @@ public abstract class DiscordCommand
     public final boolean worksInChannel(final TextChannel channel) {
         return worksInChannel(channel.getId());
     }
-    
+
     /**
      * Checks if this command works from this channel
      *
      * @param channelID Channel ID of the current channel
      */
-    public final boolean worksInChannel(String channelID) {
-        return Arrays.equals(this.channelIDs, new String[]{"00"}) || (Arrays.equals(this.channelIDs, new String[]{"0"}) && channelID.toLowerCase().equals(Configuration.INSTANCE.botChannel.get().toLowerCase())) || ArrayUtils.contains(
-                channelIDs, channelID);
+    public boolean worksInChannel(String channelID) {
+        return this.channelID.equals("00") || (this.channelID.equals("0") && channelID.equals(Configuration.GENERAL.CHANNEL_ID)) || this.channelID.equals(channelID);
     }
     
     /**
@@ -113,7 +110,7 @@ public abstract class DiscordCommand
         return !this.adminOnly() || m.getRoles().contains(discord.getAdminRole());
     }
     
-    
+
     /**
      * Override to customize the command usage, which is being displayed in help (ex. to add arguments)
      */
@@ -125,7 +122,7 @@ public abstract class DiscordCommand
         return cmd.getName().equals(this.getName());
     }
     
-    
+
     /**
      * Generates an Player not found message to send to discord
      *

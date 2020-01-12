@@ -28,6 +28,6 @@ public class CommandUptime extends DiscordCommand
     
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
-        discord.sendMessage("The server is running for " + DiscordIntegration.getUptime(), cmdMsg.getTextChannel());
+        discord.sendMessage("The server is running for " + DiscordIntegration.getFullUptime(), cmdMsg.getTextChannel());
     }
 }

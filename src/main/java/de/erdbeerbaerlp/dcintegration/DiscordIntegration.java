@@ -26,14 +26,20 @@ import net.minecraftforge.fml.event.server.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+
+import static de.erdbeerbaerlp.dcintegration.Configuration.ADVANCED;
 
 
 @SuppressWarnings("ConstantConditions")
@@ -47,7 +53,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.10";
+    public static final String VERSION = "1.1.11";
     /**
      * Modid
      */
@@ -73,14 +79,14 @@ public class DiscordIntegration
     private boolean stopped = false;
     
     public DiscordIntegration() throws SecurityException, IllegalArgumentException {
-        
+
         //Register Config
         final ModLoadingContext modLoadingContext = ModLoadingContext.get();
         modLoadingContext.registerConfig(ModConfig.Type.COMMON, Configuration.cfgSpec);
-        
+
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
-        
+
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -132,7 +138,7 @@ public class DiscordIntegration
                         .replaceAll("\u00A78", "").replaceAll("\u00A79", "").replaceAll("\u00A7a", "").replaceAll("\u00A7b", "").replaceAll("\u00A7c", "").replaceAll("\u00A7d", "").replaceAll("\u00A7e", "").replaceAll("\u00A7f", "")
                         .replaceAll("\u00A7l", "").replaceAll("\u00A7k", "").replaceAll("\u00A7m", "").replaceAll("\u00A7n", "").replaceAll("\u00A7o", "").replaceAll("\u00A7r", "");
     }
-    
+
     public static String formatPlayerName(Entity p) {
         return formatPlayerName(p, true);
     }
@@ -161,10 +167,10 @@ public class DiscordIntegration
             String[] channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelID").getAsJsonArray()) : new String[]{"0"};
             final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
             if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
-    
+
         }
     }
-    
+
     private static String[] makeStringArray(final JsonArray channelID) {
         final String[] out = new String[channelID.size()];
         for (int i = 0 ; i < out.length ; i++) {
@@ -172,33 +178,32 @@ public class DiscordIntegration
         }
         return out;
     }
-    
-    public static String getUptime() {
+
+    public static String getFullUptime() {
         if (started == 0) {
             return "?????";
         }
-        
-        long diff = new Date().getTime() - started;
-        
-        int seconds = (int) Math.floorDiv(diff, 1000);
-        if (seconds < 60) {
-            return seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int minutes = Math.floorDiv(seconds, 60);
-        seconds -= minutes * 60;
-        if (minutes < 60) {
-            return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int hours = Math.floorDiv(minutes, 60);
-        minutes -= hours * 60;
-        if (hours < 24) {
-            return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int days = Math.floorDiv(hours, 24);
-        hours -= days * 24;
-        return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+        final Duration duration = Duration.between(Instant.ofEpochMilli(started), Instant.now());
+        return DurationFormatUtils.formatDuration(duration.toMillis(), Configuration.MESSAGES.UPTIME_FORMAT);
     }
-    
+
+    public static int getUptimeSeconds() {
+        long diff = new Date().getTime() - started;
+        return (int) Math.floorDiv(diff, 1000);
+    }
+
+    public static int getUptimeMinutes() {
+        return Math.floorDiv(getUptimeSeconds(), 60);
+    }
+
+    public static int getUptimeHours() {
+        return Math.floorDiv(getUptimeMinutes(), 60);
+    }
+
+    public static int getUptimeDays() {
+        return Math.floorDiv(getUptimeHours(), 24);
+    }
+
     public static String formatPlayerName(Entity p, boolean chatFormat) {
         /*if (Loader.isModLoaded("ftbutilities") && p instanceof EntityPlayer) {
             final FTBUtilitiesPlayerData d = FTBUtilitiesPlayerData.get(Universe.get().getPlayer(p));
@@ -207,12 +212,12 @@ public class DiscordIntegration
         }*/
         return p.getName().getUnformattedComponentText();
     }
-    
+
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (discord_instance != null) discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerJoin.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
     }
-    
+
     @SubscribeEvent
     public void onModConfigEvent(final ModConfig.ModConfigEvent event) {
         final ModConfig config = event.getConfig();
@@ -221,12 +226,12 @@ public class DiscordIntegration
             cfg = config;
         }
     }
-    
+
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
         if (discord_instance != null) discord_instance.sendMessage(ev.getPlayer(), ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
     }
-    
+
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
         if (ev.getEntity() instanceof PlayerEntity || (ev.getEntity() instanceof TameableEntity && ((TameableEntity) ev.getEntity()).getOwner() instanceof PlayerEntity && Configuration.INSTANCE.tamedDeathEnabled.get())) {
@@ -235,7 +240,7 @@ public class DiscordIntegration
                             ev.getEntity().getName().getUnformattedComponentText() + " ", "")));
         }
     }
-    
+
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
         if (discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat()) discord_instance.sendMessage(Configuration.INSTANCE.msgAdvancement.get().replace("%player%",
@@ -254,7 +259,7 @@ public class DiscordIntegration
                                                                                                                                                                                                                           .getUnformattedComponentText())
                                                                                                                                                                                                                .replace("\\n", "\n"));
     }
-    
+
     public void preInit(final FMLDedicatedServerSetupEvent ev) {
         System.out.println("Loading mod");
         try {
@@ -270,7 +275,7 @@ public class DiscordIntegration
                     System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
                     continue;
                 }
-    
+
                 final String mcCommand = cmdVal.get("mcCommand").getAsString();
                 final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
                 final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
@@ -292,8 +297,10 @@ public class DiscordIntegration
             System.err.println("Failed to login: " + e.getMessage());
             discord_instance = null;
         }
-        if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get()) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
-        if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
+        if (discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK)
+            this.startingMsg = discord_instance.sendMessageReturns(Configuration.MESSAGES.SERVER_STARTING_MSG);
+        if (discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION)
+            (ADVANCED.CHANNEL_DESCRIPTION_ID.isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(ADVANCED.CHANNEL_DESCRIPTION_ID)).setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
     }
     
     @SubscribeEvent
@@ -316,8 +323,11 @@ public class DiscordIntegration
             e.printStackTrace();
         }
         else discord_instance.sendMessage(Configuration.INSTANCE.msgServerStarted.get());
+        System.out.println("Pre-Pre-Start");
         if (discord_instance != null) {
+            System.out.println("Pre-Start");
             discord_instance.startThreads();
+            System.out.println("Post Start");
         }
         /*Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (discord_instance != null) {
@@ -331,7 +341,7 @@ public class DiscordIntegration
                 discord_instance.kill();
             }
         }));*/
-        
+
         //noinspection StatementWithEmptyBody
         if (Configuration.INSTANCE.updateCheck.get()) {
             //UNUSED for now
@@ -386,12 +396,12 @@ public class DiscordIntegration
                 b.setContent(Configuration.INSTANCE.msgServerStopped.get());
                 b.setUsername(Configuration.INSTANCE.serverName.get());
                 b.setAvatarUrl(Configuration.INSTANCE.serverAvatar.get());
-                final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(discord_instance.getChannel()).getUrl());
+                final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(ADVANCED.SERVER_CHANNEL_ID.isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(ADVANCED.SERVER_CHANNEL_ID)).getUrl());
                 cli.send(b.build());
                 cli.close();
-            }
-            else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
-            if (Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
+            } else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
+            if (Configuration.INSTANCE.botModifyDescription.get())
+                (ADVANCED.CHANNEL_DESCRIPTION_ID.isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(ADVANCED.CHANNEL_DESCRIPTION_ID)).setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
         }
         stopped = true;
     }
@@ -403,16 +413,31 @@ public class DiscordIntegration
             if (!stopped) {
                 if (!discord_instance.isKilled) {
                     discord_instance.stopThreads();
-                    if (Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
+                    if (Configuration.INSTANCE.botModifyDescription.get())
+                        (ADVANCED.CHANNEL_DESCRIPTION_ID.isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(ADVANCED.CHANNEL_DESCRIPTION_ID)).setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
                     discord_instance.sendMessage(Configuration.INSTANCE.msgServerCrash.get());
                 }
             }
             discord_instance.kill();
             }
         });
-       
+
     }
-    
+    @SubscribeEvent
+    public void playerJoin(PlayerLoggedInEvent ev) {
+        if (discord_instance != null && !Configuration.MESSAGES.DISABLE_JOIN_LEAVE_MESSAGES)
+            discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_JOINED_MSG.replace("%player%", formatPlayerName(ev.player, false)));
+    }
+
+    @SubscribeEvent
+    public void playerLeave(PlayerLoggedOutEvent ev) {
+        if (discord_instance != null && !Configuration.MESSAGES.DISABLE_JOIN_LEAVE_MESSAGES && !timeouts.contains(ev.player.getUniqueID()))
+            discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_LEFT_MSG.replace("%player%", ev.player.getName()));
+        else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
+            discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_TIMEOUT_MSG.replace("%player%", ev.player.getName()));
+            timeouts.remove(ev.player.getUniqueID());
+        }
+    }
     /* TODO Find out more
     @SubscribeEvent
     public void imc(InterModEnqueueEvent ev) {
@@ -432,7 +457,22 @@ public class DiscordIntegration
     private boolean isModIDBlacklisted(String sender) {
         return ArrayUtils.contains(Configuration.getArray(Configuration.INSTANCE.imcModIdBlacklist.get()), sender);
     }
-    
+
+    @SubscribeEvent
+    public void chat(ServerChatEvent ev) {
+        if (discord_instance != null) discord_instance.sendMessage(ev.getPlayer(), ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
+    }
+
+    @SubscribeEvent
+    public void death(LivingDeathEvent ev) {
+        if (ev.getEntity() instanceof EntityPlayerMP || (ev.getEntity() instanceof EntityTameable && ((EntityTameable) ev.getEntity()).getOwner() instanceof EntityPlayerMP && Configuration.MESSAGES.TAMED_DEATH_ENABLED)) {
+            if (discord_instance != null)
+                discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_DEATH_MSG.replace("%player%", formatPlayerName(ev.getEntity())).replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving())
+                        .getUnformattedText()
+                        .replace(ev.getEntity().getName() + " ", "")), ADVANCED.DEATH_CHANNEL_ID.isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(ADVANCED.DEATH_CHANNEL_ID));
+        }
+    }
+
     private static final Pattern PATTERN_CONTROL_CODE = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
     
     public static String stripControlCodes(String text) {
@@ -440,7 +480,7 @@ public class DiscordIntegration
     }
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
-        
+
         if (discord_instance != null && !ev.getPlayer().equals(lastTimeout)) discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerLeave.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
         else if (discord_instance != null && ev.getPlayer().equals(lastTimeout)) {
             discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerTimeout.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
