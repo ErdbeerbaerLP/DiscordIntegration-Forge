@@ -173,7 +173,8 @@ public class Discord implements EventListener {
         }
     };
 
-    private ArrayList<String> messages = new ArrayList<>();
+
+    private HashMap<String, ArrayList<String>> messages = new HashMap<>();
     /**
      * Thread to send messages from vanilla commands
      */
@@ -181,11 +182,13 @@ public class Discord implements EventListener {
         try {
             while (true) {
                 if (!messages.isEmpty()) {
-                    StringBuilder s = new StringBuilder();
-                    for (final String msg : messages)
-                        s.append(msg + "\n");
-                    messages.clear();
-                    this.sendMessage(s.toString().trim());
+                    messages.forEach((channel, msgs) -> {
+                        StringBuilder s = new StringBuilder();
+                        for (final String msg : msgs)
+                            s.append(msg + "\n");
+                        messages.clear();
+                        this.sendMessage(s.toString().trim(), getChannel(channel));
+                    });
                 }
                 Thread.sleep(500);
             }
@@ -627,8 +630,14 @@ public class Discord implements EventListener {
      *
      * @param msg message
      */
-    public void sendMessageFuture(String msg) {
-        this.messages.add(msg);
+    public void sendMessageFuture(String msg, String channelID) {
+        final ArrayList<String> msgs;
+        if (messages.containsKey(channelID))
+            msgs = messages.get(channelID);
+        else
+            msgs = new ArrayList<>();
+        msgs.add(msg);
+        messages.put(channelID, msgs);
     }
 
     public void sendMessage(String msg, TextChannel textChannel) {

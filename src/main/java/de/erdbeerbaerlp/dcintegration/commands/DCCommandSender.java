@@ -17,22 +17,24 @@ import java.util.concurrent.ScheduledExecutorService;
 
 
 @SuppressWarnings("EntityConstructor")
-public class DCCommandSender extends FakePlayer
-{
-    
+public class DCCommandSender extends FakePlayer {
+
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat(DCCommandSender.class.getSimpleName()).setDaemon(true).build());
     private static final UUID uuid = UUID.fromString(Configuration.COMMANDS.SENDER_UUID);
     private final CommandFromCFG command;
-    
-    public DCCommandSender(User user, CommandFromCFG command) {
+    private String channelID;
+
+    public DCCommandSender(User user, CommandFromCFG command, String channel) {
         super(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0], new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
         this.command = command;
+        this.channelID = channel;
     }
-    
+
     @SuppressWarnings("unused")
-    public DCCommandSender(WorldServer world, String name, CommandFromCFG command) {
+    public DCCommandSender(WorldServer world, String name, CommandFromCFG command, String channel) {
         super(world, new GameProfile(uuid, "@" + name));
         this.command = command;
+        this.channelID = channel;
     }
     
     private static String textComponentToDiscordMessage(ITextComponent component) {
@@ -48,12 +50,12 @@ public class DCCommandSender extends FakePlayer
     @Override
     public void sendMessage(ITextComponent component) {
         Preconditions.checkNotNull(component);
-        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component));
+        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component), channelID);
     }
     
     @Override
     public void sendStatusMessage(ITextComponent component, boolean actionBar) {
         Preconditions.checkNotNull(component);
-        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component));
+        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component), channelID);
     }
 }
