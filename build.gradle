@@ -181,6 +181,9 @@ curseforge {
                 optionalDependency 'emojicord'
                 optionalDependency 'voting'
             }
+            options {
+                forgeGradleIntegration = false // defaults to true
+            }
         }
     }
 }

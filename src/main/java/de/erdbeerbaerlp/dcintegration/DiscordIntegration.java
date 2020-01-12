@@ -318,11 +318,8 @@ public class DiscordIntegration {
             e.printStackTrace();
         }
         else discord_instance.sendMessage(Configuration.INSTANCE.msgServerStarted.get());
-        System.out.println("Pre-Pre-Start");
         if (discord_instance != null) {
-            System.out.println("Pre-Start");
             discord_instance.startThreads();
-            System.out.println("Post Start");
         }
         /*Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (discord_instance != null) {
@@ -458,7 +455,6 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
-
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueID()))
             discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerLeave.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
         else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueID())) {

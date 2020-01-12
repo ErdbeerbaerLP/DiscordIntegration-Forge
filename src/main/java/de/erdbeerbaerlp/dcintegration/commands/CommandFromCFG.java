@@ -84,7 +84,6 @@ public class CommandFromCFG extends DiscordCommand {
                 cmd = cmd + " " + args[i];
             }
         }
-        System.out.println("Running " + cmd);
         final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this, cmdMsg.getTextChannel().getId());
         if (s.hasPermissionLevel(4)) {
             try {

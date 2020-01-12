@@ -401,7 +401,6 @@ public class Discord implements EventListener {
                     argumentsRaw = argumentsRaw.trim();
                     boolean hasPermission = true;
                     boolean executed = false;
-                    System.out.println(command[0]);
                     for (final DiscordCommand cmd : commands) {
                         if (!cmd.worksInChannel(ev.getTextChannel())) continue;
                         if (cmd.getName().equals(command[0])) {
