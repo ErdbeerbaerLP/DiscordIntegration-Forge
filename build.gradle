@@ -16,7 +16,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
-        //classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
         classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
     }
 }
@@ -28,7 +28,7 @@ apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-//apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'org.spongepowered.mixin'
 repositories {
     jcenter()
     maven {
@@ -122,18 +122,18 @@ shadowJar {
 }
 dependencies {
     minecraft 'net.minecraftforge:forge:1.15.1-30.0.15'
-    /*embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+    compile("org.spongepowered:mixin:0.8-SNAPSHOT") {
         transitive = false
-    }*/
+    }
     embed("net.dv8tion:JDA:4.0.0_39")
     embed 'club.minnced:discord-webhooks:0.1.8'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     //deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
     //deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'
 }
-/*mixin {
+mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
-}*/
+}
 reobf {
     shadowJar {
         dependsOn tasks.createMcpToSrg
@@ -156,7 +156,11 @@ jar {
                 "Implementation-Title"    : project.name,
                 "Implementation-Version"  : "${version}",
                 "Implementation-Vendor"   : "dcintegration",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+                'MixinConfigs': 'mixins.dcintegration.json',
+                "ForceLoadAsMod": "true",
+                'FMLCorePluginContainsFMLMod': 'true'
         ])
     }
 }

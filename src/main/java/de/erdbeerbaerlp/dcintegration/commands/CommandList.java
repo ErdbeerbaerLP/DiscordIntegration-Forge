@@ -8,27 +8,26 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 
-public class CommandList extends DiscordCommand
-{
+public class CommandList extends DiscordCommand {
     public CommandList() {
         super(Configuration.INSTANCE.listCmdChannelID.get());
     }
-    
+
     @Override
     public String getName() {
         return "list";
     }
-    
+
     @Override
     public String[] getAliases() {
         return new String[]{"online"};
     }
-    
+
     @Override
     public String getDescription() {
         return "Lists all players currently online";
     }
-    
+
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
         final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
@@ -48,7 +47,7 @@ public class CommandList extends DiscordCommand
 //				final boolean afk = data.afkTime >= Ticks.get(FTBUtilitiesConfig.afk.notification_timer).millis();
 //				out = out+(afk?"[AFK]":"")+DiscordIntegration.formatPlayerName(p)+",";
 //			}
-    
+
         }
         out = out.substring(0, out.length() - 1);
         discord.sendMessage(out + "\n```", cmdMsg.getTextChannel());

@@ -14,27 +14,25 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 /**
  * Abstract class used for discord commands
  */
-public abstract class DiscordCommand
-{
+public abstract class DiscordCommand {
     /**
      * Instance of {@link MinecraftServer}
      */
     final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
     /**
-     * Discord instance for easy use in commands
-     */
-    public Discord discord = DiscordIntegration.discord_instance;
-    /**
      * The channel ID the command listens to
      */
     private final String channelID;
+    /**
+     * Discord instance for easy use in commands
+     */
+    public Discord discord = DiscordIntegration.discord_instance;
     boolean isConfigCmd = false;
 
     protected DiscordCommand(String channelID) {
-        this.channelID = channelID;}
+        this.channelID = channelID;
+    }
 
-    protected DiscordCommand(String channelID) {this.channelIDs = new String[]{channelID};}
-    
     /**
      * Checks if this command works from this channel
      *
@@ -50,31 +48,31 @@ public abstract class DiscordCommand
      * @param channelID Channel ID of the current channel
      */
     public boolean worksInChannel(String channelID) {
-        return this.channelID.equals("00") || (this.channelID.equals("0") && channelID.equals(Configuration.GENERAL.CHANNEL_ID)) || this.channelID.equals(channelID);
+        return this.channelID.equals("00") || (this.channelID.equals("0") && channelID.equals(Configuration.INSTANCE.botChannel.get())) || this.channelID.equals(channelID);
     }
-    
+
     /**
      * Sets the name of the command
      */
     public abstract String getName();
-    
+
     /**
      * Sets the aliases of the command
      */
     public abstract String[] getAliases();
-    
+
     /**
      * Sets the description for the help command
      */
     public abstract String getDescription();
-    
+
     /**
      * Is this command only for admins?
      */
     public boolean adminOnly() {
         return false;
     }
-    
+
     /**
      * Method called when executing this command
      * <p>
@@ -83,14 +81,14 @@ public abstract class DiscordCommand
      * @param cmdMsg the {@link MessageReceivedEvent} of the message
      */
     public abstract void execute(String[] args, final MessageReceivedEvent cmdMsg);
-    
+
     /**
      * Wether or not this command should be visible in help
      */
     public boolean includeInHelp() {
         return true;
     }
-    
+
     /**
      * Should the user be able to execute this command?
      * <p>
@@ -109,7 +107,7 @@ public abstract class DiscordCommand
         if (m == null) return false;
         return !this.adminOnly() || m.getRoles().contains(discord.getAdminRole());
     }
-    
+
 
     /**
      * Override to customize the command usage, which is being displayed in help (ex. to add arguments)
@@ -117,11 +115,11 @@ public abstract class DiscordCommand
     public String getCommandUsage() {
         return Configuration.INSTANCE.prefix.get() + getName();
     }
-    
+
     public final boolean equals(DiscordCommand cmd) {
         return cmd.getName().equals(this.getName());
     }
-    
+
 
     /**
      * Generates an Player not found message to send to discord
@@ -132,7 +130,7 @@ public abstract class DiscordCommand
     public final String parsePlayerNotFoundMsg(String playerName) {
         return Configuration.INSTANCE.msgPlayerNotFound.get().replace("%player%", playerName);
     }
-    
+
     public final boolean isConfigCommand() {
         return isConfigCmd;
     }

@@ -13,20 +13,19 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 
 
-public class McCommandDiscord
-{
+public class McCommandDiscord {
     public McCommandDiscord(CommandDispatcher<CommandSource> dispatcher) {
         final LiteralArgumentBuilder<CommandSource> l = LiteralArgumentBuilder.<CommandSource>literal("discord").executes((ctx) -> {
             ctx.getSource().sendFeedback(new StringTextComponent(Configuration.INSTANCE.dcCmdMsg.get()).setStyle(
                     new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.INSTANCE.dcCmdMsgHover.get())))
-                               .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
             return 0;
         }).then(Commands.literal("restart").requires((p) -> p.hasPermissionLevel(3))).executes((ctx) -> {
             new Thread(() -> {
                 if (DiscordIntegration.discord_instance.restart()) {
                     ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.GREEN + "Discord bot restarted!"), false);
-                }
-                else ctx.getSource().sendErrorMessage(new StringTextComponent(TextFormatting.RED + "Failed to properly restart the discord bot!"));
+                } else
+                    ctx.getSource().sendErrorMessage(new StringTextComponent(TextFormatting.RED + "Failed to properly restart the discord bot!"));
             }).start();
             return 0;
         }).then(Commands.literal("ignore")).executes((ctx) -> {

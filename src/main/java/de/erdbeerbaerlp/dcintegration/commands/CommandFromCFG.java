@@ -31,7 +31,7 @@ public class CommandFromCFG extends DiscordCommand {
 
     @Override
     public boolean worksInChannel(String channelID) {
-        return Arrays.equals(channelIDs, new String[]{"00"}) || Arrays.equals(channelIDs, new String[]{"0"}) && channelID.equals(Configuration.GENERAL.CHANNEL_ID) || ArrayUtils.contains(channelIDs, channelID);
+        return Arrays.equals(channelIDs, new String[]{"00"}) || Arrays.equals(channelIDs, new String[]{"0"}) && channelID.equals(Configuration.INSTANCE.botChannel) || ArrayUtils.contains(channelIDs, channelID);
     }
 
     /**
@@ -46,7 +46,7 @@ public class CommandFromCFG extends DiscordCommand {
     public boolean adminOnly() {
         return admin;
     }
-    
+
     /**
      * Sets the aliases of the command
      */
@@ -54,7 +54,7 @@ public class CommandFromCFG extends DiscordCommand {
     public String[] getAliases() {
         return aliases;
     }
-    
+
     /**
      * Sets the description for the help command
      */
@@ -62,13 +62,13 @@ public class CommandFromCFG extends DiscordCommand {
     public String getDescription() {
         return desc;
     }
-    
+
     @Override
     public String getCommandUsage() {
         if (useArgs) return super.getCommandUsage() + " " + argText;
         else return super.getCommandUsage();
     }
-    
+
     /**
      * Method called when executing this command
      *
@@ -80,22 +80,22 @@ public class CommandFromCFG extends DiscordCommand {
         String cmd = mcCmd;
         int argsCount = useArgs ? args.length : 0;
         if (argsCount > 0) {
-            for (int i = 0 ; i < argsCount ; i++) {
+            for (int i = 0; i < argsCount; i++) {
                 cmd = cmd + " " + args[i];
             }
         }
         System.out.println("Running " + cmd);
-        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this);
+        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this, cmdMsg.getTextChannel().getId());
         if (s.hasPermissionLevel(4)) {
             try {
                 ServerLifecycleHooks.getCurrentServer().getCommandManager().getDispatcher().execute(cmd.trim(), s.getCommandSource());
             } catch (CommandSyntaxException e) {
                 discord.sendMessage(e.getMessage());
             }
-        }
-        else discord.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.INSTANCE.senderUUID
-                .get() + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```",
-                cmdMsg.getTextChannel());
+        } else
+            discord.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.INSTANCE.senderUUID
+                            .get() + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```",
+                    cmdMsg.getTextChannel());
     }
-    
+
 }
