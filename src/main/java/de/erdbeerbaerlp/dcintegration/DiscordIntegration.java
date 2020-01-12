@@ -47,6 +47,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
+import static de.erdbeerbaerlp.dcintegration.Configuration.ADVANCED;
+
 
 @Mod(modid = DiscordIntegration.MODID, version = DiscordIntegration.VERSION, name = DiscordIntegration.NAME, serverSideOnly = true, acceptableRemoteVersions = "*",
      updateJSON = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/update_check.json")
@@ -156,26 +158,19 @@ public class DiscordIntegration
 
     public static int getUptimeSeconds() {
         long diff = new Date().getTime() - started;
-        int seconds = (int) Math.floorDiv(diff, 1000);
-        return seconds;
+        return (int) Math.floorDiv(diff, 1000);
     }
 
     public static int getUptimeMinutes() {
-        int seconds = getUptimeSeconds();
-        int minutes = Math.floorDiv(seconds, 60);
-        return minutes;
+        return Math.floorDiv(getUptimeSeconds(), 60);
     }
 
     public static int getUptimeHours() {
-        int minutes = getUptimeMinutes();
-        int hours = Math.floorDiv(minutes, 60);
-        return hours;
+        return Math.floorDiv(getUptimeMinutes(), 60);
     }
 
     public static int getUptimeDays() {
-        int hours = getUptimeHours();
-        int days = Math.floorDiv(hours, 24);
-        return days;
+        return Math.floorDiv(getUptimeHours(), 24);
     }
 
     public static void registerConfigCommands() {
@@ -216,9 +211,11 @@ public class DiscordIntegration
     
     @EventHandler
     public void init(FMLInitializationEvent ev) {
-        if (discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK) this.startingMsg = discord_instance.sendMessageReturns(Configuration.MESSAGES.SERVER_STARTING_MSG);
-        if (discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
-        
+        if (discord_instance != null && !Configuration.WEBHOOK.BOT_WEBHOOK)
+            this.startingMsg = discord_instance.sendMessageReturns(Configuration.MESSAGES.SERVER_STARTING_MSG);
+        if (discord_instance != null && Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION)
+            (ADVANCED.CHANNEL_DESCRIPTION_ID.isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(ADVANCED.CHANNEL_DESCRIPTION_ID)).setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_STARTING).complete();
+
     }
     
     @EventHandler
@@ -310,12 +307,12 @@ public class DiscordIntegration
                 b.setContent(Configuration.MESSAGES.SERVER_STOPPED_MSG);
                 b.setUsername(Configuration.WEBHOOK.SERVER_NAME);
                 b.setAvatarUrl(Configuration.WEBHOOK.SERVER_AVATAR);
-                @SuppressWarnings("ConstantConditions") final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(discord_instance.getChannel()).getUrl());
+                @SuppressWarnings("ConstantConditions") final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(ADVANCED.SERVER_CHANNEL_ID.isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(ADVANCED.SERVER_CHANNEL_ID)).getUrl());
                 cli.send(b.build());
                 cli.close();
-            }
-            else discord_instance.getChannel().sendMessage(Configuration.MESSAGES.SERVER_STOPPED_MSG).complete();
-            if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
+            } else discord_instance.getChannel().sendMessage(Configuration.MESSAGES.SERVER_STOPPED_MSG).complete();
+            if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION)
+                (ADVANCED.CHANNEL_DESCRIPTION_ID.isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(ADVANCED.CHANNEL_DESCRIPTION_ID)).setTopic(Configuration.MESSAGES.CHANNEL_DESCRIPTION_OFFLINE).complete();
         }
         stopped = true;
     }
@@ -331,7 +328,8 @@ public class DiscordIntegration
                 if (!discord_instance.isKilled) {
                     discord_instance.stopThreads();
                     discord_instance.sendMessage(Configuration.MESSAGES.SERVER_CRASHED_MSG);
-                    if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) discord_instance.getChannelManager().setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
+                    if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION)
+                        (ADVANCED.CHANNEL_DESCRIPTION_ID.isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(ADVANCED.CHANNEL_DESCRIPTION_ID)).setTopic(Configuration.MESSAGES.SERVER_CRASHED_MSG).complete();
                 }
             }
             discord_instance.kill();
@@ -340,12 +338,14 @@ public class DiscordIntegration
     
     @SubscribeEvent
     public void playerJoin(PlayerLoggedInEvent ev) {
-        if (discord_instance != null) discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_JOINED_MSG.replace("%player%", formatPlayerName(ev.player, false)));
+        if (discord_instance != null && !Configuration.MESSAGES.DISABLE_JOIN_LEAVE_MESSAGES)
+            discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_JOINED_MSG.replace("%player%", formatPlayerName(ev.player, false)));
     }
     
     @SubscribeEvent
     public void playerLeave(PlayerLoggedOutEvent ev) {
-        if (discord_instance != null && !timeouts.contains(ev.player.getUniqueID())) discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_LEFT_MSG.replace("%player%", ev.player.getName()));
+        if (discord_instance != null && !Configuration.MESSAGES.DISABLE_JOIN_LEAVE_MESSAGES && !timeouts.contains(ev.player.getUniqueID()))
+            discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_LEFT_MSG.replace("%player%", ev.player.getName()));
         else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
             discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_TIMEOUT_MSG.replace("%player%", ev.player.getName()));
             timeouts.remove(ev.player.getUniqueID());
@@ -378,9 +378,10 @@ public class DiscordIntegration
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
         if (ev.getEntity() instanceof EntityPlayerMP || (ev.getEntity() instanceof EntityTameable && ((EntityTameable) ev.getEntity()).getOwner() instanceof EntityPlayerMP && Configuration.MESSAGES.TAMED_DEATH_ENABLED)) {
-            if (discord_instance != null) discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_DEATH_MSG.replace("%player%", formatPlayerName(ev.getEntity())).replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving())
-                                                                                                                                                                                        .getUnformattedText()
-                                                                                                                                                                                        .replace(ev.getEntity().getName() + " ", "")));
+            if (discord_instance != null)
+                discord_instance.sendMessage(Configuration.MESSAGES.PLAYER_DEATH_MSG.replace("%player%", formatPlayerName(ev.getEntity())).replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving())
+                        .getUnformattedText()
+                        .replace(ev.getEntity().getName() + " ", "")), ADVANCED.DEATH_CHANNEL_ID.isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(ADVANCED.DEATH_CHANNEL_ID));
         }
     }
     

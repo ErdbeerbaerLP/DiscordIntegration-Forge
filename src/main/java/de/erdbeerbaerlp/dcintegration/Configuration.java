@@ -9,12 +9,14 @@ import net.minecraftforge.common.config.Config.Name;
  * Class containing all config entries
  */
 @Config(modid = DiscordIntegration.MODID, name = "Discord-Integration")
-public class Configuration
-{
-    
+public class Configuration {
+
     @Name("General Config")
     @Comment("General bot Configuration")
     public static category_general GENERAL = new category_general();
+    @Name("Advanced")
+    @Comment("Configure Advanced features like moving specific message types to different channels")
+    public static category_advanced ADVANCED = new category_advanced();
     @Name("Webhook")
     @Comment("Webhook configuration")
     public static category_webhook WEBHOOK = new category_webhook();
@@ -31,6 +33,7 @@ public class Configuration
     @Name("Votifier")
     @Comment("Configure votifier integration here")
     public static votifier VOTIFIER = new votifier();
+
     
     
     public static class category_general
@@ -51,6 +54,29 @@ public class Configuration
         public int DESCRIPTION_UPDATE_DELAY = 500;
     }
 
+    public static class category_advanced {
+        @Comment({"Custom channel ID for server specific messages (like Join/leave)", "Leave empty to use default channel"})
+        public String SERVER_CHANNEL_ID = "";
+
+        @Comment({"Custom channel ID for death messages", "Leave empty to use default channel"})
+        public String DEATH_CHANNEL_ID = "";
+
+        @Comment({"Custom channel ID for FTB Utilities messages", "Leave empty to use default channel"})
+        public String FTB_UTILITIES_CHANNEL_ID = "";
+
+        @Comment({"Custom channel ID for Votifier messages", "Leave empty to use default channel"})
+        public String VOTIFIER_CHANNEL_ID = "";
+
+        @Comment({"Custom channel where messages get sent to minecraft", "Leave empty to use default channel"})
+        public String CHAT_INPUT_ID = "";
+
+        @Comment({"Custom channel for ingame messages", "Leave empty to use default channel"})
+        public String CHAT_OUTPUT_ID = "";
+
+        @Comment({"Custom channel for description", "Leave empty to use default channel"})
+        public String CHANNEL_DESCRIPTION_ID = "";
+    }
+
     public static class category_webhook {
 
         @Comment("Wether or not the bot should use a webhook (it will create one)")
@@ -62,6 +88,8 @@ public class Configuration
     }
 
     public static class category_messages {
+        @Comment("Set this to true if you don't want to have Join / Leave messages being sent")
+        public boolean DISABLE_JOIN_LEAVE_MESSAGES = false;
         @Comment({"The format of the uptime command and %uptime% placeholder", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html"})
         public String UPTIME_FORMAT = "dd 'days' HH 'hours' mm 'minutes' ss 'seconds'";
         @Comment("Disable removal of color codes from chat to discord?")
@@ -130,8 +158,7 @@ public class Configuration
         public boolean ENABLE_UNKNOWN_COMMAND_MESSAGE = true;
         @Comment("Set to true to enable the \"Unknown Command\" message in all channels")
         public boolean ENABLE_UNKNOWN_COMMAND_MESSAGE_EVERYWHERE = false;
-        @Comment(
-                {"Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.", "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server", "adminOnly   -   True: Only allows users with the Admin role to use this command. " + "False: @everyone can use the command", "description -   Description shown in /help", "aliases     -   Aliases for the command " + "in a string array", "useArgs     -   Shows argument text after the command", "argText " + "    -   Defines custom arg text. Default is <args>", "channelIDs    -    Allows you to set specific text channels outside" + " of the server channel to use this command (make it an string array), Set to [\"00\"] to allow from all channels"})
+        @Comment({"Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.", "You can click on \"Compact JSON Data\" on the website", "NOTE: You MUST op the uuid set at SENDER_UUID in the ops.txt !!!", "", "mcCommand   -   The command to execute on the server", "adminOnly   -   True: Only allows users with the Admin role to use this command. " + "False: @everyone can use the command", "description -   Description shown in /help", "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Default is <args>", "channelIDs    -    Allows you to set specific text channels outside of the server channel to use this command (make it an string array), Set to [\"00\"] to allow from all channels"})
         public String JSON_COMMANDS = DiscordIntegration.defaultCommandJson;
         @Comment("The Role ID of your Admin Role")
         public String ADMIN_ROLE_ID = "0";
