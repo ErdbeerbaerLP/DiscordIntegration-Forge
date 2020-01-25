@@ -121,7 +121,7 @@ shadowJar {
     relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.1-30.0.15'
+    minecraft 'net.minecraftforge:forge:1.15.2-31.0.1'
     compile("org.spongepowered:mixin:0.8-SNAPSHOT") {
         transitive = false
     }
@@ -173,6 +173,7 @@ curseforge {
             changelog = project.changelog
             releaseType = 'release'
             addGameVersion '1.15.1'
+            addGameVersion '1.15.2'
                 mainArtifact(jar) {
                 displayName = "DiscordIntegration-$version (MC 1.15)"
             }
