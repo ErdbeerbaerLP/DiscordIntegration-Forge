@@ -31,7 +31,7 @@ public class CommandFromCFG extends DiscordCommand {
 
     @Override
     public boolean worksInChannel(String channelID) {
-        return Arrays.equals(channelIDs, new String[]{"00"}) || Arrays.equals(channelIDs, new String[]{"0"}) && channelID.equals(Configuration.INSTANCE.botChannel) || ArrayUtils.contains(channelIDs, channelID);
+        return Arrays.equals(channelIDs, new String[]{"00"}) || Arrays.equals(channelIDs, new String[]{"0"}) && channelID.equals(Configuration.INSTANCE.botChannel.get()) || ArrayUtils.contains(channelIDs, channelID);
     }
 
     /**

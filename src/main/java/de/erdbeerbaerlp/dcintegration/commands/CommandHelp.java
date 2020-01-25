@@ -31,6 +31,8 @@ public class CommandHelp extends DiscordCommand {
         for (final DiscordCommand cmd : discord.getCommandList()) {
             if (cmd.canUserExecuteCommand(cmdMsg.getAuthor()) && cmd.includeInHelp() && cmd.worksInChannel(cmdMsg.getTextChannel()))
                 out = out + cmd.getCommandUsage() + " - " + cmd.getDescription() + "\n";
+            else
+                out = out + "[NO PERMS] " + cmd.getCommandUsage() + " - " + cmd.getDescription() + "\n";
         }
         discord.sendMessage(out + "\n```", cmdMsg.getTextChannel());
 
