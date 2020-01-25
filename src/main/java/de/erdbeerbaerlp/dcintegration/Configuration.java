@@ -125,7 +125,7 @@ public class Configuration {
         //#########################
         builder.comment("General bot Configuration").push("generalSettings");
         botToken = builder.comment("Insert your Bot Token here!", "DO NOT SHARE IT WITH ANYONE!").define("botToken", "INSERT BOT TOKEN HERE");
-        botPresenceName = builder.comment("The Name of the Game").define("botPresenceName", "Minecraft");
+        botPresenceName = builder.comment("The Name of the Game", "", "PLACEHOLDERS:", "%online% - Online Players", "%max% - Maximum Player Amount").define("botPresenceName", "Minecraft with %online% players");
         botPresenceType = builder.defineEnum("botPresenceType", Discord.GameTypes.PLAYING);
         botChannel = builder.comment("The channel ID where the bot will be working in").define("botChannel", "000000000");
         botModifyDescription = builder.comment("Wether or not the Bot should modify the channel description").define("botModifyDescription", true);

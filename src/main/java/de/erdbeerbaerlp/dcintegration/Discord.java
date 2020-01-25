@@ -44,6 +44,42 @@ public class Discord implements EventListener {
     final ArrayList<String> ignoringPlayers = new ArrayList<>();
     private final JDA jda;
     public boolean isKilled = false;
+    Runnable target;
+    Thread updatePresence = new Thread() {
+        {
+            setName("[DC INTEGRATION] Discord Presence Updater");
+            setDaemon(true);
+            setPriority(MAX_PRIORITY);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                final String game = Configuration.INSTANCE.botPresenceName.get()
+                        .replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
+                        .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers());
+                switch (Configuration.INSTANCE.botPresenceType.get()) {
+                    case DISABLED:
+                        break;
+                    case LISTENING:
+                        jda.getPresence().setActivity(Activity.listening(game));
+                        break;
+                    case PLAYING:
+                        jda.getPresence().setActivity(Activity.playing(game));
+                        break;
+                    case WATCHING:
+                        jda.getPresence().setActivity(Activity.watching(game));
+                        break;
+                }
+                try {
+                    sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
+                }
+            }
+        }
+    };
     /**
      * This thread is used to update the channel description
      */
@@ -192,20 +228,6 @@ public class Discord implements EventListener {
     Discord() throws LoginException, InterruptedException {
         final JDABuilder b = new JDABuilder(Configuration.INSTANCE.botToken.get());
         b.setAutoReconnect(true);
-
-        switch (Configuration.INSTANCE.botPresenceType.get()) {
-            case DISABLED:
-                break;
-            case LISTENING:
-                b.setActivity(Activity.listening(Configuration.INSTANCE.botPresenceName.get()));
-                break;
-            case PLAYING:
-                b.setActivity(Activity.playing(Configuration.INSTANCE.botPresenceName.get()));
-                break;
-            case WATCHING:
-                b.setActivity(Activity.watching(Configuration.INSTANCE.botPresenceName.get()));
-                break;
-        }
         b.setEnableShutdownHook(false);
         this.jda = b.build().awaitReady();
         System.out.println("Bot Ready");
@@ -401,17 +423,22 @@ public class Discord implements EventListener {
                     argumentsRaw = argumentsRaw.trim();
                     boolean hasPermission = true;
                     boolean executed = false;
+                    System.out.println("Command Message" + ev.getMessage().getContentRaw());
                     for (final DiscordCommand cmd : commands) {
+                        System.out.println("1st Loop: " + cmd.getName());
                         if (!cmd.worksInChannel(ev.getTextChannel())) continue;
                         if (cmd.getName().equals(command[0])) {
                             if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                System.out.println("Executed");
                                 cmd.execute(argumentsRaw.split(" "), ev);
                                 executed = true;
                             } else hasPermission = false;
                         }
                         for (final String alias : cmd.getAliases()) {
+                            System.out.println("2nd Loop: " + cmd.getName());
                             if (alias.equals(command[0])) {
                                 if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                    System.out.println("Executed");
                                     cmd.execute(argumentsRaw.split(" "), ev);
                                     executed = true;
                                 } else hasPermission = false;
@@ -567,6 +594,7 @@ public class Discord implements EventListener {
     public void startThreads() {
         if (Configuration.INSTANCE.botModifyDescription.get()) updateChannelDesc.start();
         if (!messageSender.isAlive()) messageSender.start();
+        if (!updatePresence.isAlive()) updatePresence.start();
         /*if (Loader.isModLoaded("ftbutilities")) {
             if (FTBUtilitiesConfig.auto_shutdown.enabled) ftbUtilitiesShutdownDetectThread.start();
             if (FTBUtilitiesConfig.afk.enabled) ftbUtilitiesAFKDetectThread.start();
