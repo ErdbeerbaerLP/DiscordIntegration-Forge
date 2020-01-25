@@ -242,7 +242,7 @@ public class Configuration {
         //#########################
         //#    INGAME-COMMAND     #
         //#########################
-        builder.comment("Configurate the /discord command useable ingame").push("dc-commands");
+        builder.comment("Configurate the /discord command useable ingame").push("mc-command");
         dcCmdEnabled = builder.comment("Enable the /discord command?").define("dcCmdEnabled", true);
         dcCmdMsg = builder.comment("The message displayed when typing /discord in the server chat").define("dcCmdMsg", "Join our discord! http://discord.gg/myserver");
         dcCmdMsgHover = builder.comment("The message shown when hovering the /discord command message").define("dcCmdMsgHover", "Click to open the invite url");

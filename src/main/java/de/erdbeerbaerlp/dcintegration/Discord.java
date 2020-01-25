@@ -409,7 +409,6 @@ public class Discord implements EventListener {
                                 executed = true;
                             } else hasPermission = false;
                         }
-
                         for (final String alias : cmd.getAliases()) {
                             if (alias.equals(command[0])) {
                                 if (cmd.canUserExecuteCommand(ev.getAuthor())) {
