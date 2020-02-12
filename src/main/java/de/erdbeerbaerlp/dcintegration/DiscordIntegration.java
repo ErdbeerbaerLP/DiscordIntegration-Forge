@@ -293,7 +293,8 @@ public class DiscordIntegration {
             discord_instance = null;
         }
         if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get())
-            this.startingMsg = discord_instance.sendMessageReturns(Configuration.INSTANCE.msgServerStarting.get());
+            if (!Configuration.INSTANCE.msgServerStarting.get().isEmpty())
+                this.startingMsg = discord_instance.sendMessageReturns(Configuration.INSTANCE.msgServerStarting.get());
         if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get())
             (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
     }
