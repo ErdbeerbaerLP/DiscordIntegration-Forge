@@ -103,7 +103,7 @@ configurations {
     compile.extendsFrom(embed)
 }
 shadowJar {
-    classifier = '1.15'
+    classifier = '1.14'
     configurations = [project.configurations.embed]
     relocate 'okhttp3', 'dcshadow.okhttp'
     relocate 'okio', 'dcshadow.okio'
@@ -121,7 +121,7 @@ shadowJar {
     relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.2-31.0.1'
+    minecraft 'net.minecraftforge:forge:1.14.4-28.2.0'
     compile("org.spongepowered:mixin:0.8-SNAPSHOT") {
         transitive = false
     }
@@ -145,7 +145,7 @@ artifacts {
     archives tasks.shadowJar
 }
 jar {
-    classifier = "1.15"
+    classifier = "1.14"
     manifest {
         attributes([
                 'Maven-Artifact'          : "${project.group}:${project.archivesBaseName}:${project.version}",
