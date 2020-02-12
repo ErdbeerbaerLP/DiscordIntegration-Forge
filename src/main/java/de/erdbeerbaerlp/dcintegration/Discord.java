@@ -77,7 +77,6 @@ public class Discord implements EventListener {
                 try {
                     sleep(1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
                     break;
                 }
             }
