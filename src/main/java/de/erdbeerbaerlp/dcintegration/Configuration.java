@@ -13,12 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class Configuration
-{
+public class Configuration {
     public static final ForgeConfigSpec cfgSpec;
     public static final Configuration INSTANCE;
-    
-    
+
     static {
         {
             final Pair<Configuration, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Configuration::new);
@@ -26,14 +24,14 @@ public class Configuration
             cfgSpec = specPair.getRight();
         }
     }
-    
+
     //#########################
     //#        GENERAL        #
     //#########################
-    public final ForgeConfigSpec.ConfigValue<String> botToken;
-    public final ForgeConfigSpec.ConfigValue<String> botPresenceName;
+    public final ConfigValue<String> botToken;
+    public final ConfigValue<String> botPresenceName;
     public final ForgeConfigSpec.EnumValue<Discord.GameTypes> botPresenceType;
-    public final ForgeConfigSpec.ConfigValue<String> botChannel;
+    public final ConfigValue<String> botChannel;
     public final ForgeConfigSpec.BooleanValue botModifyDescription;
     public final ForgeConfigSpec.BooleanValue updateCheck;
     //#########################
@@ -41,81 +39,93 @@ public class Configuration
     //#########################
     public final ForgeConfigSpec.BooleanValue enableWebhook;
     public final ConfigValue<String> serverAvatar;
-    public final ForgeConfigSpec.ConfigValue<String> serverName;
+    public final ConfigValue<String> serverName;
     //#########################
     //#       MESSAGES        #
     //#########################
     public final ForgeConfigSpec.BooleanValue discordColorCodes;
     public final ForgeConfigSpec.BooleanValue preventMcColorCodes;
-    public final ForgeConfigSpec.ConfigValue<String> msgServerStarted;
-    public final ForgeConfigSpec.ConfigValue<String> msgServerStarting;
-    public final ForgeConfigSpec.ConfigValue<String> msgServerStopped;
-    public final ForgeConfigSpec.ConfigValue<String> msgPlayerJoin;
-    public final ForgeConfigSpec.ConfigValue<String> msgPlayerLeave;
-    public final ForgeConfigSpec.ConfigValue<String> msgPlayerDeath;
-    public final ForgeConfigSpec.ConfigValue<String> msgServerCrash;
-    public final ForgeConfigSpec.ConfigValue<String> ingameDiscordMsg;
-    public final ForgeConfigSpec.ConfigValue<String> msgAdvancement;
-    public final ForgeConfigSpec.ConfigValue<String> msgChatMessage;
-    public final ForgeConfigSpec.ConfigValue<String> description;
-    public final ForgeConfigSpec.ConfigValue<String> descriptionOffline;
-    public final ForgeConfigSpec.ConfigValue<String> descriptionStarting;
-    public final ForgeConfigSpec.ConfigValue<String> msgPlayerTimeout;
+    public final ConfigValue<String> msgServerStarted;
+    public final ConfigValue<String> msgServerStarting;
+    public final ConfigValue<String> msgServerStopped;
+    public final ConfigValue<String> msgPlayerJoin;
+    public final ConfigValue<String> msgPlayerLeave;
+    public final ConfigValue<String> msgPlayerDeath;
+    public final ConfigValue<String> msgServerCrash;
+    public final ConfigValue<String> ingameDiscordMsg;
+    public final ConfigValue<String> msgAdvancement;
+    public final ConfigValue<String> msgChatMessage;
+    public final ConfigValue<String> description;
+    public final ConfigValue<String> descriptionOffline;
+    public final ConfigValue<String> descriptionStarting;
+    public final ConfigValue<String> msgPlayerTimeout;
     public final ForgeConfigSpec.BooleanValue sayOutput;
     public final ForgeConfigSpec.BooleanValue meOutput;
-    public final ForgeConfigSpec.ConfigValue<String> imcModIdBlacklist;
+    public final ConfigValue<String> imcModIdBlacklist;
     public final ForgeConfigSpec.BooleanValue tamedDeathEnabled;
     public final ConfigValue<String> msgIgnoreUnignore;
     public final ConfigValue<String> msgIgnoreIgnore;
-    
+    public final ConfigValue<String> uptimeFormat;
+
     //#########################
     //#       COMMANDS        #
     //#########################
-    public final ForgeConfigSpec.ConfigValue<String> adminRoleId;
-    public final ForgeConfigSpec.ConfigValue<String> prefix;
-    public final ForgeConfigSpec.ConfigValue<String> msgListEmpty;
-    public final ForgeConfigSpec.ConfigValue<String> msgListOne;
-    public final ForgeConfigSpec.ConfigValue<String> msgListHeader;
-    public final ForgeConfigSpec.ConfigValue<String> msgNoPermission;
-    public final ForgeConfigSpec.ConfigValue<String> msgUnknownCommand;
-    public final ForgeConfigSpec.ConfigValue<String> msgNotEnoughArgs;
-    public final ForgeConfigSpec.ConfigValue<String> msgTooManyArgs;
-    public final ForgeConfigSpec.ConfigValue<String> msgPlayerNotFound;
-    public final ForgeConfigSpec.ConfigValue<String> jsonCommands;
-    public final ForgeConfigSpec.ConfigValue<String> senderUUID;
+    public final ConfigValue<String> adminRoleId;
+    public final ConfigValue<String> prefix;
+    public final ConfigValue<String> msgListEmpty;
+    public final ConfigValue<String> msgListOne;
+    public final ConfigValue<String> msgListHeader;
+    public final ConfigValue<String> msgNoPermission;
+    public final ConfigValue<String> msgUnknownCommand;
+    public final ConfigValue<String> msgNotEnoughArgs;
+    public final ConfigValue<String> msgTooManyArgs;
+    public final ConfigValue<String> msgPlayerNotFound;
+    public final ConfigValue<String> jsonCommands;
+    public final ConfigValue<String> senderUUID;
     public final ForgeConfigSpec.BooleanValue cmdHelpEnabled;
     public final ForgeConfigSpec.BooleanValue cmdListEnabled;
     public final ForgeConfigSpec.BooleanValue cmdUptimeEnabled;
     public final ForgeConfigSpec.BooleanValue enableUnknownCommandEverywhere;
     public final ForgeConfigSpec.BooleanValue enableUnknownCommandMsg;
-    public final ForgeConfigSpec.ConfigValue<String> helpCmdChannelID;
-    public final ForgeConfigSpec.ConfigValue<String> listCmdChannelID;
-    public final ForgeConfigSpec.ConfigValue<String> uptimeCmdChannelID;
-    public final ForgeConfigSpec.ConfigValue<String> helpHeader;
-    
+    public final ConfigValue<String> helpCmdChannelID;
+    public final ConfigValue<String> listCmdChannelID;
+    public final ConfigValue<String> uptimeCmdChannelID;
+    public final ConfigValue<String> helpHeader;
+
     //#########################
     //#    INGAME-COMMAND     #
     //#########################
     public final ForgeConfigSpec.BooleanValue dcCmdEnabled;
-    public final ForgeConfigSpec.ConfigValue<String> dcCmdMsg;
-    public final ForgeConfigSpec.ConfigValue<String> dcCmdMsgHover;
-    public final ForgeConfigSpec.ConfigValue<String> dcCmdURL;
-    
-    //	//#########################
+    public final ConfigValue<String> dcCmdMsg;
+    public final ConfigValue<String> dcCmdMsgHover;
+    public final ConfigValue<String> dcCmdURL;
+
+//	//#########################
 //	//#     FTB-UTILITIES     # XXX Not implemented, since FTB Utilities is still on 1.12
 //	//#########################
 //	public final ForgeConfigSpec.BooleanValue ftbuAfkMsgEnabled;
-//	public final ForgeConfigSpec.ConfigValue<String> ftbuAFKMsg;
-//	public final ForgeConfigSpec.ConfigValue<String> ftbuAFKMsgEnd;
-//	public final ForgeConfigSpec.ConfigValue<String> ftbuAvatar;
-//	public final ForgeConfigSpec.ConfigValue<String> ftbuShutdownMsg;
+//	public final ConfigValue<String> ftbuAFKMsg;
+//	public final ConfigValue<String> ftbuAFKMsgEnd;
+//	public final ConfigValue<String> ftbuAvatar;
+//	public final ConfigValue<String> ftbuShutdownMsg;
+
+
+    //#########################
+    //#        ADVANCED       #
+    //#########################
+    public final ConfigValue<String> channelDescriptionID;
+    public final ConfigValue<String> serverChannelID;
+    public final ConfigValue<String> deathChannelID;
+    public final ConfigValue<String> chatOutputChannel;
+    public final ConfigValue<String> chatInputChannel;
+
     Configuration(final ForgeConfigSpec.Builder builder) {
         //#########################
         //#        GENERAL        #
         //#########################
         builder.comment("General bot Configuration").push("generalSettings");
         botToken = builder.comment("Insert your Bot Token here!", "DO NOT SHARE IT WITH ANYONE!").define("botToken", "INSERT BOT TOKEN HERE");
-        botPresenceName = builder.comment("The Name of the Game").define("botPresenceName", "Minecraft");
+        botPresenceName = builder.comment("The Name of the Game", "", "PLACEHOLDERS:", "%online% - Online Players", "%max% - Maximum Player Amount").define("botPresenceName", "Minecraft with %online% players");
         botPresenceType = builder.defineEnum("botPresenceType", Discord.GameTypes.PLAYING);
         botChannel = builder.comment("The channel ID where the bot will be working in").define("botChannel", "000000000");
         botModifyDescription = builder.comment("Wether or not the Bot should modify the channel description").define("botModifyDescription", true);
@@ -145,19 +155,20 @@ public class Configuration
         ingameDiscordMsg = builder.comment("This is what will be displayed ingame when someone types into the bot\u00B4s channel", "PLACEHOLDERS:", "%user% - The username", "%id% - The user ID", "%msg% - The Message").define(
                 "ingameDiscordMsg", "\u00A76[\u00A75DISCORD\u00A76]\u00A7r <%user%> %msg%");
         msgAdvancement = builder.comment("Supports MulitLined messages using \\n", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%name% - The advancement name", "%desc% - The advancement description").define("msgAdvancement",
-                                                                                                                                                                                                                         "%player% just gained the advancement **%name%**\\n_%desc%_");
+                "%player% just gained the advancement **%name%**\\n_%desc%_");
         msgChatMessage = builder.comment("Chat message", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message").define("msgChatMessage", "%player%: %msg%");
         description = builder.comment("Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS",
-                                      "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server").define("description", "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%");
+                "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server").define("description", "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%");
         descriptionOffline = builder.comment("Channel description while the server is offline").define("descriptionOffline", "Server is Offline!");
         descriptionStarting = builder.comment("Channel description while the server is starting").define("descriptionStarting", "Starting...");
-        msgPlayerTimeout = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.14!").define("msgPlayerTimeout", "%player% timed out!");
+        msgPlayerTimeout = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.15!").define("msgPlayerTimeout", "%player% timed out!");
         sayOutput = builder.comment("Should /say output be sent to discord?").define("enableSayOutput", true);
         meOutput = builder.comment("Should /me output be sent to discord?").define("enableMeOutput", true);
         imcModIdBlacklist = builder.comment("A list of blacklisted modids", "Adding one will prevent the mod to send messages to discord using forges IMC system").define("imcModIdBlacklist", parseArray(new String[]{"examplemodid"}));
         tamedDeathEnabled = builder.comment("Should tamed entity death be visible in discord?").define("tamedDeathEnabled", false);
         msgIgnoreIgnore = builder.comment("Message sent when ignoring Discord messages").define("msgIgnoreIgnore", "You are now ignoring Discord messages!");
         msgIgnoreUnignore = builder.comment("Message sent when unignoring Discord messages").define("msgIgnoreUnignore", "You are no longer ignoring Discord messages!");
+        uptimeFormat = builder.comment("The format of the uptime command and %uptime% placeholder", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html").define("uptimeFormat", "dd 'days' HH 'hours' mm 'minutes' ss 'seconds'");
         builder.pop();
         //#########################
         //#       COMMANDS        #
@@ -213,11 +224,11 @@ public class Configuration
         cmdListEnabled = builder.comment("Enable the list command in discord", "Requires server restart").define("enableListCommand", true);
         cmdUptimeEnabled = builder.comment("Enable the iptime command in discord", "Requires server restart").define("enableUptimeCommand", true);
         jsonCommands = builder.comment("Add your Custom commands to this JSON", "You can copy-paste it to https://jsoneditoronline.org  Make sure when pasting here, that the json is NOT mulitlined.",
-                                       "You can click on \"Compact JSON Data\" on the website", "NOTE: The JSON string must be escaped. You can use this website to escape or unescape: https://www.freeformatter.com/java-dotnet-escape.html",
-                                       "NOTE 2: You MUST op the uuid set at SENDER_UUID in the " + "ops.txt !!!", "", "mcCommand   -   The command to" + " " + "execute on the " + "server",
-                                       "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help",
-                                       "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Default is <args>",
-                                       "channelIDs  -   Allows you to set specific text channels outside" + " of the server channel to use this command (make it an string array), Set to [\"00\"] to allow from all channels").define(
+                "You can click on \"Compact JSON Data\" on the website", "NOTE: The JSON string must be escaped. You can use this website to escape or unescape: https://www.freeformatter.com/java-dotnet-escape.html",
+                "NOTE 2: You MUST op the uuid set at SENDER_UUID in the " + "ops.txt !!!", "", "mcCommand   -   The command to" + " " + "execute on the " + "server",
+                "adminOnly   -   True: Only allows users with the Admin role to use this command. False: @everyone can use the command", "description -   Description shown in /help",
+                "aliases     -   Aliases for the command in a string array", "useArgs     -   Shows argument text after the command", "argText     -   Defines custom arg text. Default is <args>",
+                "channelIDs  -   Allows you to set specific text channels outside" + " of the server channel to use this command (make it an string array), Set to [\"00\"] to allow from all channels").define(
                 "jsonCommands", defaultCommandJson);
         senderUUID = builder.comment("You MUST op this UUID in the ops.txt or many commands won't work!!").define("senderUUID", "8d8982a5-8cf9-4604-8feb-3dd5ee1f83a3");
         enableUnknownCommandEverywhere = builder.comment("Set to true to enable the \"Unknown Command\" message in all channels").define("enableUnknownCommandEverywhere", false);
@@ -226,12 +237,12 @@ public class Configuration
         helpCmdChannelID = builder.comment("Custom Channel ID list for the help command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "00");
         uptimeCmdChannelID = builder.comment("Custom Channel ID list for the uptime command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "0");
         listCmdChannelID = builder.comment("Custom Channel ID list for the list command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "0");
-    
+
         builder.pop();
         //#########################
         //#    INGAME-COMMAND     #
         //#########################
-        builder.comment("Configurate the /discord command useable ingame").push("dc-commands");
+        builder.comment("Configurate the /discord command useable ingame").push("mc-command");
         dcCmdEnabled = builder.comment("Enable the /discord command?").define("dcCmdEnabled", true);
         dcCmdMsg = builder.comment("The message displayed when typing /discord in the server chat").define("dcCmdMsg", "Join our discord! http://discord.gg/myserver");
         dcCmdMsgHover = builder.comment("The message shown when hovering the /discord command message").define("dcCmdMsgHover", "Click to open the invite url");
@@ -257,18 +268,28 @@ public class Configuration
 //				.comment("Format of the shutdown message printed when the server will shutdown/restart in 30 and 10 seconds","PLACEHOLDERS:", "%seconds% - The seconds remaining till shutdown (30 or 10)")
 //				.define("ftbuShutdownMsg", "Server stopping in %seconds%!");
 //		builder.pop();
+        //#########################
+        //#        ADVANCED       #
+        //#########################
+        builder.comment("Configure Advanced features like moving specific message types to different channels").push("advanced");
+        channelDescriptionID = builder.comment("Custom channel for description", "Leave empty to use default channel").define("channelDescriptionID", "");
+        serverChannelID = builder.comment("Custom channel ID for server specific messages (like Join/leave)", "Leave empty to use default channel").define("serverChannelID", "");
+        deathChannelID = builder.comment("Custom channel ID for death messages", "Leave empty to use default channel").define("deathChannelID", "");
+        chatOutputChannel = builder.comment("Custom channel for for ingame messages", "Leave empty to use default channel").define("chatOutputID", "");
+        chatInputChannel = builder.comment("Custom channel where messages get sent to minecraft", "Leave empty to use default channel").define("chatInputID", "");
+        builder.pop();
     }
-    
+
     public static String parseArray(String[] array) {
         String out = "[";
-        for (int i = 0 ; i < array.length ; i++) {
+        for (int i = 0; i < array.length; i++) {
             out += "\"" + array[i] + "\"";
             if (i != array.length - 1) out += ", ";
         }
         out += "]";
         return out;
     }
-    
+
     public static String[] getArray(String s) {
         final ArrayList<String> tmpList = new ArrayList<>();
         if (!s.startsWith("[") && !s.endsWith("]")) return new String[0];
@@ -278,7 +299,7 @@ public class Configuration
         }
         return tmpList.toArray(new String[0]);
     }
-    
+
     public static void setValueAndSave(final ModConfig cfg, final List<String> list, final Object newValue) {
         cfg.getConfigData().set(list, newValue);
         cfg.save();

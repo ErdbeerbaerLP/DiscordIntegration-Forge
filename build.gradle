@@ -16,7 +16,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
-        //classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
         classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
     }
 }
@@ -28,7 +28,7 @@ apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-//apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'org.spongepowered.mixin'
 repositories {
     jcenter()
     maven {
@@ -42,7 +42,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.1.10"
+version = "1.1.13"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -103,7 +103,7 @@ configurations {
     compile.extendsFrom(embed)
 }
 shadowJar {
-    classifier = '1.14'
+    classifier = '1.15'
     configurations = [project.configurations.embed]
     relocate 'okhttp3', 'dcshadow.okhttp'
     relocate 'okio', 'dcshadow.okio'
@@ -121,21 +121,21 @@ shadowJar {
     relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.14.4-28.0.45'
-    /*embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+    minecraft 'net.minecraftforge:forge:1.15.2-31.0.1'
+    compile("org.spongepowered:mixin:0.8-SNAPSHOT") {
         transitive = false
-    }*/
+    }
     embed("net.dv8tion:JDA:4.0.0_39")
     embed 'club.minnced:discord-webhooks:0.1.8'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     //deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
     //deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'
 }
-/*mixin {
+mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
-}*/
+}
 reobf {
-    shadowJar  {
+    shadowJar {
         dependsOn tasks.createMcpToSrg
         mappings = tasks.createMcpToSrg.outputs.files.singleFile
     }
@@ -145,18 +145,22 @@ artifacts {
     archives tasks.shadowJar
 }
 jar {
-    classifier = "1.14"
+    classifier = "1.15"
     manifest {
         attributes([
-                'Maven-Artifact': "${project.group}:${project.archivesBaseName}:${project.version}",
-                'Timestamp': System.currentTimeMillis(),
-                "Specification-Title": "dcintegration",
-                "Specification-Vendor": "dcintegration",
-                "Specification-Version": "1", // We are version 1 of ourselves
-                "Implementation-Title": project.name,
-                "Implementation-Version": "${version}",
-                "Implementation-Vendor" :"dcintegration",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                'Maven-Artifact'          : "${project.group}:${project.archivesBaseName}:${project.version}",
+                'Timestamp'               : System.currentTimeMillis(),
+                "Specification-Title"     : "dcintegration",
+                "Specification-Vendor"    : "dcintegration",
+                "Specification-Version"   : "1", // We are version 1 of ourselves
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : "${version}",
+                "Implementation-Vendor"   : "dcintegration",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+                'MixinConfigs': 'mixins.dcintegration.json',
+                "ForceLoadAsMod": "true",
+                'FMLCorePluginContainsFMLMod': 'true'
         ])
     }
 }
@@ -180,6 +184,9 @@ curseforge {
                 optionalDependency 'ftb-utilities'
                 optionalDependency 'emojicord'
                 optionalDependency 'voting'
+            }
+            options {
+                forgeGradleIntegration = false // defaults to true
             }
         }
     }

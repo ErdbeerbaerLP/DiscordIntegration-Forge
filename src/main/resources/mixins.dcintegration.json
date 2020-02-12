@@ -1,10 +1,9 @@
 {
-	"required": true,
-    "package": "de.erdbeerbaerlp.dcintegration.mixin",
-    "refmap": "mixins.dcintegration.refmap.json",
-    "minVersion": "0.6",
-    "compatibilityLevel": "JAVA_8",
-    "server": [
-        "MixinNetHandlerPlayServer"
-    ]
+  "package": "de.erdbeerbaerlp.dcintegration.mixin",
+  "refmap": "mixins.dcintegration.refmap.json",
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_8",
+  "server": [
+    "MixinNetHandlerPlayServer"
+  ]
 }

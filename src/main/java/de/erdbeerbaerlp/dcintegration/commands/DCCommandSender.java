@@ -19,55 +19,55 @@ import java.util.concurrent.ScheduledExecutorService;
 
 
 @SuppressWarnings("EntityConstructor")
-public class DCCommandSender extends FakePlayer
-{
-    
+public class DCCommandSender extends FakePlayer {
+
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat(DCCommandSender.class.getSimpleName()).setDaemon(true).build());
     private static final UUID uuid = UUID.fromString(Configuration.INSTANCE.senderUUID.get());
     private final CommandFromCFG command;
-    
-    
-    public DCCommandSender(User user, CommandFromCFG command) {
+    private String channelID;
+
+    public DCCommandSender(User user, CommandFromCFG command, String channel) {
         super(ServerLifecycleHooks.getCurrentServer().getWorld(DimensionType.OVERWORLD), new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
         this.command = command;
+        this.channelID = channel;
     }
-    
-    @SuppressWarnings("unused")
-    public DCCommandSender(ServerWorld world, String name, CommandFromCFG command) {
+
+    public DCCommandSender(ServerWorld world, String name, CommandFromCFG command, String channel) {
         super(world, new GameProfile(uuid, "@" + name));
         this.command = command;
+        this.channelID = channel;
     }
-    
+
     private static String textComponentToDiscordMessage(ITextComponent component) {
         return DiscordIntegration.removeFormatting(component.getFormattedText());
-        
+
     }
-    
+
     @Override
     public void sendMessage(ITextComponent textComponent, ChatType chatTypeIn) {
         Preconditions.checkNotNull(textComponent);
         DiscordIntegration.discord_instance.sendMessage(textComponentToDiscordMessage(textComponent));
     }
-    
+
     @Override
     public boolean shouldReceiveFeedback() {
         return true;
     }
-    
+
     @Override
     public boolean shouldReceiveErrors() {
         return true;
     }
-    
+
     @Override
     public void sendMessage(ITextComponent component) {
         Preconditions.checkNotNull(component);
-        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component));
+        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component), channelID);
     }
-    
+
     @Override
     public void sendStatusMessage(ITextComponent component, boolean actionBar) {
         Preconditions.checkNotNull(component);
-        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component));
+        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component), channelID);
     }
 }

@@ -26,11 +26,16 @@ import net.minecraftforge.fml.event.server.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
@@ -38,8 +43,7 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("ConstantConditions")
 @Mod(DiscordIntegration.MODID)
-public class DiscordIntegration
-{
+public class DiscordIntegration {
     /**
      * Mod name
      */
@@ -47,12 +51,13 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.10";
+    public static final String VERSION = "1.1.13";
     /**
      * Modid
      */
     public static final String MODID = "dcintegration";
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Pattern PATTERN_CONTROL_CODE = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
     /**
      * The only instance of {@link Discord}
      */
@@ -63,30 +68,9 @@ public class DiscordIntegration
     public static long started;
     public static ModConfig cfg = null;
     public static PlayerEntity lastTimeout;
-    /**
-     * Message sent when the server is starting (in non-webhook mode!), stored for editing
-     */
-    private CompletableFuture<Message> startingMsg;
-    /**
-     * If the server was stopped or has crashed
-     */
-    private boolean stopped = false;
-    
-    public DiscordIntegration() throws SecurityException, IllegalArgumentException {
-        
-        //Register Config
-        final ModLoadingContext modLoadingContext = ModLoadingContext.get();
-        modLoadingContext.registerConfig(ModConfig.Type.COMMON, Configuration.cfgSpec);
-        
-        // Register the setup method for modloading
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
-        
-        // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
-    }
-    
+    public static final ArrayList<UUID> timeouts = new ArrayList<>();
     static String defaultCommandJson;
-    
+
     static {
         final JsonObject a = new JsonObject();
         final JsonObject kick = new JsonObject();
@@ -121,6 +105,29 @@ public class DiscordIntegration
         final Gson gson = new GsonBuilder().create();
         defaultCommandJson = gson.toJson(a);
     }
+
+    /**
+     * Message sent when the server is starting (in non-webhook mode!), stored for editing
+     */
+    private CompletableFuture<Message> startingMsg;
+    /**
+     * If the server was stopped or has crashed
+     */
+    private boolean stopped = false;
+
+    public DiscordIntegration() throws SecurityException, IllegalArgumentException {
+
+        //Register Config
+        final ModLoadingContext modLoadingContext = ModLoadingContext.get();
+        modLoadingContext.registerConfig(ModConfig.Type.COMMON, Configuration.cfgSpec);
+
+        // Register the setup method for modloading
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
+
+        // Register ourselves for server and other game events we are interested in
+        MinecraftForge.EVENT_BUS.register(this);
+    }
+
     /**
      * Removes Color code formatting
      *
@@ -129,14 +136,14 @@ public class DiscordIntegration
      */
     public static String removeFormatting(String formatted) {
         return formatted.replaceAll("\u00A70", "").replaceAll("\u00A71", "").replaceAll("\u00A72", "").replaceAll("\u00A73", "").replaceAll("\u00A74", "").replaceAll("\u00A75", "").replaceAll("\u00A76", "").replaceAll("\u00A77", "")
-                        .replaceAll("\u00A78", "").replaceAll("\u00A79", "").replaceAll("\u00A7a", "").replaceAll("\u00A7b", "").replaceAll("\u00A7c", "").replaceAll("\u00A7d", "").replaceAll("\u00A7e", "").replaceAll("\u00A7f", "")
-                        .replaceAll("\u00A7l", "").replaceAll("\u00A7k", "").replaceAll("\u00A7m", "").replaceAll("\u00A7n", "").replaceAll("\u00A7o", "").replaceAll("\u00A7r", "");
+                .replaceAll("\u00A78", "").replaceAll("\u00A79", "").replaceAll("\u00A7a", "").replaceAll("\u00A7b", "").replaceAll("\u00A7c", "").replaceAll("\u00A7d", "").replaceAll("\u00A7e", "").replaceAll("\u00A7f", "")
+                .replaceAll("\u00A7l", "").replaceAll("\u00A7k", "").replaceAll("\u00A7m", "").replaceAll("\u00A7n", "").replaceAll("\u00A7o", "").replaceAll("\u00A7r", "");
     }
-    
+
     public static String formatPlayerName(Entity p) {
         return formatPlayerName(p, true);
     }
-    
+
     public static void registerConfigCommands() {
         final JsonObject commandJson = new JsonParser().parse(Configuration.INSTANCE.jsonCommands.get()).getAsJsonObject();
         System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
@@ -155,50 +162,50 @@ public class DiscordIntegration
             String[] aliases = new String[0];
             if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
                 aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
-                for (int i = 0 ; i < aliases.length ; i++)
+                for (int i = 0; i < aliases.length; i++)
                     aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
             }
             String[] channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelID").getAsJsonArray()) : new String[]{"0"};
             final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
-            if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
-    
+            if (!discord_instance.registerCommand(regCmd))
+                System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
+
         }
     }
-    
+
     private static String[] makeStringArray(final JsonArray channelID) {
         final String[] out = new String[channelID.size()];
-        for (int i = 0 ; i < out.length ; i++) {
+        for (int i = 0; i < out.length; i++) {
             out[i] = channelID.get(i).getAsString();
         }
         return out;
     }
-    
-    public static String getUptime() {
+
+    public static String getFullUptime() {
         if (started == 0) {
             return "?????";
         }
-        
-        long diff = new Date().getTime() - started;
-        
-        int seconds = (int) Math.floorDiv(diff, 1000);
-        if (seconds < 60) {
-            return seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int minutes = Math.floorDiv(seconds, 60);
-        seconds -= minutes * 60;
-        if (minutes < 60) {
-            return minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int hours = Math.floorDiv(minutes, 60);
-        minutes -= hours * 60;
-        if (hours < 24) {
-            return hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
-        }
-        int days = Math.floorDiv(hours, 24);
-        hours -= days * 24;
-        return days + " day" + (days == 1 ? "" : "s") + ", " + hours + " hour" + (hours == 1 ? "" : "s") + ", " + minutes + " minute" + (minutes == 1 ? "" : "s") + ", " + seconds + " second" + (seconds == 1 ? "" : "s");
+        final Duration duration = Duration.between(Instant.ofEpochMilli(started), Instant.now());
+        return DurationFormatUtils.formatDuration(duration.toMillis(), Configuration.INSTANCE.uptimeFormat.get());
     }
-    
+
+    public static int getUptimeSeconds() {
+        long diff = new Date().getTime() - started;
+        return (int) Math.floorDiv(diff, 1000);
+    }
+
+    public static int getUptimeMinutes() {
+        return Math.floorDiv(getUptimeSeconds(), 60);
+    }
+
+    public static int getUptimeHours() {
+        return Math.floorDiv(getUptimeMinutes(), 60);
+    }
+
+    public static int getUptimeDays() {
+        return Math.floorDiv(getUptimeHours(), 24);
+    }
+
     public static String formatPlayerName(Entity p, boolean chatFormat) {
         /*if (Loader.isModLoaded("ftbutilities") && p instanceof EntityPlayer) {
             final FTBUtilitiesPlayerData d = FTBUtilitiesPlayerData.get(Universe.get().getPlayer(p));
@@ -207,12 +214,17 @@ public class DiscordIntegration
         }*/
         return p.getName().getUnformattedComponentText();
     }
-    
+
+    public static String stripControlCodes(String text) {
+        return PATTERN_CONTROL_CODE.matcher(text).replaceAll("");
+    }
+
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
-        if (discord_instance != null) discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerJoin.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
+        if (discord_instance != null)
+            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerJoin.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
     }
-    
+
     @SubscribeEvent
     public void onModConfigEvent(final ModConfig.ModConfigEvent event) {
         final ModConfig config = event.getConfig();
@@ -221,40 +233,27 @@ public class DiscordIntegration
             cfg = config;
         }
     }
-    
-    @SubscribeEvent
-    public void chat(ServerChatEvent ev) {
-        if (discord_instance != null) discord_instance.sendMessage(ev.getPlayer(), ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
-    }
-    
-    @SubscribeEvent
-    public void death(LivingDeathEvent ev) {
-        if (ev.getEntity() instanceof PlayerEntity || (ev.getEntity() instanceof TameableEntity && ((TameableEntity) ev.getEntity()).getOwner() instanceof PlayerEntity && Configuration.INSTANCE.tamedDeathEnabled.get())) {
-            if (discord_instance != null) discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerDeath.get().replace("%player%", formatPlayerName(ev.getEntity())).replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving())
-                                                                                                                                                                                            .getUnformattedComponentText().replace(
-                            ev.getEntity().getName().getUnformattedComponentText() + " ", "")));
-        }
-    }
-    
+
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
-        if (discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat()) discord_instance.sendMessage(Configuration.INSTANCE.msgAdvancement.get().replace("%player%",
-                                                                                                                                                                                                                              ev.getPlayer()
-                                                                                                                                                                                                                                .getName()
-                                                                                                                                                                                                                                .getUnformattedComponentText())
-                                                                                                                                                                                                               .replace("%name%",
-                                                                                                                                                                                                                        ev.getAdvancement()
-                                                                                                                                                                                                                          .getDisplay()
-                                                                                                                                                                                                                          .getTitle()
-                                                                                                                                                                                                                          .getUnformattedComponentText())
-                                                                                                                                                                                                               .replace("%desc%",
-                                                                                                                                                                                                                        ev.getAdvancement()
-                                                                                                                                                                                                                          .getDisplay()
-                                                                                                                                                                                                                          .getDescription()
-                                                                                                                                                                                                                          .getUnformattedComponentText())
-                                                                                                                                                                                                               .replace("\\n", "\n"));
+        if (discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
+            discord_instance.sendMessage(Configuration.INSTANCE.msgAdvancement.get().replace("%player%",
+                    ev.getPlayer()
+                            .getName()
+                            .getUnformattedComponentText())
+                    .replace("%name%",
+                            ev.getAdvancement()
+                                    .getDisplay()
+                                    .getTitle()
+                                    .getUnformattedComponentText())
+                    .replace("%desc%",
+                            ev.getAdvancement()
+                                    .getDisplay()
+                                    .getDescription()
+                                    .getUnformattedComponentText())
+                    .replace("\\n", "\n"));
     }
-    
+
     public void preInit(final FMLDedicatedServerSetupEvent ev) {
         System.out.println("Loading mod");
         try {
@@ -270,7 +269,7 @@ public class DiscordIntegration
                     System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
                     continue;
                 }
-    
+
                 final String mcCommand = cmdVal.get("mcCommand").getAsString();
                 final String desc = cmdVal.has("description") ? cmdVal.get("description").getAsString() : "No Description";
                 final boolean admin = !cmdVal.has("adminOnly") || cmdVal.get("adminOnly").getAsBoolean();
@@ -280,32 +279,35 @@ public class DiscordIntegration
                 String[] aliases = new String[0];
                 if (cmdVal.has("aliases") && cmdVal.get("aliases").isJsonArray()) {
                     aliases = new String[cmdVal.getAsJsonArray("aliases").size()];
-                    for (int i = 0 ; i < aliases.length ; i++)
+                    for (int i = 0; i < aliases.length; i++)
                         aliases[i] = cmdVal.getAsJsonArray("aliases").get(i).getAsString();
                 }
                 String[] channelID = (cmdVal.has("channelIDs") && cmdVal.get("channelIDs") instanceof JsonArray) ? makeStringArray(cmdVal.get("channelIDs").getAsJsonArray()) : new String[]{"0"};
                 final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
-                if (!discord_instance.registerCommand(regCmd)) System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
+                if (!discord_instance.registerCommand(regCmd))
+                    System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
             }
             System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
         } catch (Exception e) {
             System.err.println("Failed to login: " + e.getMessage());
             discord_instance = null;
         }
-        if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get()) this.startingMsg = discord_instance.sendMessageReturns("Server Starting...");
-        if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
+        if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get())
+            this.startingMsg = discord_instance.sendMessageReturns(Configuration.INSTANCE.msgServerStarting.get());
+        if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get())
+            (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
     }
-    
+
     @SubscribeEvent
     public void serverAboutToStart(final FMLServerAboutToStartEvent ev) {
-    
+
     }
-    
+
     @SubscribeEvent
     public void serverStarting(final FMLServerStartingEvent ev) {
         new McCommandDiscord(ev.getCommandDispatcher());
     }
-    
+
     @SubscribeEvent
     public void serverStarted(final FMLServerStartedEvent ev) {
         LOGGER.info("Started");
@@ -331,7 +333,7 @@ public class DiscordIntegration
                 discord_instance.kill();
             }
         }));*/
-        
+
         //noinspection StatementWithEmptyBody
         if (Configuration.INSTANCE.updateCheck.get()) {
             //UNUSED for now
@@ -352,14 +354,15 @@ public class DiscordIntegration
             //				}
         }
     }
-    
+
     @SubscribeEvent
     public void command(CommandEvent ev) {
         String command = ev.getParseResults().getReader().getString();
         if (discord_instance != null) {
             if (((command.startsWith("/say") || command.startsWith("say")) && Configuration.INSTANCE.sayOutput.get()) || ((command.startsWith("/me") || command.startsWith("me")) && Configuration.INSTANCE.meOutput.get())) {
                 String msg = command.replace("/say ", "").replace("/me ", "");
-                if (command.startsWith("say") || command.startsWith("me")) msg = msg.replaceFirst("say ", "").replaceFirst("me ", "");
+                if (command.startsWith("say") || command.startsWith("me"))
+                    msg = msg.replaceFirst("say ", "").replaceFirst("me ", "");
                 if (command.startsWith("/me") || command.startsWith("me")) msg = "*" + msg.trim() + "*";
                 try {
                     discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), msg);
@@ -369,14 +372,14 @@ public class DiscordIntegration
             }
         }
     }
-    
+
     private String getModNameFromID(String modid) {
         for (ModInfo c : ModList.get().getMods()) {
             if (c.getModId().equals(modid)) return c.getDisplayName();
         }
         return modid;
     }
-    
+
     @SubscribeEvent
     public void serverStopping(final FMLServerStoppingEvent ev) {
         if (discord_instance != null) {
@@ -386,33 +389,34 @@ public class DiscordIntegration
                 b.setContent(Configuration.INSTANCE.msgServerStopped.get());
                 b.setUsername(Configuration.INSTANCE.serverName.get());
                 b.setAvatarUrl(Configuration.INSTANCE.serverAvatar.get());
-                final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(discord_instance.getChannel()).getUrl());
+                final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(Configuration.INSTANCE.serverChannelID.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.serverChannelID.get())).getUrl());
                 cli.send(b.build());
                 cli.close();
-            }
-            else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
-            if (Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
+            } else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
+            if (Configuration.INSTANCE.botModifyDescription.get())
+                (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
         }
         stopped = true;
     }
-    
+
     @SubscribeEvent
     public void serverStopped(final FMLServerStoppedEvent ev) {
         ev.getServer().runImmediately(() -> {
             if (discord_instance != null) {
-            if (!stopped) {
-                if (!discord_instance.isKilled) {
-                    discord_instance.stopThreads();
-                    if (Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
-                    discord_instance.sendMessage(Configuration.INSTANCE.msgServerCrash.get());
+                if (!stopped) {
+                    if (!discord_instance.isKilled) {
+                        discord_instance.stopThreads();
+                        if (Configuration.INSTANCE.botModifyDescription.get())
+                            (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
+                        discord_instance.sendMessage(Configuration.INSTANCE.msgServerCrash.get());
+                    }
                 }
-            }
-            discord_instance.kill();
+                discord_instance.kill();
             }
         });
-       
+
     }
-    
+
     /* TODO Find out more
     @SubscribeEvent
     public void imc(InterModEnqueueEvent ev) {
@@ -432,19 +436,30 @@ public class DiscordIntegration
     private boolean isModIDBlacklisted(String sender) {
         return ArrayUtils.contains(Configuration.getArray(Configuration.INSTANCE.imcModIdBlacklist.get()), sender);
     }
-    
-    private static final Pattern PATTERN_CONTROL_CODE = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
-    
-    public static String stripControlCodes(String text) {
-        return PATTERN_CONTROL_CODE.matcher(text).replaceAll("");
+
+    @SubscribeEvent
+    public void chat(ServerChatEvent ev) {
+        if (discord_instance != null)
+            discord_instance.sendMessage(ev.getPlayer(), ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
     }
+
+    @SubscribeEvent
+    public void death(LivingDeathEvent ev) {
+        if (ev.getEntity() instanceof PlayerEntity || (ev.getEntity() instanceof TameableEntity && ((TameableEntity) ev.getEntity()).getOwner() instanceof PlayerEntity && Configuration.INSTANCE.tamedDeathEnabled.get())) {
+            if (discord_instance != null)
+                discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerDeath.get().replace("%player%", formatPlayerName(ev.getEntity())).replace("%msg%", ev.getSource().getDeathMessage(ev.getEntityLiving())
+                        .getUnformattedComponentText().replace(
+                                ev.getEntity().getName().getUnformattedComponentText() + " ", "")), Configuration.INSTANCE.deathChannelID.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.deathChannelID.get()));
+        }
+    }
+
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
-        
-        if (discord_instance != null && !ev.getPlayer().equals(lastTimeout)) discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerLeave.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
-        else if (discord_instance != null && ev.getPlayer().equals(lastTimeout)) {
+        if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueID()))
+            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerLeave.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
+        else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueID())) {
             discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerTimeout.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
-            lastTimeout = null;
+            timeouts.remove(ev.getPlayer().getUniqueID());
         }
         /*if (Loader.isModLoaded("votifier")) {
             MinecraftForge.EVENT_BUS.register(new VotifierEventHandler());
