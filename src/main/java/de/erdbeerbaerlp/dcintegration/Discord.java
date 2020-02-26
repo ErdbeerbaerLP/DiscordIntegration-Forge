@@ -31,6 +31,7 @@ import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.server.FMLServerHandler;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
@@ -119,6 +120,44 @@ public class Discord implements EventListener {
                 try {
                     sleep(TimeUnit.SECONDS.toMillis(1));
                 } catch (InterruptedException ignored) {
+                    break;
+                }
+            }
+            interrupt();
+        }
+    };
+    /**
+     * This thread updates the bot's discord status
+     */
+    Thread updatePresence = new Thread() {
+        {
+            setName("[DC INTEGRATION] Presence Updater");
+            setDaemon(true);
+            setPriority(MAX_PRIORITY);
+        }
+
+        public void run() {
+            while (!isKilled) {
+                final String game = GENERAL.BOT_GAME_NAME
+                        .replace("%online%", "" + FMLServerHandler.instance().getServer().getOnlinePlayerNames().length)
+                        .replace("%max%", "" + FMLServerHandler.instance().getServer().getMaxPlayers());
+                switch (GENERAL.BOT_GAME_TYPE) {
+                    case DISABLED:
+                        break;
+                    case LISTENING:
+                        jda.getPresence().setActivity(Activity.listening(game));
+                        break;
+                    case PLAYING:
+                        jda.getPresence().setActivity(Activity.playing(game));
+                        break;
+                    case WATCHING:
+                        jda.getPresence().setActivity(Activity.watching(game));
+                        break;
+                }
+                try {
+                    sleep(TimeUnit.SECONDS.toMillis(5));
+                } catch (InterruptedException ignored) {
+                    break;
                 }
             }
             interrupt();
@@ -167,6 +206,7 @@ public class Discord implements EventListener {
                 try {
                     sleep(900);
                 } catch (InterruptedException ignored) {
+                    break;
                 }
             }
         }
@@ -235,17 +275,20 @@ public class Discord implements EventListener {
         final JDABuilder b = new JDABuilder(GENERAL.BOT_TOKEN);
         b.setAutoReconnect(true);
 
+        final String game = GENERAL.BOT_GAME_NAME
+                .replace("%online%", "" + FMLServerHandler.instance().getServer().getOnlinePlayerNames().length)
+                .replace("%max%", "" + FMLServerHandler.instance().getServer().getMaxPlayers());
         switch (GENERAL.BOT_GAME_TYPE) {
             case DISABLED:
                 break;
             case LISTENING:
-                b.setActivity(Activity.listening(GENERAL.BOT_GAME_NAME));
+                b.setActivity(Activity.listening(game));
                 break;
             case PLAYING:
-                b.setActivity(Activity.playing(GENERAL.BOT_GAME_NAME));
+                b.setActivity(Activity.playing(game));
                 break;
             case WATCHING:
-                b.setActivity(Activity.watching(GENERAL.BOT_GAME_NAME));
+                b.setActivity(Activity.watching(game));
                 break;
         }
         b.setEnableShutdownHook(false);
@@ -577,6 +620,7 @@ public class Discord implements EventListener {
     public void startThreads() {
         if (Configuration.GENERAL.MODIFY_CHANNEL_DESCRIPTRION) updateChannelDesc.start();
         if (!messageSender.isAlive()) messageSender.start();
+        if (!updatePresence.isAlive()) updatePresence.start();
         if (Loader.isModLoaded("ftbutilities")) {
             if (FTBUtilitiesConfig.auto_shutdown.enabled) ftbUtilitiesShutdownDetectThread.start();
             if (FTBUtilitiesConfig.afk.enabled) ftbUtilitiesAFKDetectThread.start();
@@ -591,6 +635,7 @@ public class Discord implements EventListener {
         if (updateChannelDesc.isAlive()) updateChannelDesc.interrupt();
         if (ftbUtilitiesShutdownDetectThread.isAlive()) ftbUtilitiesShutdownDetectThread.interrupt();
         if (messageSender.isAlive()) messageSender.interrupt();
+        if (updatePresence.isAlive()) updatePresence.interrupt();
     }
 
     /**

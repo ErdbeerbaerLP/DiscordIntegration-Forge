@@ -36,14 +36,13 @@ public class Configuration {
 
     
     
-    public static class category_general
-    {
-        
+    public static class category_general {
+
         @Comment({"Insert your Bot Token here!", "DO NOT SHARE IT WITH ANYONE!"})
         public String BOT_TOKEN = "INSERT TOKEN HERE!";
         public Discord.GameTypes BOT_GAME_TYPE = Discord.GameTypes.PLAYING;
-        @Comment("The Name of the Game")
-        public String BOT_GAME_NAME = "Minecraft";
+        @Comment({"The Name of the Game", "", "PLACEHOLDERS:", "%online% - Online Players", "%max% - Maximum Player Amount"})
+        public String BOT_GAME_NAME = "Minecraft with %online% players";
         @Comment("The channel ID where the bot will be working in")
         public String CHANNEL_ID = "000000000";
         @Comment("Wether or not the Bot should modify the channel description")
