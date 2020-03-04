@@ -1,7 +1,7 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
-import de.erdbeerbaerlp.dcintegration.Configuration;
 import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
+import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;

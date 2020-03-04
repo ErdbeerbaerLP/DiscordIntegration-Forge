@@ -3,6 +3,8 @@ package de.erdbeerbaerlp.dcintegration;
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
+import de.erdbeerbaerlp.dcintegration.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.storage.PlayerLinks;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
@@ -25,18 +27,21 @@ import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import org.apache.commons.collections4.KeyValue;
+import org.apache.commons.collections4.keyvalue.DefaultKeyValue;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.LongStream;
 
-import static de.erdbeerbaerlp.dcintegration.Configuration.INSTANCE;
+import static de.erdbeerbaerlp.dcintegration.storage.Configuration.INSTANCE;
 
 @SuppressWarnings("ConstantConditions")
 public class Discord implements EventListener {
@@ -45,43 +50,7 @@ public class Discord implements EventListener {
     private final JDA jda;
     public boolean isKilled = false;
     Runnable target;
-    Thread updatePresence = new Thread() {
-        {
-            setName("[DC INTEGRATION] Discord Presence Updater");
-            setDaemon(true);
-            setPriority(MAX_PRIORITY);
-        }
-
-        @Override
-        public void run() {
-            while (true) {
-                if (ServerLifecycleHooks.getCurrentServer() != null) {
-
-                    final String game = Configuration.INSTANCE.botPresenceName.get()
-                            .replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
-                            .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers());
-                    switch (Configuration.INSTANCE.botPresenceType.get()) {
-                        case DISABLED:
-                            break;
-                        case LISTENING:
-                            jda.getPresence().setActivity(Activity.listening(game));
-                            break;
-                        case PLAYING:
-                            jda.getPresence().setActivity(Activity.playing(game));
-                            break;
-                        case WATCHING:
-                            jda.getPresence().setActivity(Activity.watching(game));
-                            break;
-                    }
-                }
-                try {
-                    sleep(1000);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }
-    };
+    private HashMap<Integer, KeyValue<Instant, UUID>> pendingLinks = new HashMap<>();
     /**
      * This thread is used to update the channel description
      */
@@ -407,95 +376,53 @@ public class Discord implements EventListener {
         jda.shutdown();
     }
 
-    /**
-     * Event handler to handle messages
-     */
-    @Override
-    public void onEvent(GenericEvent event) {
-        if (isKilled) return;
-        if (event instanceof MessageReceivedEvent) {
-            final MessageReceivedEvent ev = (MessageReceivedEvent) event;
-            if (!ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
-                if (ev.getMessage().getContentRaw().startsWith(Configuration.INSTANCE.prefix.get())) {
-                    final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.INSTANCE.prefix.get(), "").split(" ");
-                    String argumentsRaw = "";
-                    for (int i = 1; i < command.length; i++) {
-                        argumentsRaw = argumentsRaw + command[i] + " ";
-                    }
-                    argumentsRaw = argumentsRaw.trim();
-                    boolean hasPermission = true;
-                    boolean executed = false;
-                    for (final DiscordCommand cmd : commands) {
-                        if (!cmd.worksInChannel(ev.getTextChannel())) {
-                            continue;
-                        }
-                        if (cmd.getName().equals(command[0])) {
-                            if (cmd.canUserExecuteCommand(ev.getAuthor())) {
-                                cmd.execute(argumentsRaw.split(" "), ev);
-                                executed = true;
-                            } else {
-                                hasPermission = false;
-                            }
-                        }
-                        for (final String alias : cmd.getAliases()) {
-                            if (alias.equals(command[0])) {
-                                if (cmd.canUserExecuteCommand(ev.getAuthor())) {
-                                    cmd.execute(argumentsRaw.split(" "), ev);
-                                    executed = true;
-                                } else {
-                                    hasPermission = false;
-                                }
-                            }
-                        }
-                    }
-                    if (!hasPermission) {
-                        sendMessage(Configuration.INSTANCE.msgNoPermission.get(), ev.getTextChannel());
-                        return;
-                    }
-                    if (!executed && (Configuration.INSTANCE.enableUnknownCommandEverywhere.get() || ev.getTextChannel().getId().equals(getChannel().getId())) && Configuration.INSTANCE.enableUnknownCommandMsg.get()) {
-                        if (Configuration.INSTANCE.cmdHelpEnabled.get())
-                            sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()), ev.getTextChannel());
+    Thread updatePresence = new Thread() {
+        {
+            setName("[DC INTEGRATION] Discord Presence Updater");
+            setDaemon(true);
+            setPriority(MAX_PRIORITY);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                if (ServerLifecycleHooks.getCurrentServer() != null) {
+
+                    final String game = Configuration.INSTANCE.botPresenceName.get()
+                            .replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
+                            .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers());
+                    switch (Configuration.INSTANCE.botPresenceType.get()) {
+                        case DISABLED:
+                            break;
+                        case LISTENING:
+                            jda.getPresence().setActivity(Activity.listening(game));
+                            break;
+                        case PLAYING:
+                            jda.getPresence().setActivity(Activity.playing(game));
+                            break;
+                        case WATCHING:
+                            jda.getPresence().setActivity(Activity.watching(game));
+                            break;
                     }
 
-
-                } else if (ev.getChannel().getId().equals(INSTANCE.chatInputChannel.get().isEmpty() ? getChannel().getId() : INSTANCE.chatInputChannel.get())) {
-                    final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
-                    String msg = ev.getMessage().getContentRaw();
-
-                    for (final Member u : ev.getMessage().getMentionedMembers()) {
-                        msg = msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
-                    }
-                    for (final Role r : ev.getMessage().getMentionedRoles()) {
-                        msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
-                    }
-                    StringBuilder message = new StringBuilder(msg);
-                    for (Message.Attachment a : ev.getMessage().getAttachments()) {
-                        //noinspection StringConcatenationInsideStringBufferAppend
-                        message.append("\nAttachment: " + a.getProxyUrl());
-                    }
-                    for (MessageEmbed e : embeds) {
-                        if (e.isEmpty()) continue;
-                        message.append("\n\n-----[Embed]-----\n");
-                        if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty())
-                            //noinspection StringConcatenationInsideStringBufferAppend
-                            message.append(TextFormatting.BOLD + "" + TextFormatting.ITALIC + e.getAuthor().getName() + "\n");
-                        if (e.getTitle() != null && !e.getTitle().trim().isEmpty())
-                            //noinspection StringConcatenationInsideStringBufferAppend
-                            message.append(TextFormatting.BOLD + e.getTitle() + "\n");
-                        if (e.getDescription() != null && !e.getDescription().trim().isEmpty())
-                            message.append("Message:\n").append(e.getDescription()).append("\n");
-                        if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty())
-                            message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
-                        message.append("\n-----------------");
-                    }
-                    sendMcMsg(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
-                            .replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.INSTANCE.preventMcColorCodes.get() ? DiscordIntegration
-                                    .stripControlCodes(message.toString()) : message.toString())))
-                            .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                    // Removing of expired numbers
+                    final ArrayList<Integer> remove = new ArrayList<>();
+                    pendingLinks.forEach((k, v) -> {
+                        final Instant now = Instant.now();
+                        Duration d = Duration.between(v.getKey(), now);
+                        if (d.toMinutes() > 10) remove.add(k);
+                    });
+                    for (int i : remove)
+                        pendingLinks.remove(i);
+                }
+                try {
+                    sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
                 }
             }
         }
-    }
+    };
 
     public boolean togglePlayerIgnore(PlayerEntity sender) {
         if (ignoringPlayers.contains(sender.getName().getUnformattedComponentText())) {
@@ -664,6 +591,171 @@ public class Discord implements EventListener {
 
     public void sendMessage(String msg, TextChannel textChannel) {
         this.sendMessage(Configuration.INSTANCE.serverName.get(), "0000000", msg, textChannel);
+    }
+
+    /**
+     * Event handler to handle messages
+     */
+    @Override
+    public void onEvent(GenericEvent event) {
+        if (isKilled) return;
+        if (event instanceof MessageReceivedEvent) {
+            final MessageReceivedEvent ev = (MessageReceivedEvent) event;
+            if (ev.getChannelType().equals(ChannelType.TEXT)) {
+                if (!ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
+                    if (ev.getMessage().getContentRaw().startsWith(Configuration.INSTANCE.prefix.get())) {
+                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.INSTANCE.prefix.get(), "").split(" ");
+                        String argumentsRaw = "";
+                        for (int i = 1; i < command.length; i++) {
+                            argumentsRaw = argumentsRaw + command[i] + " ";
+                        }
+                        argumentsRaw = argumentsRaw.trim();
+                        boolean hasPermission = true;
+                        boolean executed = false;
+                        for (final DiscordCommand cmd : commands) {
+                            if (!cmd.worksInChannel(ev.getTextChannel())) {
+                                continue;
+                            }
+                            if (cmd.getName().equals(command[0])) {
+                                if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                    cmd.execute(argumentsRaw.split(" "), ev);
+                                    executed = true;
+                                } else {
+                                    hasPermission = false;
+                                }
+                            }
+                            for (final String alias : cmd.getAliases()) {
+                                if (alias.equals(command[0])) {
+                                    if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                        cmd.execute(argumentsRaw.split(" "), ev);
+                                        executed = true;
+                                    } else {
+                                        hasPermission = false;
+                                    }
+                                }
+                            }
+                        }
+                        if (!hasPermission) {
+                            sendMessage(Configuration.INSTANCE.msgNoPermission.get(), ev.getTextChannel());
+                            return;
+                        }
+                        if (!executed && (Configuration.INSTANCE.enableUnknownCommandEverywhere.get() || ev.getTextChannel().getId().equals(getChannel().getId())) && Configuration.INSTANCE.enableUnknownCommandMsg.get()) {
+                            if (Configuration.INSTANCE.cmdHelpEnabled.get())
+                                sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()), ev.getTextChannel());
+                        }
+
+
+                    } else if (ev.getChannel().getId().equals(INSTANCE.chatInputChannel.get().isEmpty() ? getChannel().getId() : INSTANCE.chatInputChannel.get())) {
+                        final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
+                        String msg = ev.getMessage().getContentRaw();
+
+                        for (final Member u : ev.getMessage().getMentionedMembers()) {
+                            msg = msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
+                        }
+                        for (final Role r : ev.getMessage().getMentionedRoles()) {
+                            msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
+                        }
+                        StringBuilder message = new StringBuilder(msg);
+                        for (Message.Attachment a : ev.getMessage().getAttachments()) {
+                            //noinspection StringConcatenationInsideStringBufferAppend
+                            message.append("\nAttachment: " + a.getProxyUrl());
+                        }
+                        for (MessageEmbed e : embeds) {
+                            if (e.isEmpty()) continue;
+                            message.append("\n\n-----[Embed]-----\n");
+                            if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty())
+                                //noinspection StringConcatenationInsideStringBufferAppend
+                                message.append(TextFormatting.BOLD + "" + TextFormatting.ITALIC + e.getAuthor().getName() + "\n");
+                            if (e.getTitle() != null && !e.getTitle().trim().isEmpty())
+                                //noinspection StringConcatenationInsideStringBufferAppend
+                                message.append(TextFormatting.BOLD + e.getTitle() + "\n");
+                            if (e.getDescription() != null && !e.getDescription().trim().isEmpty())
+                                message.append("Message:\n").append(e.getDescription()).append("\n");
+                            if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty())
+                                message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
+                            message.append("\n-----------------");
+                        }
+                        sendMcMsg(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
+                                .replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.INSTANCE.preventMcColorCodes.get() ? DiscordIntegration
+                                        .stripControlCodes(message.toString()) : message.toString())))
+                                .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                    }
+                }
+            } else if (ev.getChannelType().equals(ChannelType.PRIVATE)) {
+                if (!ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
+                    if (INSTANCE.whitelist.get()) {
+                        final String[] command = ev.getMessage().getContentRaw().replaceFirst("!", "").split(" ");
+                        if (command.length > 0 && command[0].equals("whitelist")) {
+                            if (PlayerLinks.isDiscordLinked(ev.getAuthor().getId())) {
+                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinks.getNameFromUUID(PlayerLinks.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                return;
+                            }
+                            System.out.println(command.length);
+                            if (command.length > 2) {
+                                ev.getChannel().sendMessage("Too many arguments. Use `!whitelist <uuid>`").queue();
+                                return;
+                            }
+                            if (command.length < 2) {
+                                ev.getChannel().sendMessage("Not enough arguments. Use `!whitelist <uuid>`").queue();
+                                return;
+                            }
+                            UUID u;
+                            try {
+                                String s = command[1];
+                                if (!s.contains("-"))
+                                    s = s.replaceFirst(
+                                            "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"
+                                    );
+                                u = UUID.fromString(s);
+                                final boolean linked = PlayerLinks.linkPlayer(ev.getAuthor().getId(), u);
+                                if (linked)
+                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinks.getNameFromUUID(u)).queue();
+                                else
+                                    ev.getChannel().sendMessage("Failed to link!").queue();
+                            } catch (IllegalArgumentException e) {
+                                ev.getChannel().sendMessage("Argument is not an UUID. Use `!whitelist <uuid>`").queue();
+                                return;
+                            }
+                        }
+                    } else if (INSTANCE.allowLink.get()) {
+                        try {
+                            int num = Integer.parseInt(ev.getMessage().getContentRaw());
+                            if (PlayerLinks.isDiscordLinked(ev.getAuthor().getId())) {
+                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinks.getNameFromUUID(PlayerLinks.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                return;
+                            }
+                            if (pendingLinks.containsKey(num)) {
+                                final boolean linked = PlayerLinks.linkPlayer(ev.getAuthor().getId(), pendingLinks.get(num).getValue());
+                                if (linked)
+                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinks.getNameFromUUID(PlayerLinks.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                else
+                                    ev.getChannel().sendMessage("Failed to link!").queue();
+                            } else {
+                                ev.getChannel().sendMessage("Use /discord link ingame to get your link number").queue();
+                                return;
+                            }
+                        } catch (NumberFormatException nfe) {
+                            ev.getChannel().sendMessage("This is not a number. Use /discord link ingame to get your link number").queue();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public int genLinkNumber(UUID uniqueID) {
+        final AtomicInteger r = new AtomicInteger(-1);
+        pendingLinks.forEach((k, v) -> {
+            if (v.getValue().equals(uniqueID))
+                r.set(k);
+        });
+        if (r.get() != -1) return r.get();
+        do {
+            r.set(new Random().nextInt(1000000));
+        } while (pendingLinks.containsKey(r.get()));
+        pendingLinks.put(r.get(), new DefaultKeyValue<>(Instant.now(), uniqueID));
+        return r.get();
     }
 
 

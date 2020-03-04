@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Mixin used to detect player timeouts
  */
 @Mixin(value = ServerPlayNetHandler.class, priority = 1001)
-public abstract class MixinNetHandlerPlayServer {
+public class MixinNetHandlerPlayServer {
     @Shadow
     public ServerPlayerEntity player;
 

@@ -6,6 +6,7 @@ import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import com.google.gson.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.commands.*;
+import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.entities.Message;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.TameableEntity;
@@ -51,7 +52,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.14";
+    public static final String VERSION = "1.2";
     /**
      * Modid
      */
@@ -312,6 +313,12 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void serverStarted(final FMLServerStartedEvent ev) {
         LOGGER.info("Started");
+        //Detect mixin
+        try {
+            Class.forName("org.spongepowered.asm.mixin.Mixins");
+        } catch (ClassNotFoundException e) {
+            LOGGER.error("It looks like mixin is missing. Install MixinLoader from https://github.com/IzzelAliz/MixinLoader/releases to get access to all features (whitelist and timeout detection)");
+        }
         started = new Date().getTime();
         if (discord_instance != null) if (startingMsg != null) try {
             this.startingMsg.get().editMessage(Configuration.INSTANCE.msgServerStarted.get()).queue();

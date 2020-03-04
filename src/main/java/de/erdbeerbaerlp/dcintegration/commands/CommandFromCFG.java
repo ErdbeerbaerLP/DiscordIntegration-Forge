@@ -1,7 +1,7 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import de.erdbeerbaerlp.dcintegration.Configuration;
+import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.ArrayUtils;
