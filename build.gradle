@@ -33,7 +33,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.1.12"
+version = "1.1.13"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -77,7 +77,7 @@ dependencies {
 	embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         transitive = false
     }
-    embed("net.dv8tion:JDA:4.1.1_101")
+    embed("net.dv8tion:JDA:4.0.0_39")
     embed 'club.minnced:discord-webhooks:0.1.8'
     deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"

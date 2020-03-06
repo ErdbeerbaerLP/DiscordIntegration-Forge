@@ -276,8 +276,8 @@ public class Discord implements EventListener {
         b.setAutoReconnect(true);
 
         final String game = GENERAL.BOT_GAME_NAME
-                .replace("%online%", "" + FMLServerHandler.instance().getServer().getOnlinePlayerNames().length)
-                .replace("%max%", "" + FMLServerHandler.instance().getServer().getMaxPlayers());
+                .replace("%online%", "" + "?")
+                .replace("%max%", "" + "?");
         switch (GENERAL.BOT_GAME_TYPE) {
             case DISABLED:
                 break;
