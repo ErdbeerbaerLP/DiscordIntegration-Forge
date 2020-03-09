@@ -30,4 +30,5 @@ Mod version _0.0.0_
 -
 
 **Additional info**
+Note: If you add your configm REMOVE YOUR BOT TOKEN BEFORE UPLOADING!!!
 -
