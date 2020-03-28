@@ -129,18 +129,6 @@ public class DiscordIntegration {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    /**
-     * Removes Color code formatting
-     *
-     * @param formatted Formatted text with §2 color codes
-     * @return Raw text without color codes
-     */
-    public static String removeFormatting(String formatted) {
-        return formatted.replaceAll("\u00A70", "").replaceAll("\u00A71", "").replaceAll("\u00A72", "").replaceAll("\u00A73", "").replaceAll("\u00A74", "").replaceAll("\u00A75", "").replaceAll("\u00A76", "").replaceAll("\u00A77", "")
-                .replaceAll("\u00A78", "").replaceAll("\u00A79", "").replaceAll("\u00A7a", "").replaceAll("\u00A7b", "").replaceAll("\u00A7c", "").replaceAll("\u00A7d", "").replaceAll("\u00A7e", "").replaceAll("\u00A7f", "")
-                .replaceAll("\u00A7l", "").replaceAll("\u00A7k", "").replaceAll("\u00A7m", "").replaceAll("\u00A7n", "").replaceAll("\u00A7o", "").replaceAll("\u00A7r", "");
-    }
-
     public static String formatPlayerName(Entity p) {
         return formatPlayerName(p, true);
     }
@@ -213,7 +201,10 @@ public class DiscordIntegration {
             final String nick = (Configuration.FTB_UTILITIES.CHAT_FORMATTING && chatFormat) ? d.getNameForChat((EntityPlayerMP) p).getUnformattedText().replace("<", "").replace(">", "").trim() : d.getNickname().trim();
             if (!nick.isEmpty()) return nick;
         }*/
-        return p.getName().getUnformattedComponentText();
+        if (p.getDisplayName().getUnformattedComponentText().isEmpty())
+            return p.getName().getUnformattedComponentText();
+        else
+            return p.getDisplayName().getUnformattedComponentText();
     }
 
     public static String stripControlCodes(String text) {
@@ -222,8 +213,9 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
-        if (discord_instance != null)
-            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerJoin.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
+        if (discord_instance != null) {
+            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerJoin.get().replace("%player%", formatPlayerName(ev.getPlayer())));
+        }
     }
 
     @SubscribeEvent
@@ -317,7 +309,7 @@ public class DiscordIntegration {
         try {
             Class.forName("org.spongepowered.asm.mixin.Mixins");
         } catch (ClassNotFoundException e) {
-            LOGGER.error("It looks like mixin is missing. Install MixinLoader from https://github.com/IzzelAliz/MixinLoader/releases to get access to all features (whitelist and timeout detection)");
+            LOGGER.error("It looks like mixin is missing. Install MixinBootstrap from https://www.curseforge.com/minecraft/mc-mods/mixinbootstrap/files to get access to all features (whitelist and timeout detection)");
         }
         started = new Date().getTime();
         if (discord_instance != null) if (startingMsg != null) try {
@@ -341,26 +333,6 @@ public class DiscordIntegration {
                 discord_instance.kill();
             }
         }));*/
-
-        //noinspection StatementWithEmptyBody
-        if (Configuration.INSTANCE.updateCheck.get()) {
-            //UNUSED for now
-            //				CheckResult result = ForgeVersion.getResult(FML.instance().getIndexedModList().get(DiscordIntegration.MODID));
-            //				if (result.status == Status.OUTDATED){
-            //					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c Update available!\n\u00A7cCurrent version: \u00A74"+DiscordIntegration.VERSION+"\u00A7c, Newest: \u00A7a"+result.target+"\n\u00A7cChangelog:\n\u00A76"+result.changes.get(result.target)+"\nDownload the newest version on https://minecraft.curseforge.com/projects/dcintegration");
-            //				}else if(result.status == Status.AHEAD){
-            //					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A77 It looks like you are using an Development version... \n\u00A77Your version: \u00A76"+DiscordIntegration.VERSION);
-            //				}else if(result.status == Status.FAILED){
-            //					System.err.println("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c FAILED TO CHECK FOR UPDATES");
-            //				}else if(result.status == Status.BETA){
-            //					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7a You are using an Beta Version. This may contain bugs which are being fixed.");
-            //				}else if(result.status == Status.BETA_OUTDATED){
-            //					System.out.println("\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7c You are using an Outdated Beta Version. This may contain bugs which are being fixed or are already fixed\n\u00A76Changelog of newer Beta:"+result.changes.get(result.target));
-            //				}else if(result.status == Status.UP_TO_DATE) {
-            //				}else {
-            //					System.out.println("\n\u00A76[\u00A75DiscordIntegration\u00A76]\u00A7cUpdateCheck: "+result.status.toString());
-            //				}
-        }
     }
 
     @SubscribeEvent
@@ -373,7 +345,7 @@ public class DiscordIntegration {
                     msg = msg.replaceFirst("say ", "").replaceFirst("me ", "");
                 if (command.startsWith("/me") || command.startsWith("me")) msg = "*" + msg.trim() + "*";
                 try {
-                    discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), msg);
+                    discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), msg, Configuration.INSTANCE.chatOutputChannel.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.chatOutputChannel.get()));
                 } catch (CommandSyntaxException e) {
                     discord_instance.sendMessage(msg);
                 }
@@ -447,10 +419,20 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
-        if (discord_instance != null)
+        if (discord_instance != null) {
             discord_instance.sendMessage(ev.getPlayer(), ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
+        }
     }
 
+    /* XX Not Working :/
+    @SubscribeEvent
+    public void renderName(PlayerEvent.NameFormat ev){
+        if (PlayerLinkController.isPlayerLinked(ev.getPlayer().getUniqueID()) && PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueID()).useDiscordNameIngame) {
+            ev.setDisplayname(PlayerLinkController.getDiscordFromPlayer(ev.getPlayer().getUniqueID()));
+        }else{
+            ev.setDisplayname(ev.getUsername());
+        }
+    }*/
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
         if (ev.getEntity() instanceof PlayerEntity || (ev.getEntity() instanceof TameableEntity && ((TameableEntity) ev.getEntity()).getOwner() instanceof PlayerEntity && Configuration.INSTANCE.tamedDeathEnabled.get())) {
@@ -464,9 +446,9 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueID()))
-            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerLeave.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
+            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerLeave.get().replace("%player%", formatPlayerName(ev.getPlayer())));
         else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueID())) {
-            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerTimeout.get().replace("%player%", ev.getPlayer().getName().getUnformattedComponentText()));
+            discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerTimeout.get().replace("%player%", formatPlayerName(ev.getPlayer())));
             timeouts.remove(ev.getPlayer().getUniqueID());
         }
         /*if (Loader.isModLoaded("votifier")) {

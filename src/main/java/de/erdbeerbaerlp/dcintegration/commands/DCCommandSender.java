@@ -39,7 +39,7 @@ public class DCCommandSender extends FakePlayer {
     }
 
     private static String textComponentToDiscordMessage(ITextComponent component) {
-        return DiscordIntegration.removeFormatting(component.getFormattedText());
+        return DiscordIntegration.stripControlCodes(component.getFormattedText());
 
     }
 

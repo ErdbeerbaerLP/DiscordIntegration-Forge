@@ -35,7 +35,6 @@ public class Configuration {
     public final ForgeConfigSpec.EnumValue<Discord.GameTypes> botPresenceType;
     public final ConfigValue<String> botChannel;
     public final ForgeConfigSpec.BooleanValue botModifyDescription;
-    public final ForgeConfigSpec.BooleanValue updateCheck;
     public final ForgeConfigSpec.BooleanValue whitelist;
     public final ForgeConfigSpec.BooleanValue allowLink;
     //#########################
@@ -134,7 +133,6 @@ public class Configuration {
         botPresenceType = builder.defineEnum("botPresenceType", Discord.GameTypes.PLAYING);
         botChannel = builder.comment("The channel ID where the bot will be working in").define("botChannel", "000000000");
         botModifyDescription = builder.comment("Wether or not the Bot should modify the channel description").define("botModifyDescription", true);
-        updateCheck = builder.comment("If you think the update check is annoying disable this", "Update checking is not yet implemented!!!").define("updateCheck", true);
         allowLink = builder.comment("Should discord linking be enabled?", "If whitelist is on, this can not be disabled").define("allow-linking", true);
         whitelist = builder.comment("Enable discord based whitelist?", "This will override the link config!", "To whitelist use !whitelist <uuid> in the bot DMs").define("whitelist", false);
         builder.pop();
@@ -242,7 +240,7 @@ public class Configuration {
         enableUnknownCommandEverywhere = builder.comment("Set to true to enable the \"Unknown Command\" message in all channels").define("enableUnknownCommandEverywhere", false);
         enableUnknownCommandMsg = builder.comment("Set to false to completely disable the \"Unknown Command\" message").define("enableUnknownCommandMsg", true);
         helpHeader = builder.comment("Header of the help command").define("helpHeader", "Your available commands in this channel:");
-        helpCmdChannelID = builder.comment("Custom Channel ID list for the help command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "00");
+        helpCmdChannelID = builder.comment("Custom Channel ID list for the help command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "0");
         uptimeCmdChannelID = builder.comment("Custom Channel ID list for the uptime command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "0");
         listCmdChannelID = builder.comment("Custom Channel ID list for the list command. Set to 00 to allow usage from everywhere and to 0 to allow usage from the bots default channel").define("helpCmdChannel", "0");
 

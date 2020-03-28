@@ -35,7 +35,7 @@ public class McCommandDiscord {
         }).then(Commands.literal("link").executes((ctx) -> {
             if (Configuration.INSTANCE.allowLink.get() && !Configuration.INSTANCE.whitelist.get()) {
                 final int r = DiscordIntegration.discord_instance.genLinkNumber(ctx.getSource().asPlayer().getUniqueID());
-                ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.AQUA + "Send this number as an direct message to the bot to link your account: " + r + "\nThis number will expire after 10 minutes"), true);
+                ctx.getSource().sendFeedback(new StringTextComponent("Send this number as an direct message to the bot to link your account: " + r + "\nThis number will expire after 10 minutes").setStyle(new Style().setColor(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r + "")).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Click to copy number to clipboard")))), true);
             } else {
                 ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + "This subcommand is disabled!"), true);
             }

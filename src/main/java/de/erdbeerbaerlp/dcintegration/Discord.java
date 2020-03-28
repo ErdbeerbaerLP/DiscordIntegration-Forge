@@ -4,10 +4,9 @@ import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
-import de.erdbeerbaerlp.dcintegration.storage.PlayerLinks;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.Permission;
+import de.erdbeerbaerlp.dcintegration.storage.PlayerLinkController;
+import de.erdbeerbaerlp.dcintegration.storage.PlayerSettings;
+import net.dv8tion.jda.api.*;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -33,6 +32,7 @@ import org.apache.commons.collections4.keyvalue.DefaultKeyValue;
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -48,13 +48,10 @@ public class Discord implements EventListener {
     private static final File IGNORED_PLAYERS = new File("./players_ignoring_discord");
     final ArrayList<String> ignoringPlayers = new ArrayList<>();
     private final JDA jda;
-    public boolean isKilled = false;
-    Runnable target;
-    private HashMap<Integer, KeyValue<Instant, UUID>> pendingLinks = new HashMap<>();
     /**
      * This thread is used to update the channel description
      */
-    Thread updateChannelDesc = new Thread() {
+    final Thread updateChannelDesc = new Thread() {
         private String cachedDescription = "";
 
         {
@@ -94,7 +91,54 @@ public class Discord implements EventListener {
             }
         }
     };
-    private List<DiscordCommand> commands = new ArrayList<>();
+    private final HashMap<Integer, KeyValue<Instant, UUID>> pendingLinks = new HashMap<>();
+    final Thread updatePresence = new Thread() {
+        {
+            setName("[DC INTEGRATION] Discord Presence Updater");
+            setDaemon(true);
+            setPriority(MAX_PRIORITY);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                if (ServerLifecycleHooks.getCurrentServer() != null) {
+
+                    final String game = Configuration.INSTANCE.botPresenceName.get()
+                            .replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
+                            .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers());
+                    switch (Configuration.INSTANCE.botPresenceType.get()) {
+                        case DISABLED:
+                            break;
+                        case LISTENING:
+                            jda.getPresence().setActivity(Activity.listening(game));
+                            break;
+                        case PLAYING:
+                            jda.getPresence().setActivity(Activity.playing(game));
+                            break;
+                        case WATCHING:
+                            jda.getPresence().setActivity(Activity.watching(game));
+                            break;
+                    }
+
+                    // Removing of expired numbers
+                    final ArrayList<Integer> remove = new ArrayList<>();
+                    pendingLinks.forEach((k, v) -> {
+                        final Instant now = Instant.now();
+                        Duration d = Duration.between(v.getKey(), now);
+                        if (d.toMinutes() > 10) remove.add(k);
+                    });
+                    for (int i : remove)
+                        pendingLinks.remove(i);
+                }
+                try {
+                    sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }
+    };
     /*/*
      * This thread is used to detect auto shutdown status using ftb utilities
      *//*
@@ -171,11 +215,12 @@ public class Discord implements EventListener {
         }
     };
 */
-    private HashMap<String, ArrayList<String>> messages = new HashMap<>();
+    private final HashMap<String, ArrayList<String>> messages = new HashMap<>();
+    public boolean isKilled = false;
     /**
      * Thread to send messages from vanilla commands
      */
-    Thread messageSender = new Thread(() -> {
+    final Thread messageSender = new Thread(() -> {
         try {
             while (true) {
                 if (!messages.isEmpty()) {
@@ -192,6 +237,8 @@ public class Discord implements EventListener {
         } catch (InterruptedException ignored) {
         }
     });
+    Runnable target;
+    private List<DiscordCommand> commands = new ArrayList<>();
 
     /**
      * Constructor for this class
@@ -332,15 +379,16 @@ public class Discord implements EventListener {
      * Sends a message to discord
      *
      * @param playerName the name of the player
-     * @param UUID       the player uuid
+     * @param uuid       the player uuid
      * @param msg        the message to send
      */
-    public void sendMessage(String playerName, String UUID, String msg, TextChannel channel) {
+    public void sendMessage(final String playerName, String uuid, String msg, TextChannel channel) {
         if (isKilled) return;
+        final UUID uUUID = uuid.equals("0000000") ? null : UUID.fromString(uuid);
         if (!Configuration.INSTANCE.discordColorCodes.get()) msg = DiscordIntegration.stripControlCodes(msg);
         try {
             if (Configuration.INSTANCE.enableWebhook.get()) {
-                if (playerName.equals(Configuration.INSTANCE.serverName.get()) && UUID.equals("0000000")) {
+                if (playerName.equals(Configuration.INSTANCE.serverName.get()) && uuid.equals("0000000")) {
                     final WebhookMessageBuilder b = new WebhookMessageBuilder();
                     b.setContent(msg);
                     b.setUsername(Configuration.INSTANCE.serverName.get());
@@ -351,13 +399,25 @@ public class Discord implements EventListener {
                 } else {
                     final WebhookMessageBuilder b = new WebhookMessageBuilder();
                     b.setContent(msg);
-                    b.setUsername(playerName);
-                    b.setAvatarUrl("https://minotar.net/avatar/" + UUID);
+                    String avatar = "https://minotar.net/avatar/" + uuid;
+                    String pname = playerName;
+                    if (PlayerLinkController.isPlayerLinked(uUUID)) {
+                        final PlayerSettings s = PlayerLinkController.getSettings(null, uUUID);
+                        final Member dc = getChannel().getGuild().getMemberById(PlayerLinkController.getDiscordFromPlayer(uUUID));
+                        if (s.useDiscordNameInChannel) {
+                            pname = dc.getEffectiveName();
+                            avatar = dc.getUser().getAvatarUrl();
+                        } else {
+                            pname = playerName;
+                        }
+                    }
+                    b.setUsername(pname);
+                    b.setAvatarUrl(avatar);
                     final WebhookClient cli = WebhookClient.withUrl(getWebhook(channel).getUrl());
                     cli.send(b.build());
                     cli.close();
                 }
-            } else if (playerName.equals(Configuration.INSTANCE.serverName.get()) && UUID.equals("0000000")) {
+            } else if (playerName.equals(Configuration.INSTANCE.serverName.get()) && uuid.equals("0000000")) {
                 channel.sendMessage(msg).queue();
             } else {
                 channel.sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", playerName).replace("%msg%", msg)).queue();
@@ -375,54 +435,6 @@ public class Discord implements EventListener {
         this.isKilled = true;
         jda.shutdown();
     }
-
-    Thread updatePresence = new Thread() {
-        {
-            setName("[DC INTEGRATION] Discord Presence Updater");
-            setDaemon(true);
-            setPriority(MAX_PRIORITY);
-        }
-
-        @Override
-        public void run() {
-            while (true) {
-                if (ServerLifecycleHooks.getCurrentServer() != null) {
-
-                    final String game = Configuration.INSTANCE.botPresenceName.get()
-                            .replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
-                            .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers());
-                    switch (Configuration.INSTANCE.botPresenceType.get()) {
-                        case DISABLED:
-                            break;
-                        case LISTENING:
-                            jda.getPresence().setActivity(Activity.listening(game));
-                            break;
-                        case PLAYING:
-                            jda.getPresence().setActivity(Activity.playing(game));
-                            break;
-                        case WATCHING:
-                            jda.getPresence().setActivity(Activity.watching(game));
-                            break;
-                    }
-
-                    // Removing of expired numbers
-                    final ArrayList<Integer> remove = new ArrayList<>();
-                    pendingLinks.forEach((k, v) -> {
-                        final Instant now = Instant.now();
-                        Duration d = Duration.between(v.getKey(), now);
-                        if (d.toMinutes() > 10) remove.add(k);
-                    });
-                    for (int i : remove)
-                        pendingLinks.remove(i);
-                }
-                try {
-                    sleep(1000);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }
-    };
 
     public boolean togglePlayerIgnore(PlayerEntity sender) {
         if (ignoringPlayers.contains(sender.getName().getUnformattedComponentText())) {
@@ -465,7 +477,8 @@ public class Discord implements EventListener {
     private void sendMcMsg(final ITextComponent msg) {
         final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         for (final ServerPlayerEntity p : l) {
-            if (!ignoringPlayers.contains(p.getName().getUnformattedComponentText())) p.sendMessage(msg);
+            if (!ignoringPlayers.contains(p.getName().getUnformattedComponentText()) && !(PlayerLinkController.isPlayerLinked(p.getUniqueID()) && PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame))
+                p.sendMessage(msg);
         }
     }
 
@@ -683,11 +696,11 @@ public class Discord implements EventListener {
                 }
             } else if (ev.getChannelType().equals(ChannelType.PRIVATE)) {
                 if (!ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
-                    if (INSTANCE.whitelist.get()) {
-                        final String[] command = ev.getMessage().getContentRaw().replaceFirst("!", "").split(" ");
+                    if (INSTANCE.whitelist.get() && INSTANCE.allowLink.get()) {
+                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
                         if (command.length > 0 && command[0].equals("whitelist")) {
-                            if (PlayerLinks.isDiscordLinked(ev.getAuthor().getId())) {
-                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinks.getNameFromUUID(PlayerLinks.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                            if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
+                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
                                 return;
                             }
                             System.out.println(command.length);
@@ -707,9 +720,9 @@ public class Discord implements EventListener {
                                             "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"
                                     );
                                 u = UUID.fromString(s);
-                                final boolean linked = PlayerLinks.linkPlayer(ev.getAuthor().getId(), u);
+                                final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), u);
                                 if (linked)
-                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinks.getNameFromUUID(u)).queue();
+                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(u)).queue();
                                 else
                                     ev.getChannel().sendMessage("Failed to link!").queue();
                             } catch (IllegalArgumentException e) {
@@ -717,31 +730,118 @@ public class Discord implements EventListener {
                                 return;
                             }
                         }
-                    } else if (INSTANCE.allowLink.get()) {
-                        try {
-                            int num = Integer.parseInt(ev.getMessage().getContentRaw());
-                            if (PlayerLinks.isDiscordLinked(ev.getAuthor().getId())) {
-                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinks.getNameFromUUID(PlayerLinks.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                    } else if (INSTANCE.allowLink.get() && !INSTANCE.whitelist.get()) {
+                        if (!ev.getMessage().getContentRaw().startsWith(INSTANCE.prefix.get()))
+                            try {
+                                int num = Integer.parseInt(ev.getMessage().getContentRaw());
+                                if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
+                                    ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                    return;
+                                }
+                                if (pendingLinks.containsKey(num)) {
+                                    final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), pendingLinks.get(num).getValue());
+                                    if (linked) {
+                                        ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(pendingLinks.get(num).getValue()).sendMessage(new StringTextComponent("Your account is now linked with " + ev.getAuthor().getAsTag()));
+                                    } else
+                                        ev.getChannel().sendMessage("Failed to link!").queue();
+                                } else {
+                                    ev.getChannel().sendMessage("Use `/discord link` ingame to get your link number").queue();
+                                    return;
+                                }
+                            } catch (NumberFormatException nfe) {
+                                ev.getChannel().sendMessage("This is not a number. Use `/discord link` ingame to get your link number").queue();
                                 return;
                             }
-                            if (pendingLinks.containsKey(num)) {
-                                final boolean linked = PlayerLinks.linkPlayer(ev.getAuthor().getId(), pendingLinks.get(num).getValue());
-                                if (linked)
-                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinks.getNameFromUUID(PlayerLinks.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
-                                else
-                                    ev.getChannel().sendMessage("Failed to link!").queue();
-                            } else {
-                                ev.getChannel().sendMessage("Use /discord link ingame to get your link number").queue();
-                                return;
+                    }
+                    if (INSTANCE.allowLink.get()) {
+                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
+                        if (command.length > 0) {
+                            final String cmdUsages = "Usages:\n\n/settings - lists all available keys\n/settings get <key> - Gets the current settings value\n/settings set <key> <value> - Sets an Settings value";
+                            switch (command[0]) {
+                                case "help":
+                                    ev.getChannel().sendMessage("__Available commands here:__\n\n/help - Shows this\n/settings - Edit your personal settings").queue();
+                                    break;
+                                case "settings":
+                                    if (!PlayerLinkController.isDiscordLinked(ev.getAuthor().getId()))
+                                        ev.getChannel().sendMessage("Your account is not linked! Link it first using " + (INSTANCE.whitelist.get() ? (INSTANCE.prefix.get() + "whitelist <uuid>") : "`/discord link` ingame")).queue();
+                                    else if (command.length == 1) {
+                                        final MessageBuilder mb = new MessageBuilder();
+                                        mb.setContent(cmdUsages);
+                                        final EmbedBuilder b = new EmbedBuilder();
+                                        final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
+                                        getSettings().forEach((name, desc) -> {
+                                            if (!(!INSTANCE.enableWebhook.get() && name.equals("useDiscordNameInChannel"))) {
+                                                try {
+                                                    b.addField(name + " == " + (((boolean) settings.getClass().getDeclaredField(name).get(settings)) ? "true" : "false"), desc, false);
+                                                } catch (IllegalAccessException | NoSuchFieldException e) {
+                                                    b.addField(name + " == Unknown", desc, false);
+                                                }
+                                            }
+                                        });
+                                        b.setAuthor("Personal Settings list:");
+                                        mb.setEmbed(b.build());
+                                        ev.getChannel().sendMessage(mb.build()).queue();
+                                    } else if (command.length == 3 && command[1].equals("get")) {
+                                        if (getSettings().containsKey(command[2])) {
+                                            final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
+                                            try {
+                                                ev.getChannel().sendMessage("This settings value is `" + (settings.getClass().getField(command[2]).getBoolean(settings) ? "true" : "false") + "`").queue();
+                                            } catch (IllegalAccessException | NoSuchFieldException e) {
+                                                e.printStackTrace();
+                                            }
+                                        } else
+                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
+                                    } else if (command.length == 4 && command[1].equals("set")) {
+                                        if (getSettings().containsKey(command[2])) {
+                                            final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
+                                            int newval;
+                                            try {
+                                                newval = Integer.parseInt(command[3]);
+                                            } catch (NumberFormatException e) {
+                                                newval = -1;
+                                            }
+                                            final boolean newValue = newval == -1 ? Boolean.parseBoolean(command[3]) : newval >= 1;
+                                            try {
+                                                settings.getClass().getDeclaredField(command[2]).set(settings, newValue);
+                                                PlayerLinkController.updatePlayerSettings(ev.getAuthor().getId(), null, settings);
+                                            } catch (IllegalAccessException | NoSuchFieldException e) {
+                                                e.printStackTrace();
+                                                ev.getChannel().sendMessage("Failed to set value :/").queue();
+                                            }
+                                            ev.getChannel().sendMessage("Successfully updated setting!").queue();
+                                        } else
+                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
+                                    } else {
+                                        ev.getChannel().sendMessage(cmdUsages).queue();
+                                    }
+                                    break;
+                                default:
+                                    break;
                             }
-                        } catch (NumberFormatException nfe) {
-                            ev.getChannel().sendMessage("This is not a number. Use /discord link ingame to get your link number").queue();
-                            return;
                         }
                     }
                 }
             }
         }
+    }
+
+    private HashMap<String, String> getSettings() {
+        final HashMap<String, String> out = new HashMap<>();
+        final Field[] fields = PlayerSettings.class.getFields();
+        final Field[] descFields = PlayerSettings.Descriptions.class.getDeclaredFields();
+        for (Field f : fields) {
+            out.put(f.getName(), "No Description Provided");
+        }
+        for (Field f : descFields) {
+            f.setAccessible(true);
+            try {
+                out.put(f.getName(), (String) f.get(new PlayerSettings.Descriptions()));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return out;
     }
 
     public int genLinkNumber(UUID uniqueID) {
@@ -752,7 +852,7 @@ public class Discord implements EventListener {
         });
         if (r.get() != -1) return r.get();
         do {
-            r.set(new Random().nextInt(1000000));
+            r.set(new Random().nextInt(Integer.MAX_VALUE));
         } while (pendingLinks.containsKey(r.get()));
         pendingLinks.put(r.get(), new DefaultKeyValue<>(Instant.now(), uniqueID));
         return r.get();
