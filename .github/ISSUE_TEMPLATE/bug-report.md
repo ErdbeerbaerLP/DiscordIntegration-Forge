@@ -25,10 +25,12 @@ assignees: ''
 
 Mod version _0.0.0_
 
+**Config file**
+*REMOVE YOUR BOT TOKEN BEFORE UPLOADING!!!*
 
 **Crash report if available (use https://paste.dimdev.org)**
 -
 
 **Additional info**
-Note: If you add your config REMOVE YOUR BOT TOKEN BEFORE UPLOADING!!!
+
 -
