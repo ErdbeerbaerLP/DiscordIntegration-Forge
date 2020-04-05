@@ -33,7 +33,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.1.13"
+version = "1.1.14"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -74,7 +74,7 @@ shadowJar {
     relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
-	embed("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+	embed("org.spongepowered:mixin:0.8-SNAPSHOT") {
         transitive = false
     }
     embed("net.dv8tion:JDA:4.0.0_39")

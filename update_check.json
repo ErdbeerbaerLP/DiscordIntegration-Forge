@@ -1,6 +1,7 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.12.2": {
+    "1.1.14": "Updated mixin to 0.8",
     "1.1.13": "Fixed server not loading mod",
     "1.1.12": "Fixed potential bug. Added status modification",
     "1.1.11": "Added an way to toggle join/leave messages\nYou can now specify the rate of the description updates\nFormatting of %uptime% is now possible\n\nLAST FEATURE UPDATE FOR 1.12",
