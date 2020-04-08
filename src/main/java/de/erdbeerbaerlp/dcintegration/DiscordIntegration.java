@@ -31,6 +31,8 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -52,7 +54,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.2";
+    public static final String VERSION = "1.2.1";
     /**
      * Modid
      */
@@ -247,6 +249,7 @@ public class DiscordIntegration {
                     .replace("\\n", "\n"));
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void preInit(final FMLDedicatedServerSetupEvent ev) {
         System.out.println("Loading mod");
         try {
@@ -281,6 +284,15 @@ public class DiscordIntegration {
                     System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
             }
             System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
+            if (ModList.get().isLoaded("serverutilities")) {
+                final File pdata = new File("./" + ev.getServerSupplier().get().getFolderName() + "/playerdata/" + Configuration.INSTANCE.senderUUID.get() + ".pdat");
+                if (pdata.exists()) pdata.delete();
+                else System.out.println("Generating playerdata file for comaptibility with ServerUtilities");
+                pdata.createNewFile();
+                final FileWriter w = new FileWriter(pdata);
+                w.write("{\"uuid\":\"" + Configuration.INSTANCE.senderUUID.get() + "\",\"username\":\"DiscordFakeUser\",\"nickname\":\"Discord\",\"homes\":{},\"kitCooldowns\":{},\"perms\":[\"*\"],\"ranks\":[],\"maxHomes\":1,\"hasBeenRtpWarned\":false,\"enableFly\":false,\"isFlying\":false,\"godmode\":false,\"disableMsg\":false,\"firstKit\":false}");
+                w.close();
+            }
         } catch (Exception e) {
             System.err.println("Failed to login: " + e.getMessage());
             discord_instance = null;
