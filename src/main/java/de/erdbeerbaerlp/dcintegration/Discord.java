@@ -418,9 +418,9 @@ public class Discord implements EventListener {
                     cli.close();
                 }
             } else if (playerName.equals(Configuration.INSTANCE.serverName.get()) && uuid.equals("0000000")) {
-                channel.sendMessage(msg).queue();
+                channel.sendMessage("`" + msg + "`").queue();
             } else {
-                channel.sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", playerName).replace("%msg%", msg)).queue();
+                channel.sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", "*" + playerName + "*").replace("%msg%", msg)).queue();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -867,4 +867,3 @@ public class Discord implements EventListener {
         DISABLED
     }
 }
-
