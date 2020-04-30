@@ -51,7 +51,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.14";
+    public static final String VERSION = "1.1.16";
     /**
      * Modid
      */
@@ -67,7 +67,6 @@ public class DiscordIntegration {
      */
     public static long started;
     public static ModConfig cfg = null;
-    public static PlayerEntity lastTimeout;
     public static final ArrayList<UUID> timeouts = new ArrayList<>();
     static String defaultCommandJson;
 
