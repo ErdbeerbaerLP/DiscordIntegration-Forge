@@ -225,9 +225,9 @@ public class Discord implements EventListener {
                         StringBuilder s = new StringBuilder();
                         for (final String msg : msgs)
                             s.append(msg + "\n");
-                        messages.clear();
                         this.sendMessage(s.toString().trim(), getChannel(channel));
                     });
+                    messages.clear();
                 }
                 Thread.sleep(500);
             }
