@@ -130,7 +130,7 @@ public class Discord implements EventListener {
                     });
                     for (int i : remove)
                         pendingLinks.remove(i);
-                }
+                } //
                 try {
                     sleep(1000);
                 } catch (InterruptedException e) {
