@@ -264,7 +264,7 @@ public class Discord implements EventListener {
      * @return Sent message
      */
     public CompletableFuture<Message> sendMessageReturns(String msg) {
-        if (WEBHOOK.BOT_WEBHOOK) return null;
+        if (WEBHOOK.BOT_WEBHOOK || msg.isEmpty()) return null;
         else return getChannel().sendMessage(msg).submit();
     }
 
@@ -349,7 +349,7 @@ public class Discord implements EventListener {
      */
     public void sendMessage(String msg, String avatarURL, String name) {
         try {
-            if (isKilled) return;
+            if (isKilled || msg.isEmpty()) return;
             if (WEBHOOK.BOT_WEBHOOK) {
                 final WebhookMessageBuilder b = new WebhookMessageBuilder();
                 b.setContent(msg);
@@ -375,7 +375,7 @@ public class Discord implements EventListener {
      */
     public void sendMessage(TextChannel ch, String msg, String avatarURL, String name) {
         try {
-            if (isKilled) return;
+            if (isKilled || msg.isEmpty()) return;
             if (WEBHOOK.BOT_WEBHOOK) {
                 final WebhookMessageBuilder b = new WebhookMessageBuilder();
                 b.setContent(msg);
@@ -411,7 +411,7 @@ public class Discord implements EventListener {
     public void sendMessage(String playerName, String UUID, String msg, TextChannel channel) {
         if (!Configuration.MESSAGES.DISCORD_COLOR_CODES) msg = DiscordIntegration.stripControlCodes(msg);
         try {
-            if (isKilled) return;
+            if (isKilled || msg.isEmpty()) return;
             if (WEBHOOK.BOT_WEBHOOK) {
                 if (playerName.equals(WEBHOOK.SERVER_NAME) && UUID.equals("0000000")) {
                     final WebhookMessageBuilder b = new WebhookMessageBuilder();

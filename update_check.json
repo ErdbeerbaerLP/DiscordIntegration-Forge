@@ -1,6 +1,8 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.12.2": {
+    "1.1.16": "Fix crash when setting some messages blank",
+    "1.1.15": "Fixed custom commands not sending output",
     "1.1.14": "Updated mixin to 0.8",
     "1.1.13": "Fixed server not loading mod",
     "1.1.12": "Fixed potential bug. Added status modification",
