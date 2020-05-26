@@ -8,6 +8,7 @@ import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.entities.User;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.FakePlayer;
@@ -39,8 +40,7 @@ public class DCCommandSender extends FakePlayer {
     }
 
     private static String textComponentToDiscordMessage(ITextComponent component) {
-        return DiscordIntegration.stripControlCodes(component.getFormattedText());
-
+        return TextFormatting.getTextWithoutFormattingCodes(component.getFormattedText());
     }
 
     @Override

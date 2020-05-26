@@ -1,6 +1,6 @@
 package de.erdbeerbaerlp.dcintegration.commands;
 
-import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
+import de.erdbeerbaerlp.dcintegration.Utils;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -38,7 +38,7 @@ public class CommandList extends DiscordCommand {
         String out = (server.getPlayerList().getPlayers().size() == 1 ? Configuration.INSTANCE.msgListOne.get() : Configuration.INSTANCE.msgListHeader.get().replace("%amount%", "" + server.getPlayerList().getPlayers().size())) + "\n```\n";
 //		if(!Loader.isModLoaded("ftbutilities") || !FTBUtilitiesConfig.afk.enabled)
         for (final ServerPlayerEntity p : server.getPlayerList().getPlayers()) {
-            out = out + DiscordIntegration.formatPlayerName(p) + ",";
+            out = out + Utils.formatPlayerName(p) + ",";
 //			}
 //		else {
 //			final Universe universe = Universe.get();
