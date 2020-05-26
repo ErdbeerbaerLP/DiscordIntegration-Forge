@@ -42,7 +42,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.2.2"
+version = "1.2.3"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -121,13 +121,13 @@ shadowJar {
     relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.2-31.1.27'
+    minecraft 'net.minecraftforge:forge:1.15.2-31.2.5'
     compile("org.spongepowered:mixin:0.8-SNAPSHOT") {
         transitive = false
     }
     embed("net.dv8tion:JDA:4.1.1_101")
     embed 'club.minnced:discord-webhooks:0.1.8'
-    //embed 'com.github.IzzelAliz:MixinLoader:v1.1-SNAPSHOT' //Allow loading of mixin
+    compile 'quark:Quark:r2.1:237'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     //deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
     //deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'

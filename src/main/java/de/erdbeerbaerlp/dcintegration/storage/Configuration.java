@@ -69,6 +69,7 @@ public class Configuration {
     public final ConfigValue<String> msgIgnoreUnignore;
     public final ConfigValue<String> msgIgnoreIgnore;
     public final ConfigValue<String> uptimeFormat;
+    public final ForgeConfigSpec.BooleanValue sendItemInfo;
 
     //#########################
     //#       COMMANDS        #
@@ -103,14 +104,14 @@ public class Configuration {
     public final ConfigValue<String> dcCmdMsgHover;
     public final ConfigValue<String> dcCmdURL;
 
-//	//#########################
-//	//#     FTB-UTILITIES     # XXX Not implemented, since FTB Utilities is still on 1.12
-//	//#########################
-//	public final ForgeConfigSpec.BooleanValue ftbuAfkMsgEnabled;
-//	public final ConfigValue<String> ftbuAFKMsg;
-//	public final ConfigValue<String> ftbuAFKMsgEnd;
-//	public final ConfigValue<String> ftbuAvatar;
-//	public final ConfigValue<String> ftbuShutdownMsg;
+    //#########################
+    //#      MOD-COMPAT       #
+    //#########################
+//	public final ForgeConfigSpec.BooleanValue ftbutilitiesAfkMsgEnabled;
+//	public final ConfigValue<String> ftbutilitiesAFKMsg;
+//	public final ConfigValue<String> ftbutilitiesAFKMsgEnd;
+//	public final ConfigValue<String> ftbutilitiesAvatar;
+//	public final ConfigValue<String> ftbutilitiesShutdownMsg;
 
 
     //#########################
@@ -135,6 +136,7 @@ public class Configuration {
         botModifyDescription = builder.comment("Wether or not the Bot should modify the channel description").define("botModifyDescription", true);
         allowLink = builder.comment("Should discord linking be enabled?", "If whitelist is on, this can not be disabled").define("allow-linking", true);
         whitelist = builder.comment("Enable discord based whitelist?", "This will override the link config!", "To whitelist use !whitelist <uuid> in the bot DMs").define("whitelist", false);
+        sendItemInfo = builder.comment("Show item information, which is visible on hover ingame, as embed in discord?").define("sendItemInfo", true);
         builder.pop();
         //#########################
         //#        WEBHOOK        #
@@ -254,26 +256,27 @@ public class Configuration {
         dcCmdMsgHover = builder.comment("The message shown when hovering the /discord command message").define("dcCmdMsgHover", "Click to open the invite url");
         dcCmdURL = builder.comment("The url to open when clicking the /discord command text").define("dcCmdURL", "http://discord.gg/myserver");
         builder.pop();
-//		//#########################
-//		//#     FTB-UTILITIES     #
-//		//#########################
-//		builder.comment("Theese config values will only be used when FTB Utilities is installed!").push("ftbutilities");
-//		ftbuAfkMsgEnabled = builder
-//				.comment("Print afk messages in discord?")
-//				.define("ftbuAfkMsgEnabled", true);
-//		ftbuAFKMsg = builder
+        //#########################
+        //#       MOD-COMPAT      #
+        //#########################
+        builder.comment("Theese config values will only be used when the specific mods are installed").push("mod-compat");
+
+//      ftbutilitiesAfkMsgEnabled = builder
+//				.comment("Print FTB Utilities afk messages in discord?")
+//				.define("ftbutilitiesAfkMsgEnabled", true);
+//		ftbutilitiesAFKMsg = builder
 //				.comment("Format of the AFK message", "PLACEHOLDERS:", "%player% - The player\u00B4s name")
-//				.define("ftbuAFKMsg", "%player% is now AFK");
-//		ftbuAFKMsgEnd = builder
+//				.define("ftbutilitiesAFKMsg", "%player% is now AFK");
+//		ftbutilitiesAFKMsgEnd = builder
 //				.comment("Format of the no longer AFK message", "PLACEHOLDERS:", "%player% - The player\u00B4s name")
-//				.define("ftbuAFKMsgEnd", "%player% is no longer AFK");
-//		ftbuAvatar = builder
+//				.define("ftbutilitiesAFKMsgEnd", "%player% is no longer AFK");
+//		ftbutilitiesAvatar = builder
 //				.comment("URL of the FTB Avatar icon")
-//				.define("ftbuAvatar", "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/images/ftb.png");
-//		ftbuShutdownMsg = builder
+//				.define("ftbutilitiesAvatar", "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/images/ftb.png");
+//		ftbutilitiesShutdownMsg = builder
 //				.comment("Format of the shutdown message printed when the server will shutdown/restart in 30 and 10 seconds","PLACEHOLDERS:", "%seconds% - The seconds remaining till shutdown (30 or 10)")
-//				.define("ftbuShutdownMsg", "Server stopping in %seconds%!");
-//		builder.pop();
+//				.define("ftbutilitiesShutdownMsg", "Server stopping in %seconds%!");
+        builder.pop();
         //#########################
         //#        ADVANCED       #
         //#########################

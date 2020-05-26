@@ -1,4 +1,4 @@
-package de.erdbeerbaerlp.dcintegration;
+package de.erdbeerbaerlp.dcintegration.integrations;
 /*  :( No votifier in 1.15 yet
 import com.github.upcraftlp.votifier.api.VoteReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

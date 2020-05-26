@@ -1,6 +1,8 @@
 package de.erdbeerbaerlp.dcintegration;
 
 import club.minnced.discord.webhook.WebhookClient;
+import club.minnced.discord.webhook.send.WebhookEmbed;
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
@@ -75,11 +77,11 @@ public class Discord implements EventListener {
                 while (true) {
                     final String newDesc = Configuration.INSTANCE.description.get().replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
                             .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers()).replace("%motd%", ServerLifecycleHooks.getCurrentServer().getMOTD())
-                            .replace("%uptime%", DiscordIntegration.getFullUptime())
-                            .replace("%seconds%", DiscordIntegration.getUptimeSeconds() + "")
-                            .replace("%minutes%", DiscordIntegration.getUptimeMinutes() + "")
-                            .replace("%hours%", DiscordIntegration.getUptimeHours() + "")
-                            .replace("%days%", DiscordIntegration.getUptimeDays() + "");
+                            .replace("%uptime%", Utils.getFullUptime())
+                            .replace("%seconds%", Utils.getUptimeSeconds() + "")
+                            .replace("%minutes%", Utils.getUptimeMinutes() + "")
+                            .replace("%hours%", Utils.getUptimeHours() + "")
+                            .replace("%days%", Utils.getUptimeDays() + "");
                     if (!newDesc.equals(cachedDescription)) {
                         (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? getChannelManager() : getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(newDesc).complete();
                         cachedDescription = newDesc;
@@ -237,7 +239,6 @@ public class Discord implements EventListener {
         } catch (InterruptedException ignored) {
         }
     });
-    Runnable target;
     private List<DiscordCommand> commands = new ArrayList<>();
 
     /**
@@ -298,7 +299,7 @@ public class Discord implements EventListener {
      * @return Sent message
      */
     public CompletableFuture<Message> sendMessageReturns(String msg) {
-        if (Configuration.INSTANCE.enableWebhook.get()) return null;
+        if (Configuration.INSTANCE.enableWebhook.get() || msg.isEmpty()) return null;
         else return getChannel().sendMessage(msg).submit();
     }
 
@@ -313,7 +314,17 @@ public class Discord implements EventListener {
      * @param msg    Message
      */
     public void sendMessage(ServerPlayerEntity player, String msg) {
-        sendMessage(DiscordIntegration.formatPlayerName(player), player.getUniqueID().toString(), msg, Configuration.INSTANCE.chatOutputChannel.get().isEmpty() ? getChannel() : getChannel(Configuration.INSTANCE.chatOutputChannel.get()));
+        sendMessage(player, new DCMessage(msg));
+    }
+
+    /**
+     * Sends a message as player
+     *
+     * @param player Player
+     * @param msg    Message packed as {@link DCMessage}
+     */
+    public void sendMessage(ServerPlayerEntity player, DCMessage msg) {
+        sendMessage(Utils.formatPlayerName(player), player.getUniqueID().toString(), msg, Configuration.INSTANCE.chatOutputChannel.get().isEmpty() ? getChannel() : getChannel(Configuration.INSTANCE.chatOutputChannel.get()));
     }
 
     /**
@@ -334,7 +345,7 @@ public class Discord implements EventListener {
      */
     public void sendMessage(String msg, String avatarURL, String name) {
         try {
-            if (isKilled) return;
+            if (isKilled || msg.isEmpty()) return;
             if (Configuration.INSTANCE.enableWebhook.get()) {
                 final WebhookMessageBuilder b = new WebhookMessageBuilder();
                 b.setContent(msg);
@@ -359,7 +370,7 @@ public class Discord implements EventListener {
      */
     public void sendMessage(TextChannel ch, String msg, String avatarURL, String name) {
         try {
-            if (isKilled) return;
+            if (isKilled || msg.isEmpty()) return;
             if (INSTANCE.enableWebhook.get()) {
                 final WebhookMessageBuilder b = new WebhookMessageBuilder();
                 b.setContent(msg);
@@ -375,6 +386,17 @@ public class Discord implements EventListener {
         }
     }
 
+    public void sendMessage(final String playerName, String uuid, MessageEmbed embed, TextChannel channel) {
+        if (isKilled) return;
+        sendMessage(playerName, uuid, new DCMessage(embed), channel);
+    }
+
+
+    public void sendMessage(final String playerName, String uuid, String msg, TextChannel channel) {
+        if (isKilled || msg.isEmpty()) return;
+        sendMessage(playerName, uuid, new DCMessage(msg), channel);
+    }
+
     /**
      * Sends a message to discord
      *
@@ -382,23 +404,23 @@ public class Discord implements EventListener {
      * @param uuid       the player uuid
      * @param msg        the message to send
      */
-    public void sendMessage(final String playerName, String uuid, String msg, TextChannel channel) {
+    public void sendMessage(final String playerName, String uuid, DCMessage msg, TextChannel channel) {
         if (isKilled) return;
         final UUID uUUID = uuid.equals("0000000") ? null : UUID.fromString(uuid);
-        if (!Configuration.INSTANCE.discordColorCodes.get()) msg = DiscordIntegration.stripControlCodes(msg);
+        if (!Configuration.INSTANCE.discordColorCodes.get()) {
+            msg.setMessage(TextFormatting.getTextWithoutFormattingCodes(msg.getMessage()));
+        }
         try {
             if (Configuration.INSTANCE.enableWebhook.get()) {
                 if (playerName.equals(Configuration.INSTANCE.serverName.get()) && uuid.equals("0000000")) {
-                    final WebhookMessageBuilder b = new WebhookMessageBuilder();
-                    b.setContent(msg);
+                    final WebhookMessageBuilder b = msg.buildWebhookMessage();
                     b.setUsername(Configuration.INSTANCE.serverName.get());
                     b.setAvatarUrl(Configuration.INSTANCE.serverAvatar.get());
                     final WebhookClient cli = WebhookClient.withUrl(getWebhook(channel).getUrl());
                     cli.send(b.build());
                     cli.close();
                 } else {
-                    final WebhookMessageBuilder b = new WebhookMessageBuilder();
-                    b.setContent(msg);
+                    final WebhookMessageBuilder b = msg.buildWebhookMessage();
                     String avatar = "https://minotar.net/avatar/" + uuid;
                     String pname = playerName;
                     if (PlayerLinkController.isPlayerLinked(uUUID)) {
@@ -418,12 +440,258 @@ public class Discord implements EventListener {
                     cli.close();
                 }
             } else if (playerName.equals(Configuration.INSTANCE.serverName.get()) && uuid.equals("0000000")) {
-                channel.sendMessage(msg).queue();
+                channel.sendMessage(msg.buildMessage()).queue();
             } else {
-                channel.sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", playerName).replace("%msg%", msg)).queue();
+                msg.setMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", playerName).replace("%msg%", msg.getMessage()));
+                channel.sendMessage(msg.buildMessage()).queue();
+
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Adds messages to send in the next half second
+     * Used by config commands
+     *
+     * @param msg       message
+     * @param channelID
+     */
+    public void sendMessageFuture(String msg, String channelID) {
+        final ArrayList<String> msgs;
+        if (messages.containsKey(channelID))
+            msgs = messages.get(channelID);
+        else
+            msgs = new ArrayList<>();
+        msgs.add(msg);
+        messages.put(channelID, msgs);
+    }
+
+    public void sendMessage(String msg, TextChannel textChannel) {
+        sendMessage(new DCMessage(msg), textChannel);
+    }
+
+    public void sendMessage(DCMessage msg, TextChannel channel) {
+        this.sendMessage(Configuration.INSTANCE.serverName.get(), "0000000", msg, channel);
+    }
+
+    /**
+     * Event handler to handle messages
+     */
+    @Override
+    public void onEvent(GenericEvent event) {
+        if (isKilled) return;
+        if (event instanceof MessageReceivedEvent) {
+            final MessageReceivedEvent ev = (MessageReceivedEvent) event;
+            if (ev.getChannelType().equals(ChannelType.TEXT)) {
+                if (!ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
+                    if (ev.getMessage().getContentRaw().startsWith(Configuration.INSTANCE.prefix.get())) {
+                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.INSTANCE.prefix.get(), "").split(" ");
+                        String argumentsRaw = "";
+                        for (int i = 1; i < command.length; i++) {
+                            argumentsRaw = argumentsRaw + command[i] + " ";
+                        }
+                        argumentsRaw = argumentsRaw.trim();
+                        boolean hasPermission = true;
+                        boolean executed = false;
+                        for (final DiscordCommand cmd : commands) {
+                            if (!cmd.worksInChannel(ev.getTextChannel())) {
+                                continue;
+                            }
+                            if (cmd.getName().equals(command[0])) {
+                                if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                    cmd.execute(argumentsRaw.split(" "), ev);
+                                    executed = true;
+                                } else {
+                                    hasPermission = false;
+                                }
+                            }
+                            for (final String alias : cmd.getAliases()) {
+                                if (alias.equals(command[0])) {
+                                    if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                        cmd.execute(argumentsRaw.split(" "), ev);
+                                        executed = true;
+                                    } else {
+                                        hasPermission = false;
+                                    }
+                                }
+                            }
+                        }
+                        if (!hasPermission) {
+                            sendMessage(Configuration.INSTANCE.msgNoPermission.get(), ev.getTextChannel());
+                            return;
+                        }
+                        if (!executed && (Configuration.INSTANCE.enableUnknownCommandEverywhere.get() || ev.getTextChannel().getId().equals(getChannel().getId())) && Configuration.INSTANCE.enableUnknownCommandMsg.get()) {
+                            if (Configuration.INSTANCE.cmdHelpEnabled.get())
+                                sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()), ev.getTextChannel());
+                        }
+
+
+                    } else if (ev.getChannel().getId().equals(INSTANCE.chatInputChannel.get().isEmpty() ? getChannel().getId() : INSTANCE.chatInputChannel.get())) {
+                        final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
+                        String msg = ev.getMessage().getContentRaw();
+
+                        for (final Member u : ev.getMessage().getMentionedMembers()) {
+                            msg = msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
+                        }
+                        for (final Role r : ev.getMessage().getMentionedRoles()) {
+                            msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
+                        }
+                        StringBuilder message = new StringBuilder(msg);
+                        for (Message.Attachment a : ev.getMessage().getAttachments()) {
+                            //noinspection StringConcatenationInsideStringBufferAppend
+                            message.append("\nAttachment: " + a.getProxyUrl());
+                        }
+                        for (MessageEmbed e : embeds) {
+                            if (e.isEmpty()) continue;
+                            message.append("\n\n-----[Embed]-----\n");
+                            if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty())
+                                //noinspection StringConcatenationInsideStringBufferAppend
+                                message.append(TextFormatting.BOLD + "" + TextFormatting.ITALIC + e.getAuthor().getName() + "\n");
+                            if (e.getTitle() != null && !e.getTitle().trim().isEmpty())
+                                //noinspection StringConcatenationInsideStringBufferAppend
+                                message.append(TextFormatting.BOLD + e.getTitle() + "\n");
+                            if (e.getDescription() != null && !e.getDescription().trim().isEmpty())
+                                message.append("Message:\n").append(e.getDescription()).append("\n");
+                            if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty())
+                                message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
+                            message.append("\n-----------------");
+                        }
+                        sendMcMsg(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
+                                .replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.INSTANCE.preventMcColorCodes.get() ? TextFormatting.getTextWithoutFormattingCodes(message.toString()) : message.toString())))
+                                .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                    }
+                }
+            } else if (ev.getChannelType().equals(ChannelType.PRIVATE)) {
+                if (!ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
+                    if (INSTANCE.whitelist.get() && INSTANCE.allowLink.get()) {
+                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
+                        if (command.length > 0 && command[0].equals("whitelist")) {
+                            if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
+                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                return;
+                            }
+                            System.out.println(command.length);
+                            if (command.length > 2) {
+                                ev.getChannel().sendMessage("Too many arguments. Use `!whitelist <uuid>`").queue();
+                                return;
+                            }
+                            if (command.length < 2) {
+                                ev.getChannel().sendMessage("Not enough arguments. Use `!whitelist <uuid>`").queue();
+                                return;
+                            }
+                            UUID u;
+                            try {
+                                String s = command[1];
+                                if (!s.contains("-"))
+                                    s = s.replaceFirst(
+                                            "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"
+                                    );
+                                u = UUID.fromString(s);
+                                final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), u);
+                                if (linked)
+                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(u)).queue();
+                                else
+                                    ev.getChannel().sendMessage("Failed to link!").queue();
+                            } catch (IllegalArgumentException e) {
+                                ev.getChannel().sendMessage("Argument is not an UUID. Use `!whitelist <uuid>`").queue();
+                                return;
+                            }
+                        }
+                    } else if (INSTANCE.allowLink.get() && !INSTANCE.whitelist.get()) {
+                        if (!ev.getMessage().getContentRaw().startsWith(INSTANCE.prefix.get()))
+                            try {
+                                int num = Integer.parseInt(ev.getMessage().getContentRaw());
+                                if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
+                                    ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                    return;
+                                }
+                                if (pendingLinks.containsKey(num)) {
+                                    final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), pendingLinks.get(num).getValue());
+                                    if (linked) {
+                                        ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(pendingLinks.get(num).getValue()).sendMessage(new StringTextComponent("Your account is now linked with " + ev.getAuthor().getAsTag()));
+                                    } else
+                                        ev.getChannel().sendMessage("Failed to link!").queue();
+                                } else {
+                                    ev.getChannel().sendMessage("Use `/discord link` ingame to get your link number").queue();
+                                    return;
+                                }
+                            } catch (NumberFormatException nfe) {
+                                ev.getChannel().sendMessage("This is not a number. Use `/discord link` ingame to get your link number").queue();
+                                return;
+                            }
+                    }
+                    if (INSTANCE.allowLink.get()) {
+                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
+                        if (command.length > 0) {
+                            final String cmdUsages = "Usages:\n\n/settings - lists all available keys\n/settings get <key> - Gets the current settings value\n/settings set <key> <value> - Sets an Settings value";
+                            switch (command[0]) {
+                                case "help":
+                                    ev.getChannel().sendMessage("__Available commands here:__\n\n/help - Shows this\n/settings - Edit your personal settings").queue();
+                                    break;
+                                case "settings":
+                                    if (!PlayerLinkController.isDiscordLinked(ev.getAuthor().getId()))
+                                        ev.getChannel().sendMessage("Your account is not linked! Link it first using " + (INSTANCE.whitelist.get() ? (INSTANCE.prefix.get() + "whitelist <uuid>") : "`/discord link` ingame")).queue();
+                                    else if (command.length == 1) {
+                                        final MessageBuilder mb = new MessageBuilder();
+                                        mb.setContent(cmdUsages);
+                                        final EmbedBuilder b = new EmbedBuilder();
+                                        final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
+                                        getSettings().forEach((name, desc) -> {
+                                            if (!(!INSTANCE.enableWebhook.get() && name.equals("useDiscordNameInChannel"))) {
+                                                try {
+                                                    b.addField(name + " == " + (((boolean) settings.getClass().getDeclaredField(name).get(settings)) ? "true" : "false"), desc, false);
+                                                } catch (IllegalAccessException | NoSuchFieldException e) {
+                                                    b.addField(name + " == Unknown", desc, false);
+                                                }
+                                            }
+                                        });
+                                        b.setAuthor("Personal Settings list:");
+                                        mb.setEmbed(b.build());
+                                        ev.getChannel().sendMessage(mb.build()).queue();
+                                    } else if (command.length == 3 && command[1].equals("get")) {
+                                        if (getSettings().containsKey(command[2])) {
+                                            final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
+                                            try {
+                                                ev.getChannel().sendMessage("This settings value is `" + (settings.getClass().getField(command[2]).getBoolean(settings) ? "true" : "false") + "`").queue();
+                                            } catch (IllegalAccessException | NoSuchFieldException e) {
+                                                e.printStackTrace();
+                                            }
+                                        } else
+                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
+                                    } else if (command.length == 4 && command[1].equals("set")) {
+                                        if (getSettings().containsKey(command[2])) {
+                                            final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
+                                            int newval;
+                                            try {
+                                                newval = Integer.parseInt(command[3]);
+                                            } catch (NumberFormatException e) {
+                                                newval = -1;
+                                            }
+                                            final boolean newValue = newval == -1 ? Boolean.parseBoolean(command[3]) : newval >= 1;
+                                            try {
+                                                settings.getClass().getDeclaredField(command[2]).set(settings, newValue);
+                                                PlayerLinkController.updatePlayerSettings(ev.getAuthor().getId(), null, settings);
+                                            } catch (IllegalAccessException | NoSuchFieldException e) {
+                                                e.printStackTrace();
+                                                ev.getChannel().sendMessage("Failed to set value :/").queue();
+                                            }
+                                            ev.getChannel().sendMessage("Successfully updated setting!").queue();
+                                        } else
+                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
+                                    } else {
+                                        ev.getChannel().sendMessage(cmdUsages).queue();
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -585,244 +853,74 @@ public class Discord implements EventListener {
         return jda.getTextChannelById(id);
     }
 
-    /**
-     * Adds messages to send in the next half second
-     * Used by config commands
-     *
-     * @param msg       message
-     * @param channelID
-     */
-    public void sendMessageFuture(String msg, String channelID) {
-        final ArrayList<String> msgs;
-        if (messages.containsKey(channelID))
-            msgs = messages.get(channelID);
-        else
-            msgs = new ArrayList<>();
-        msgs.add(msg);
-        messages.put(channelID, msgs);
-    }
+    public static final class DCMessage {
+        private MessageEmbed embed = null;
 
-    public void sendMessage(String msg, TextChannel textChannel) {
-        this.sendMessage(Configuration.INSTANCE.serverName.get(), "0000000", msg, textChannel);
-    }
+        private String message = "";
 
-    /**
-     * Event handler to handle messages
-     */
-    @Override
-    public void onEvent(GenericEvent event) {
-        if (isKilled) return;
-        if (event instanceof MessageReceivedEvent) {
-            final MessageReceivedEvent ev = (MessageReceivedEvent) event;
-            if (ev.getChannelType().equals(ChannelType.TEXT)) {
-                if (!ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
-                    if (ev.getMessage().getContentRaw().startsWith(Configuration.INSTANCE.prefix.get())) {
-                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.INSTANCE.prefix.get(), "").split(" ");
-                        String argumentsRaw = "";
-                        for (int i = 1; i < command.length; i++) {
-                            argumentsRaw = argumentsRaw + command[i] + " ";
-                        }
-                        argumentsRaw = argumentsRaw.trim();
-                        boolean hasPermission = true;
-                        boolean executed = false;
-                        for (final DiscordCommand cmd : commands) {
-                            if (!cmd.worksInChannel(ev.getTextChannel())) {
-                                continue;
-                            }
-                            if (cmd.getName().equals(command[0])) {
-                                if (cmd.canUserExecuteCommand(ev.getAuthor())) {
-                                    cmd.execute(argumentsRaw.split(" "), ev);
-                                    executed = true;
-                                } else {
-                                    hasPermission = false;
-                                }
-                            }
-                            for (final String alias : cmd.getAliases()) {
-                                if (alias.equals(command[0])) {
-                                    if (cmd.canUserExecuteCommand(ev.getAuthor())) {
-                                        cmd.execute(argumentsRaw.split(" "), ev);
-                                        executed = true;
-                                    } else {
-                                        hasPermission = false;
-                                    }
-                                }
-                            }
-                        }
-                        if (!hasPermission) {
-                            sendMessage(Configuration.INSTANCE.msgNoPermission.get(), ev.getTextChannel());
-                            return;
-                        }
-                        if (!executed && (Configuration.INSTANCE.enableUnknownCommandEverywhere.get() || ev.getTextChannel().getId().equals(getChannel().getId())) && Configuration.INSTANCE.enableUnknownCommandMsg.get()) {
-                            if (Configuration.INSTANCE.cmdHelpEnabled.get())
-                                sendMessage(Configuration.INSTANCE.msgUnknownCommand.get().replace("%prefix%", Configuration.INSTANCE.prefix.get()), ev.getTextChannel());
-                        }
+        public DCMessage(final MessageEmbed embed, final String message) {
+            this.embed = embed;
+            this.message = message;
+        }
 
+        public DCMessage(final String message) {
+            this.message = message;
+        }
 
-                    } else if (ev.getChannel().getId().equals(INSTANCE.chatInputChannel.get().isEmpty() ? getChannel().getId() : INSTANCE.chatInputChannel.get())) {
-                        final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
-                        String msg = ev.getMessage().getContentRaw();
+        public DCMessage(final MessageEmbed embed) {
+            this.embed = embed;
+        }
 
-                        for (final Member u : ev.getMessage().getMentionedMembers()) {
-                            msg = msg.replace(Pattern.quote("<@" + u.getId() + ">"), "@" + u.getEffectiveName());
-                        }
-                        for (final Role r : ev.getMessage().getMentionedRoles()) {
-                            msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
-                        }
-                        StringBuilder message = new StringBuilder(msg);
-                        for (Message.Attachment a : ev.getMessage().getAttachments()) {
-                            //noinspection StringConcatenationInsideStringBufferAppend
-                            message.append("\nAttachment: " + a.getProxyUrl());
-                        }
-                        for (MessageEmbed e : embeds) {
-                            if (e.isEmpty()) continue;
-                            message.append("\n\n-----[Embed]-----\n");
-                            if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty())
-                                //noinspection StringConcatenationInsideStringBufferAppend
-                                message.append(TextFormatting.BOLD + "" + TextFormatting.ITALIC + e.getAuthor().getName() + "\n");
-                            if (e.getTitle() != null && !e.getTitle().trim().isEmpty())
-                                //noinspection StringConcatenationInsideStringBufferAppend
-                                message.append(TextFormatting.BOLD + e.getTitle() + "\n");
-                            if (e.getDescription() != null && !e.getDescription().trim().isEmpty())
-                                message.append("Message:\n").append(e.getDescription()).append("\n");
-                            if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty())
-                                message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
-                            message.append("\n-----------------");
-                        }
-                        sendMcMsg(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
-                                .replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.INSTANCE.preventMcColorCodes.get() ? DiscordIntegration
-                                        .stripControlCodes(message.toString()) : message.toString())))
-                                .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
-                    }
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(final String message) {
+            this.message = message;
+        }
+
+        public MessageEmbed getEmbed() {
+            return embed;
+        }
+
+        public void setEmbed(final MessageEmbed embed) {
+            this.embed = embed;
+        }
+
+        Message buildMessage() {
+            final MessageBuilder out = new MessageBuilder();
+            if (!message.isEmpty())
+                out.setContent(message);
+            if (embed != null)
+                out.setEmbed(embed);
+            return out.build();
+        }
+
+        WebhookMessageBuilder buildWebhookMessage() {
+            final WebhookMessageBuilder out = new WebhookMessageBuilder();
+            if (!message.isEmpty())
+                out.setContent(message);
+            if (embed != null) {
+                final WebhookEmbedBuilder eb = new WebhookEmbedBuilder();
+                if (embed.getAuthor() != null)
+                    eb.setAuthor(new WebhookEmbed.EmbedAuthor(embed.getAuthor().getName(), embed.getAuthor().getIconUrl(), embed.getAuthor().getUrl()));
+                eb.setColor(embed.getColorRaw());
+                eb.setDescription(embed.getDescription());
+                if (embed.getFooter() != null)
+                    eb.setFooter(new WebhookEmbed.EmbedFooter(embed.getFooter().getText(), embed.getFooter().getIconUrl()));
+                if (embed.getImage() != null)
+                    eb.setImageUrl(embed.getImage().getUrl());
+                if (embed.getThumbnail() != null)
+                    eb.setThumbnailUrl(embed.getThumbnail().getUrl());
+                for (MessageEmbed.Field f : embed.getFields()) {
+                    eb.addField(new WebhookEmbed.EmbedField(f.isInline(), f.getName(), f.getValue()));
                 }
-            } else if (ev.getChannelType().equals(ChannelType.PRIVATE)) {
-                if (!ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
-                    if (INSTANCE.whitelist.get() && INSTANCE.allowLink.get()) {
-                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
-                        if (command.length > 0 && command[0].equals("whitelist")) {
-                            if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
-                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
-                                return;
-                            }
-                            System.out.println(command.length);
-                            if (command.length > 2) {
-                                ev.getChannel().sendMessage("Too many arguments. Use `!whitelist <uuid>`").queue();
-                                return;
-                            }
-                            if (command.length < 2) {
-                                ev.getChannel().sendMessage("Not enough arguments. Use `!whitelist <uuid>`").queue();
-                                return;
-                            }
-                            UUID u;
-                            try {
-                                String s = command[1];
-                                if (!s.contains("-"))
-                                    s = s.replaceFirst(
-                                            "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"
-                                    );
-                                u = UUID.fromString(s);
-                                final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), u);
-                                if (linked)
-                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(u)).queue();
-                                else
-                                    ev.getChannel().sendMessage("Failed to link!").queue();
-                            } catch (IllegalArgumentException e) {
-                                ev.getChannel().sendMessage("Argument is not an UUID. Use `!whitelist <uuid>`").queue();
-                                return;
-                            }
-                        }
-                    } else if (INSTANCE.allowLink.get() && !INSTANCE.whitelist.get()) {
-                        if (!ev.getMessage().getContentRaw().startsWith(INSTANCE.prefix.get()))
-                            try {
-                                int num = Integer.parseInt(ev.getMessage().getContentRaw());
-                                if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
-                                    ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
-                                    return;
-                                }
-                                if (pendingLinks.containsKey(num)) {
-                                    final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), pendingLinks.get(num).getValue());
-                                    if (linked) {
-                                        ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
-                                        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(pendingLinks.get(num).getValue()).sendMessage(new StringTextComponent("Your account is now linked with " + ev.getAuthor().getAsTag()));
-                                    } else
-                                        ev.getChannel().sendMessage("Failed to link!").queue();
-                                } else {
-                                    ev.getChannel().sendMessage("Use `/discord link` ingame to get your link number").queue();
-                                    return;
-                                }
-                            } catch (NumberFormatException nfe) {
-                                ev.getChannel().sendMessage("This is not a number. Use `/discord link` ingame to get your link number").queue();
-                                return;
-                            }
-                    }
-                    if (INSTANCE.allowLink.get()) {
-                        final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
-                        if (command.length > 0) {
-                            final String cmdUsages = "Usages:\n\n/settings - lists all available keys\n/settings get <key> - Gets the current settings value\n/settings set <key> <value> - Sets an Settings value";
-                            switch (command[0]) {
-                                case "help":
-                                    ev.getChannel().sendMessage("__Available commands here:__\n\n/help - Shows this\n/settings - Edit your personal settings").queue();
-                                    break;
-                                case "settings":
-                                    if (!PlayerLinkController.isDiscordLinked(ev.getAuthor().getId()))
-                                        ev.getChannel().sendMessage("Your account is not linked! Link it first using " + (INSTANCE.whitelist.get() ? (INSTANCE.prefix.get() + "whitelist <uuid>") : "`/discord link` ingame")).queue();
-                                    else if (command.length == 1) {
-                                        final MessageBuilder mb = new MessageBuilder();
-                                        mb.setContent(cmdUsages);
-                                        final EmbedBuilder b = new EmbedBuilder();
-                                        final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
-                                        getSettings().forEach((name, desc) -> {
-                                            if (!(!INSTANCE.enableWebhook.get() && name.equals("useDiscordNameInChannel"))) {
-                                                try {
-                                                    b.addField(name + " == " + (((boolean) settings.getClass().getDeclaredField(name).get(settings)) ? "true" : "false"), desc, false);
-                                                } catch (IllegalAccessException | NoSuchFieldException e) {
-                                                    b.addField(name + " == Unknown", desc, false);
-                                                }
-                                            }
-                                        });
-                                        b.setAuthor("Personal Settings list:");
-                                        mb.setEmbed(b.build());
-                                        ev.getChannel().sendMessage(mb.build()).queue();
-                                    } else if (command.length == 3 && command[1].equals("get")) {
-                                        if (getSettings().containsKey(command[2])) {
-                                            final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
-                                            try {
-                                                ev.getChannel().sendMessage("This settings value is `" + (settings.getClass().getField(command[2]).getBoolean(settings) ? "true" : "false") + "`").queue();
-                                            } catch (IllegalAccessException | NoSuchFieldException e) {
-                                                e.printStackTrace();
-                                            }
-                                        } else
-                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
-                                    } else if (command.length == 4 && command[1].equals("set")) {
-                                        if (getSettings().containsKey(command[2])) {
-                                            final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
-                                            int newval;
-                                            try {
-                                                newval = Integer.parseInt(command[3]);
-                                            } catch (NumberFormatException e) {
-                                                newval = -1;
-                                            }
-                                            final boolean newValue = newval == -1 ? Boolean.parseBoolean(command[3]) : newval >= 1;
-                                            try {
-                                                settings.getClass().getDeclaredField(command[2]).set(settings, newValue);
-                                                PlayerLinkController.updatePlayerSettings(ev.getAuthor().getId(), null, settings);
-                                            } catch (IllegalAccessException | NoSuchFieldException e) {
-                                                e.printStackTrace();
-                                                ev.getChannel().sendMessage("Failed to set value :/").queue();
-                                            }
-                                            ev.getChannel().sendMessage("Successfully updated setting!").queue();
-                                        } else
-                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
-                                    } else {
-                                        ev.getChannel().sendMessage(cmdUsages).queue();
-                                    }
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                }
+                eb.setTimestamp(embed.getTimestamp());
+                if (embed.getTitle() != null)
+                    eb.setTitle(new WebhookEmbed.EmbedTitle(embed.getTitle(), embed.getUrl()));
+                out.addEmbeds(eb.build());
             }
+            return out;
         }
     }
 
