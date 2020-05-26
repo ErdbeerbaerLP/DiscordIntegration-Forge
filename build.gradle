@@ -168,7 +168,7 @@ curseforge {
         project {
             id = '324952'
             changelog = project.changelog
-            releaseType = 'alpha'
+            releaseType = 'beta'
             addGameVersion '1.15.2'
                 mainArtifact(jar) {
                 displayName = "DiscordIntegration-$version (MC 1.15)"
