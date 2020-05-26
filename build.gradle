@@ -127,7 +127,6 @@ dependencies {
     }
     embed("net.dv8tion:JDA:4.1.1_101")
     embed 'club.minnced:discord-webhooks:0.1.8'
-    compile 'quark:Quark:r2.1:237'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     //deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
     //deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'
