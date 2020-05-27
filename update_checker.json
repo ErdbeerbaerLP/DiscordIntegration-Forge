@@ -1,6 +1,7 @@
 [
   {
     "version": "1.2.4",
-    "changelog": "Fix disabling item tooltips\\nAdded update checker"
+    "type": "beta",
+    "changelog": "Fix disabling item tooltips\nFixed disabling shutdown message\nAdded update checker"
   }
 ]
