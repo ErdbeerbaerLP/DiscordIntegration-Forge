@@ -136,7 +136,6 @@ dependencies {
     embed "me.vankka:SimpleAST:2.0.3"
     embed "net.kyori:text-api:3.0.0"
     embed "net.kyori:text-serializer-legacy:3.0.0"
-    embed group: 'org.slf4j', name: 'slf4j-nop', version: '2.0.0-alpha1'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     //deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
     //deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'

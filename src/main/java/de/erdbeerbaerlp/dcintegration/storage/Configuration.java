@@ -154,7 +154,6 @@ public class Configuration {
         //#       MESSAGES        #
         //#########################
         builder.comment("Customize messages of this mod").push("messages");
-
         convertCodes = builder.comment("Enable formatting conversion (Markdown <==> Minecraft)").define("convertFormatting", true);
         formattingCodesToDiscord = builder.comment("Send formatting codes from mc chat to discord", "Has no effect when markdown <==> Minecraft is enabled").define("formattingCodesToDiscord", false);
         preventDiscordFormattingCodesToMC = builder.comment("Prevent sending MC color codes from Discord to server chat?", "Does not disable Markdown to minecraft conversion!").define("preventDiscordFormattingCodesToMC", false);
@@ -170,7 +169,7 @@ public class Configuration {
         msgAdvancement = builder.comment("Supports MulitLined messages using \\n", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%name% - The advancement name", "%desc% - The advancement description").define("msgAdvancement",
                 "%player% just gained the advancement **%name%**\\n_%desc%_");
         msgChatMessage = builder.comment("Chat message", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message").define("msgChatMessage", "%player%: %msg%");
-        description = builder.comment("Channel description while the server is online", "New discord limitation: Description can only be updated two times in 10 minutes!", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS",
+        description = builder.comment("Channel description while the server is online", "New discord limitation: Description will only be updated every 10 minutes!", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS",
                 "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server").define("description", "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%");
         descriptionOffline = builder.comment("Channel description while the server is offline").define("descriptionOffline", "Server is Offline!");
         descriptionStarting = builder.comment("Channel description while the server is starting").define("descriptionStarting", "Starting...");

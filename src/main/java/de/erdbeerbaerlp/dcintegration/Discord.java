@@ -40,6 +40,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.LongStream;
@@ -87,7 +88,7 @@ public class Discord implements EventListener {
                         (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? getChannelManager() : getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(newDesc).complete();
                         cachedDescription = newDesc;
                     }
-                    sleep(300100); // Only do it about two times per 10 minutes! New discord limitation
+                    sleep(TimeUnit.MINUTES.toMillis(10)); // Only do it about once per 10 minutes! New discord limitation
                 }
             } catch (InterruptedException | RuntimeException ignored) {
 
