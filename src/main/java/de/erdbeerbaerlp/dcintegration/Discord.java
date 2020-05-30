@@ -91,7 +91,7 @@ public class Discord implements EventListener {
                         (ADVANCED.CHANNEL_DESCRIPTION_ID.isEmpty() ? getChannelManager() : getChannelManager(ADVANCED.CHANNEL_DESCRIPTION_ID)).setTopic(newDesc).complete();
                         cachedDescription = newDesc;
                     }
-                    sleep(GENERAL.DESCRIPTION_UPDATE_DELAY);
+                    sleep(/*GENERAL.DESCRIPTION_UPDATE_DELAY*/TimeUnit.MINUTES.toMillis(10));
                 }
             } catch (InterruptedException | RuntimeException ignored) {
             }
