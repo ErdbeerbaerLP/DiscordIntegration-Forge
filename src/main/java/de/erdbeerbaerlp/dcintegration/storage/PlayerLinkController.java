@@ -2,6 +2,8 @@ package de.erdbeerbaerlp.dcintegration.storage;
 
 import com.google.gson.*;
 import com.mojang.authlib.GameProfile;
+import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
+import de.erdbeerbaerlp.dcintegration.api.DiscordEventHandler;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import javax.annotation.Nullable;
@@ -15,6 +17,7 @@ public class PlayerLinkController {
     private static final JsonParser parser = new JsonParser();
 
     public static boolean isPlayerLinked(UUID player) throws IllegalStateException {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -29,6 +32,7 @@ public class PlayerLinkController {
     }
 
     public static boolean isDiscordLinked(String discordID) {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -44,6 +48,7 @@ public class PlayerLinkController {
 
     @Nullable
     public static UUID getPlayerFromDiscord(String discordID) {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -59,6 +64,7 @@ public class PlayerLinkController {
 
     @Nullable
     public static String getDiscordFromPlayer(UUID player) {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -73,6 +79,7 @@ public class PlayerLinkController {
     }
 
     public static PlayerSettings getSettings(String discordID, UUID player) {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
         if (player == null && discordID == null) throw new NullPointerException();
         else if (discordID == null) discordID = getDiscordFromPlayer(player);
         else if (player == null) player = getPlayerFromDiscord(discordID);
@@ -91,6 +98,7 @@ public class PlayerLinkController {
     }
 
     public static boolean linkPlayer(String discordID, UUID player) throws KeyAlreadyExistsException {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
         if (isDiscordLinked(discordID) || isPlayerLinked(player)) throw new KeyAlreadyExistsException();
         try {
             if (PlayerLinkController.getNameFromUUID(player) == null) return false;
@@ -98,8 +106,14 @@ public class PlayerLinkController {
             final PlayerLink link = new PlayerLink();
             link.discordID = discordID;
             link.mcPlayerUUID = player.toString();
+            final boolean ignoringMessages = DiscordIntegration.discord_instance.ignoringPlayers.contains(player.toString());
+            link.settings.ignoreDiscordChatIngame = ignoringMessages;
+            if (ignoringMessages) DiscordIntegration.discord_instance.ignoringPlayers.remove(player.toString());
             a.add(gson.toJsonTree(link));
             saveJSON(a);
+            for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+                o.onPlayerLink(player, discordID);
+            }
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -108,6 +122,7 @@ public class PlayerLinkController {
     }
 
     public static boolean updatePlayerSettings(String discordID, UUID player, PlayerSettings s) {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
         if (player == null && discordID == null) throw new NullPointerException();
         else if (discordID == null) discordID = getDiscordFromPlayer(player);
         else if (player == null) player = getPlayerFromDiscord(discordID);
@@ -135,6 +150,7 @@ public class PlayerLinkController {
     }
 
     public static boolean unlinkPlayer(String discordID, UUID player) {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
         if (!isDiscordLinked(discordID) && !isPlayerLinked(player)) return false;
         try {
             for (JsonElement e : getJson()) {
@@ -155,6 +171,7 @@ public class PlayerLinkController {
     }
 
     private static PlayerLink getUser(String discordID, UUID player) throws IOException {
+        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
         final JsonArray a = getJson();
         for (JsonElement e : a) {
             final PlayerLink l = gson.fromJson(e, PlayerLink.class);

@@ -9,6 +9,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.fml.config.ModConfig;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class Configuration {
         }
     }
 
+    public final ForgeConfigSpec.BooleanValue enableUpdateChecker;
     //#########################
     //#        GENERAL        #
     //#########################
@@ -37,17 +39,20 @@ public class Configuration {
     public final ForgeConfigSpec.BooleanValue botModifyDescription;
     public final ForgeConfigSpec.BooleanValue whitelist;
     public final ForgeConfigSpec.BooleanValue allowLink;
+    public final ForgeConfigSpec.EnumValue<ReleaseType> updateCheckerMinimumReleaseType;
+    public final ConfigValue<String> ignoredPrefix;
+    //#########################
+    //#       MESSAGES        #
+    //#########################
+    public final ForgeConfigSpec.BooleanValue convertCodes;
     //#########################
     //#        WEBHOOK        #
     //#########################
     public final ForgeConfigSpec.BooleanValue enableWebhook;
     public final ConfigValue<String> serverAvatar;
     public final ConfigValue<String> serverName;
-    //#########################
-    //#       MESSAGES        #
-    //#########################
-    public final ForgeConfigSpec.BooleanValue discordColorCodes;
-    public final ForgeConfigSpec.BooleanValue preventMcColorCodes;
+    public final ForgeConfigSpec.BooleanValue formattingCodesToDiscord;
+    public final ForgeConfigSpec.BooleanValue preventDiscordFormattingCodesToMC;
     public final ConfigValue<String> msgServerStarted;
     public final ConfigValue<String> msgServerStarting;
     public final ConfigValue<String> msgServerStopped;
@@ -70,7 +75,6 @@ public class Configuration {
     public final ConfigValue<String> msgIgnoreIgnore;
     public final ConfigValue<String> uptimeFormat;
     public final ForgeConfigSpec.BooleanValue sendItemInfo;
-
     //#########################
     //#       COMMANDS        #
     //#########################
@@ -95,7 +99,6 @@ public class Configuration {
     public final ConfigValue<String> listCmdChannelID;
     public final ConfigValue<String> uptimeCmdChannelID;
     public final ConfigValue<String> helpHeader;
-
     //#########################
     //#    INGAME-COMMAND     #
     //#########################
@@ -103,6 +106,10 @@ public class Configuration {
     public final ConfigValue<String> dcCmdMsg;
     public final ConfigValue<String> dcCmdMsgHover;
     public final ConfigValue<String> dcCmdURL;
+    //#########################
+    //#        ADVANCED       #
+    //#########################
+    public final ConfigValue<String> channelDescriptionID;
 
     //#########################
     //#      MOD-COMPAT       #
@@ -112,18 +119,11 @@ public class Configuration {
 //	public final ConfigValue<String> ftbutilitiesAFKMsgEnd;
 //	public final ConfigValue<String> ftbutilitiesAvatar;
 //	public final ConfigValue<String> ftbutilitiesShutdownMsg;
-
-
-    //#########################
-    //#        ADVANCED       #
-    //#########################
-    public final ConfigValue<String> channelDescriptionID;
     public final ConfigValue<String> serverChannelID;
     public final ConfigValue<String> deathChannelID;
     public final ConfigValue<String> chatOutputChannel;
     public final ConfigValue<String> chatInputChannel;
     public final ConfigValue<String> msgNotWhitelisted;
-
     Configuration(final ForgeConfigSpec.Builder builder) {
         //#########################
         //#        GENERAL        #
@@ -133,25 +133,31 @@ public class Configuration {
         botPresenceName = builder.comment("The Name of the Game", "", "PLACEHOLDERS:", "%online% - Online Players", "%max% - Maximum Player Amount").define("botPresenceName", "Minecraft with %online% players");
         botPresenceType = builder.defineEnum("botPresenceType", Discord.GameTypes.PLAYING);
         botChannel = builder.comment("The channel ID where the bot will be working in").define("botChannel", "000000000");
-        botModifyDescription = builder.comment("Wether or not the Bot should modify the channel description").define("botModifyDescription", true);
-        allowLink = builder.comment("Should discord linking be enabled?", "If whitelist is on, this can not be disabled").define("allow-linking", true);
+        botModifyDescription = builder.comment("Whether or not the Bot should modify the channel description").define("botModifyDescription", true);
+        allowLink = builder.comment("Should discord linking be enabled?", "If whitelist is on, this can not be disabled", "DOES NOT WORK IN OFFLINE MODE!").define("allow-linking", true);
         whitelist = builder.comment("Enable discord based whitelist?", "This will override the link config!", "To whitelist use !whitelist <uuid> in the bot DMs").define("whitelist", false);
         sendItemInfo = builder.comment("Show item information, which is visible on hover ingame, as embed in discord?").define("sendItemInfo", true);
+        enableUpdateChecker = builder.comment("Enable checking for updates?", "Notification will be shown after every server start in log when update is available").define("enableUpdateChecker", true);
+        updateCheckerMinimumReleaseType = builder.comment("The minimum release type for the update checker to notify").defineEnum("updateCheckerMinimumReleaseType", ReleaseType.beta);
+        ignoredPrefix = builder.comment("Allows you to blacklist chat messages beginning with this value to be sent to discord", "You can also use color codes", "Set empty to disable", "Default: [Announcement]").define("ignoredPrefix", "[Announcement]");
+
         builder.pop();
         //#########################
         //#        WEBHOOK        #
         //#########################
         builder.comment("Webhook configuration").push("webhook");
-        enableWebhook = builder.comment("Wether or not the bot should use a webhook (it will create one)").define("enableWebhook", false);
+        enableWebhook = builder.comment("Whether or not the bot should use a webhook (it will create one)").define("enableWebhook", false);
         serverAvatar = builder.comment("The avatar to be used for server messages").define("serverAvatar", "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/images/srv.png");
-        serverName = builder.comment("Wether or not the bot should use a webhook (it will create one)").define("serverName", "Server");
+        serverName = builder.comment("Whether or not the bot should use a webhook (it will create one)").define("serverName", "Server");
         builder.pop();
         //#########################
         //#       MESSAGES        #
         //#########################
         builder.comment("Customize messages of this mod").push("messages");
-        discordColorCodes = builder.comment("Disable removal of color codes from chat to discord?").define("discordColorCodes", false);
-        preventMcColorCodes = builder.comment("Enable removal of color codes from discord to chat?").define("preventMcColorCodes", false);
+
+        convertCodes = builder.comment("Enable formatting conversion (Markdown <==> Minecraft)").define("convertFormatting", true);
+        formattingCodesToDiscord = builder.comment("Send formatting codes from mc chat to discord", "Has no effect when markdown <==> Minecraft is enabled").define("formattingCodesToDiscord", false);
+        preventDiscordFormattingCodesToMC = builder.comment("Prevent sending MC color codes from Discord to server chat?", "Does not disable Markdown to minecraft conversion!").define("preventDiscordFormattingCodesToMC", false);
         msgServerStarted = builder.comment("This message will edited in / sent when the server finished starting").define("msgServerStarted", "Server Started!");
         msgServerStarting = builder.comment("Message to show while the server is starting", "This will be edited to SERVER_STARTED_MSG when webhook is false").define("msgServerStarting", "Server Starting...");
         msgServerStopped = builder.comment("This message will be sent when the server was stopped").define("msgServerStopped", "Server Stopped!");
@@ -164,7 +170,7 @@ public class Configuration {
         msgAdvancement = builder.comment("Supports MulitLined messages using \\n", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%name% - The advancement name", "%desc% - The advancement description").define("msgAdvancement",
                 "%player% just gained the advancement **%name%**\\n_%desc%_");
         msgChatMessage = builder.comment("Chat message", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message").define("msgChatMessage", "%player%: %msg%");
-        description = builder.comment("Channel description while the server is online", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS",
+        description = builder.comment("Channel description while the server is online", "New discord limitation: Description can only be updated two times in 10 minutes!", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS",
                 "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server").define("description", "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%");
         descriptionOffline = builder.comment("Channel description while the server is offline").define("descriptionOffline", "Server is Offline!");
         descriptionStarting = builder.comment("Channel description while the server is starting").define("descriptionStarting", "Starting...");
@@ -175,7 +181,7 @@ public class Configuration {
         tamedDeathEnabled = builder.comment("Should tamed entity death be visible in discord?").define("tamedDeathEnabled", false);
         msgIgnoreIgnore = builder.comment("Message sent when ignoring Discord messages").define("msgIgnoreIgnore", "You are now ignoring Discord messages!");
         msgIgnoreUnignore = builder.comment("Message sent when unignoring Discord messages").define("msgIgnoreUnignore", "You are no longer ignoring Discord messages!");
-        uptimeFormat = builder.comment("The format of the uptime command and %uptime% placeholder", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html").define("uptimeFormat", "dd 'days' HH 'hours' mm 'minutes' ss 'seconds'");
+        uptimeFormat = builder.comment("The format of the uptime command and %uptime% placeholder", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html", "Note: The use of precise values like seconds might cause rate limits").define("uptimeFormat", "dd 'days' HH 'hours' mm 'minutes'");
         msgNotWhitelisted = builder.comment("Message shown to players who are not whitelisted using discord", "No effect if discord whitelist is off").define("msgWhitelist", TextFormatting.RED + "You are not whitelisted.\nJoin the discord server for more information\nhttps://discord.gg/someserver");
         builder.pop();
         //#########################
@@ -287,6 +293,22 @@ public class Configuration {
         chatOutputChannel = builder.comment("Custom channel for for ingame messages", "Leave empty to use default channel").define("chatOutputID", "");
         chatInputChannel = builder.comment("Custom channel where messages get sent to minecraft", "Leave empty to use default channel").define("chatInputID", "");
         builder.pop();
+    }
+
+    public enum ReleaseType {
+        alpha(0), beta(1), release(2);
+        public final int value;
+
+        ReleaseType(int val) {
+            this.value = val;
+        }
+
+        public static ReleaseType getFromName(String name) {
+            for (ReleaseType t : values()) {
+                if (StringUtils.equalsIgnoreCase(name, t.name())) return t;
+            }
+            return ReleaseType.beta;
+        }
     }
 
     public static String parseArray(String[] array) {

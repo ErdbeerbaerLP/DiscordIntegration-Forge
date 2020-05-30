@@ -4,11 +4,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.authlib.GameProfile;
 import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
+import de.erdbeerbaerlp.dcintegration.Utils;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.entities.User;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.FakePlayer;
@@ -40,12 +40,12 @@ public class DCCommandSender extends FakePlayer {
     }
 
     private static String textComponentToDiscordMessage(ITextComponent component) {
-        return TextFormatting.getTextWithoutFormattingCodes(component.getFormattedText());
+        if (component == null) return "";
+        return Utils.convertMCToMarkdown(component.getFormattedText());
     }
 
     @Override
     public void sendMessage(ITextComponent textComponent, ChatType chatTypeIn) {
-        Preconditions.checkNotNull(textComponent);
         DiscordIntegration.discord_instance.sendMessage(textComponentToDiscordMessage(textComponent));
     }
 

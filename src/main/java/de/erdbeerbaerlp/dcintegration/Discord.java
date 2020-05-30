@@ -4,6 +4,7 @@ import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookEmbed;
 import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import de.erdbeerbaerlp.dcintegration.api.DiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.storage.PlayerLinkController;
@@ -48,8 +49,8 @@ import static de.erdbeerbaerlp.dcintegration.storage.Configuration.INSTANCE;
 @SuppressWarnings("ConstantConditions")
 public class Discord implements EventListener {
     private static final File IGNORED_PLAYERS = new File("./players_ignoring_discord");
-    final ArrayList<String> ignoringPlayers = new ArrayList<>();
-    private final JDA jda;
+    public final ArrayList<String> ignoringPlayers = new ArrayList<>();
+    final JDA jda;
     /**
      * This thread is used to update the channel description
      */
@@ -58,7 +59,7 @@ public class Discord implements EventListener {
 
         {
             this.setName("[DC INTEGRATION] Channel Description Updater");
-            this.setDaemon(false);
+            this.setDaemon(true);
             this.setPriority(MAX_PRIORITY);
         }
 
@@ -86,7 +87,7 @@ public class Discord implements EventListener {
                         (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? getChannelManager() : getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(newDesc).complete();
                         cachedDescription = newDesc;
                     }
-                    sleep(500);
+                    sleep(300100); // Only do it about two times per 10 minutes! New discord limitation
                 }
             } catch (InterruptedException | RuntimeException ignored) {
 
@@ -96,7 +97,7 @@ public class Discord implements EventListener {
     private final HashMap<Integer, KeyValue<Instant, UUID>> pendingLinks = new HashMap<>();
     final Thread updatePresence = new Thread() {
         {
-            setName("[DC INTEGRATION] Discord Presence Updater");
+            setName("[DC INTEGRATION] Discord Presence Updater and link cleanup");
             setDaemon(true);
             setPriority(MAX_PRIORITY);
         }
@@ -105,7 +106,6 @@ public class Discord implements EventListener {
         public void run() {
             while (true) {
                 if (ServerLifecycleHooks.getCurrentServer() != null) {
-
                     final String game = Configuration.INSTANCE.botPresenceName.get()
                             .replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
                             .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers());
@@ -218,27 +218,36 @@ public class Discord implements EventListener {
     };
 */
     private final HashMap<String, ArrayList<String>> messages = new HashMap<>();
-    public boolean isKilled = false;
     /**
      * Thread to send messages from vanilla commands
      */
-    final Thread messageSender = new Thread(() -> {
-        try {
-            while (true) {
-                if (!messages.isEmpty()) {
-                    messages.forEach((channel, msgs) -> {
-                        StringBuilder s = new StringBuilder();
-                        for (final String msg : msgs)
-                            s.append(msg + "\n");
-                        this.sendMessage(s.toString().trim(), getChannel(channel));
-                    });
-                    messages.clear();
-                }
-                Thread.sleep(500);
-            }
-        } catch (InterruptedException ignored) {
+    final Thread messageSender = new Thread() {
+        {
+            setName("[DC INTEGRATION] Discord Command Message Sender");
+            setDaemon(true);
+            setPriority(MAX_PRIORITY);
         }
-    });
+
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    if (!messages.isEmpty()) {
+                        messages.forEach((channel, msgs) -> {
+                            StringBuilder s = new StringBuilder();
+                            for (final String msg : msgs)
+                                s.append(msg).append("\n");
+                            Discord.this.sendMessage(s.toString().trim(), getChannel(channel));
+                        });
+                        messages.clear();
+                    }
+                    Thread.sleep(500);
+                }
+            } catch (InterruptedException ignored) {
+            }
+        }
+    };
+    public boolean isKilled = false;
     private List<DiscordCommand> commands = new ArrayList<>();
 
     /**
@@ -293,7 +302,8 @@ public class Discord implements EventListener {
     }
 
     /**
-     * Sends a message when *not* using a webhook and returns it as RequestFuture<Message> or null when using a webhook
+     * Sends a message when *not* using a webhook and returns it as RequestFuture<Message> or null when using a webhook<br>
+     * only used by starting message
      *
      * @param msg message
      * @return Sent message
@@ -311,20 +321,34 @@ public class Discord implements EventListener {
      * Sends a message as player
      *
      * @param player Player
-     * @param msg    Message
-     */
-    public void sendMessage(ServerPlayerEntity player, String msg) {
-        sendMessage(player, new DCMessage(msg));
-    }
-
-    /**
-     * Sends a message as player
-     *
-     * @param player Player
      * @param msg    Message packed as {@link DCMessage}
      */
     public void sendMessage(ServerPlayerEntity player, DCMessage msg) {
         sendMessage(Utils.formatPlayerName(player), player.getUniqueID().toString(), msg, Configuration.INSTANCE.chatOutputChannel.get().isEmpty() ? getChannel() : getChannel(Configuration.INSTANCE.chatOutputChannel.get()));
+    }
+
+    /**
+     * Sends a message embed as player
+     *
+     * @param playerName Player Name
+     * @param embed      Discord embed
+     * @param channel    Target channel
+     * @param uuid       Player UUID
+     */
+    public void sendMessage(final String playerName, String uuid, MessageEmbed embed, TextChannel channel) {
+        sendMessage(playerName, uuid, new DCMessage(embed), channel);
+    }
+
+    /**
+     * Sends a message embed as player
+     *
+     * @param playerName Player Name
+     * @param msg        Message
+     * @param channel    Target channel
+     * @param uuid       Player UUID
+     */
+    public void sendMessage(final String playerName, String uuid, String msg, TextChannel channel) {
+        sendMessage(playerName, uuid, new DCMessage(msg), channel);
     }
 
     /**
@@ -337,64 +361,68 @@ public class Discord implements EventListener {
     }
 
     /**
-     * Sends a message to discord with custom avatar url (when using a webhook)
+     * Sends an generic message to discord with custom avatar url (when using a webhook)
+     *
+     * @param channel   target channel
+     * @param message   message
+     * @param avatarURL URL of the avatar image for the webhook
+     * @param name      Webhook name
+     */
+    public void sendMessage(TextChannel channel, String message, String avatarURL, String name) {
+        sendMessage(name, new DCMessage(message), avatarURL, channel, false);
+    }
+
+    /**
+     * Sends a CHAT message to discord with custom avatar url (when using a webhook)
      *
      * @param msg       Message
      * @param avatarURL URL of the avatar image
      * @param name      Name of the fake player
      */
     public void sendMessage(String msg, String avatarURL, String name) {
-        try {
-            if (isKilled || msg.isEmpty()) return;
-            if (Configuration.INSTANCE.enableWebhook.get()) {
-                final WebhookMessageBuilder b = new WebhookMessageBuilder();
-                b.setContent(msg);
-                b.setUsername(name);
-                b.setAvatarUrl(avatarURL);
-                final WebhookClient cli = WebhookClient.withUrl(getWebhook(getChannel()).getUrl());
-                cli.send(b.build());
-                cli.close();
-            } else
-                getChannel().sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", name).replace("%msg%", msg)).queue();
-        } catch (Exception ignored) {
-        }
+        sendMessage(name, new DCMessage(msg), avatarURL, INSTANCE.serverChannelID.get().isEmpty() ? getChannel() : getChannel(INSTANCE.serverChannelID.get()), true);
     }
 
     /**
-     * Sends a message to discord with custom avatar url (when using a webhook)
+     * Sends a CHAT message to discord with custom avatar url (when using a webhook)
      *
-     * @param msg       Message
-     * @param avatarURL URL of the avatar image
      * @param name      Name of the fake player
-     * @param ch        Channel to send message into
+     * @param msg       Message
+     * @param channel   Channel to send message into
+     * @param avatarURL URL of the avatar image
      */
-    public void sendMessage(TextChannel ch, String msg, String avatarURL, String name) {
+    public void sendMessage(String name, String msg, TextChannel channel, String avatarURL) {
+        sendMessage(name, new DCMessage(msg), avatarURL, channel, true);
+    }
+
+    /**
+     * Sends an discord message
+     *
+     * @param name          Player name or Webhook user name
+     * @param message       Message to send
+     * @param avatarURL     Avatar URL for the webhook
+     * @param channel       Target channel
+     * @param isChatMessage true to send it as chat message (when not using webhook)
+     */
+    public void sendMessage(String name, DCMessage message, String avatarURL, TextChannel channel, boolean isChatMessage) {
+        if (isKilled) return;
         try {
-            if (isKilled || msg.isEmpty()) return;
             if (INSTANCE.enableWebhook.get()) {
-                final WebhookMessageBuilder b = new WebhookMessageBuilder();
-                b.setContent(msg);
+                final WebhookMessageBuilder b = message.buildWebhookMessage();
                 b.setUsername(name);
                 b.setAvatarUrl(avatarURL);
-                final WebhookClient cli = WebhookClient.withUrl(getWebhook(ch).getUrl());
+                final WebhookClient cli = WebhookClient.withUrl(getWebhook(channel).getUrl());
                 cli.send(b.build());
                 cli.close();
+            } else if (isChatMessage) {
+                message.setMessage(INSTANCE.msgChatMessage.get().replace("%player%", name).replace("%msg%", message.getMessage()));
+                channel.sendMessage(message.buildMessage()).queue();
             } else {
-                ch.sendMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", name).replace("%msg%", msg)).queue();
+                channel.sendMessage(message.buildMessage()).queue();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    }
-
-    public void sendMessage(final String playerName, String uuid, MessageEmbed embed, TextChannel channel) {
-        if (isKilled) return;
-        sendMessage(playerName, uuid, new DCMessage(embed), channel);
-    }
-
-
-    public void sendMessage(final String playerName, String uuid, String msg, TextChannel channel) {
-        if (isKilled || msg.isEmpty()) return;
-        sendMessage(playerName, uuid, new DCMessage(msg), channel);
     }
 
     /**
@@ -404,51 +432,21 @@ public class Discord implements EventListener {
      * @param uuid       the player uuid
      * @param msg        the message to send
      */
-    public void sendMessage(final String playerName, String uuid, DCMessage msg, TextChannel channel) {
-        if (isKilled) return;
+    public void sendMessage(String playerName, String uuid, DCMessage msg, TextChannel channel) {
+        final boolean isServerMessage = playerName.equals(INSTANCE.serverName.get()) && uuid.equals("0000000");
         final UUID uUUID = uuid.equals("0000000") ? null : UUID.fromString(uuid);
-        if (!Configuration.INSTANCE.discordColorCodes.get()) {
-            msg.setMessage(TextFormatting.getTextWithoutFormattingCodes(msg.getMessage()));
-        }
-        try {
-            if (Configuration.INSTANCE.enableWebhook.get()) {
-                if (playerName.equals(Configuration.INSTANCE.serverName.get()) && uuid.equals("0000000")) {
-                    final WebhookMessageBuilder b = msg.buildWebhookMessage();
-                    b.setUsername(Configuration.INSTANCE.serverName.get());
-                    b.setAvatarUrl(Configuration.INSTANCE.serverAvatar.get());
-                    final WebhookClient cli = WebhookClient.withUrl(getWebhook(channel).getUrl());
-                    cli.send(b.build());
-                    cli.close();
-                } else {
-                    final WebhookMessageBuilder b = msg.buildWebhookMessage();
-                    String avatar = "https://minotar.net/avatar/" + uuid;
-                    String pname = playerName;
-                    if (PlayerLinkController.isPlayerLinked(uUUID)) {
-                        final PlayerSettings s = PlayerLinkController.getSettings(null, uUUID);
-                        final Member dc = getChannel().getGuild().getMemberById(PlayerLinkController.getDiscordFromPlayer(uUUID));
-                        if (s.useDiscordNameInChannel) {
-                            pname = dc.getEffectiveName();
-                            avatar = dc.getUser().getAvatarUrl();
-                        } else {
-                            pname = playerName;
-                        }
-                    }
-                    b.setUsername(pname);
-                    b.setAvatarUrl(avatar);
-                    final WebhookClient cli = WebhookClient.withUrl(getWebhook(channel).getUrl());
-                    cli.send(b.build());
-                    cli.close();
+        String avatarURL = "";
+        if (!isServerMessage && uUUID != null) {
+            if (PlayerLinkController.isPlayerLinked(uUUID)) {
+                final PlayerSettings s = PlayerLinkController.getSettings(null, uUUID);
+                final Member dc = getChannel().getGuild().getMemberById(PlayerLinkController.getDiscordFromPlayer(uUUID));
+                if (s.useDiscordNameInChannel) {
+                    playerName = dc.getEffectiveName();
+                    avatarURL = dc.getUser().getAvatarUrl();
                 }
-            } else if (playerName.equals(Configuration.INSTANCE.serverName.get()) && uuid.equals("0000000")) {
-                channel.sendMessage(msg.buildMessage()).queue();
-            } else {
-                msg.setMessage(Configuration.INSTANCE.msgChatMessage.get().replace("%player%", playerName).replace("%msg%", msg.getMessage()));
-                channel.sendMessage(msg.buildMessage()).queue();
-
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+        sendMessage(playerName, msg, avatarURL, channel, !isServerMessage);
     }
 
     /**
@@ -456,9 +454,10 @@ public class Discord implements EventListener {
      * Used by config commands
      *
      * @param msg       message
-     * @param channelID
+     * @param channelID the channel ID the message should get sent to
      */
     public void sendMessageFuture(String msg, String channelID) {
+        if (msg.isEmpty() || channelID.isEmpty()) return;
         final ArrayList<String> msgs;
         if (messages.containsKey(channelID))
             msgs = messages.get(channelID);
@@ -486,6 +485,9 @@ public class Discord implements EventListener {
             final MessageReceivedEvent ev = (MessageReceivedEvent) event;
             if (ev.getChannelType().equals(ChannelType.TEXT)) {
                 if (!ev.isWebhookMessage() && !ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
+                    for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+                        if (o.onDiscordMessagePre(ev)) return;
+                    }
                     if (ev.getMessage().getContentRaw().startsWith(Configuration.INSTANCE.prefix.get())) {
                         final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.INSTANCE.prefix.get(), "").split(" ");
                         String argumentsRaw = "";
@@ -501,6 +503,9 @@ public class Discord implements EventListener {
                             }
                             if (cmd.getName().equals(command[0])) {
                                 if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                    for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+                                        if (o.onDiscordCommand(ev, cmd)) return;
+                                    }
                                     cmd.execute(argumentsRaw.split(" "), ev);
                                     executed = true;
                                 } else {
@@ -510,6 +515,9 @@ public class Discord implements EventListener {
                             for (final String alias : cmd.getAliases()) {
                                 if (alias.equals(command[0])) {
                                     if (cmd.canUserExecuteCommand(ev.getAuthor())) {
+                                        for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+                                            if (o.onDiscordCommand(ev, cmd)) return;
+                                        }
                                         cmd.execute(argumentsRaw.split(" "), ev);
                                         executed = true;
                                     } else {
@@ -518,6 +526,10 @@ public class Discord implements EventListener {
                                 }
                             }
                         }
+                        if (!executed)
+                            for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+                                if (o.onDiscordCommand(ev, null)) return;
+                            }
                         if (!hasPermission) {
                             sendMessage(Configuration.INSTANCE.msgNoPermission.get(), ev.getTextChannel());
                             return;
@@ -538,34 +550,51 @@ public class Discord implements EventListener {
                         for (final Role r : ev.getMessage().getMentionedRoles()) {
                             msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
                         }
+                        for (final Emote e : ev.getMessage().getEmotes()) {
+                            /* Emojicord conversion?  Untested since mod is still 1.14
+                            if(!msg.contains(e.getAsMention())) return;
+                            final String s = Base64.getEncoder().encodeToString(e.getId().getBytes());
+                            msg = msg.replace(e.getAsMention(), e.getAsMention().replace(e.getId(), s));*/
+                            //Replace emote IDs (<:name:123456789> with easier to read ones (:name:)
+                            msg = msg.replace(e.getAsMention(), ":" + e.getName() + ":");
+                        }
                         StringBuilder message = new StringBuilder(msg);
                         for (Message.Attachment a : ev.getMessage().getAttachments()) {
-                            //noinspection StringConcatenationInsideStringBufferAppend
-                            message.append("\nAttachment: " + a.getProxyUrl());
+                            message.append("\nAttachment: ").append(a.getProxyUrl());
                         }
                         for (MessageEmbed e : embeds) {
                             if (e.isEmpty()) continue;
                             message.append("\n\n-----[Embed]-----\n");
-                            if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty())
-                                //noinspection StringConcatenationInsideStringBufferAppend
-                                message.append(TextFormatting.BOLD + "" + TextFormatting.ITALIC + e.getAuthor().getName() + "\n");
-                            if (e.getTitle() != null && !e.getTitle().trim().isEmpty())
-                                //noinspection StringConcatenationInsideStringBufferAppend
-                                message.append(TextFormatting.BOLD + e.getTitle() + "\n");
-                            if (e.getDescription() != null && !e.getDescription().trim().isEmpty())
+                            if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty()) {
+                                message.append(TextFormatting.BOLD).append(TextFormatting.ITALIC).append(e.getAuthor().getName()).append("\n");
+                            }
+                            if (e.getTitle() != null && !e.getTitle().trim().isEmpty()) {
+                                message.append(TextFormatting.BOLD).append(e.getTitle()).append("\n");
+                            }
+                            if (e.getDescription() != null && !e.getDescription().trim().isEmpty()) {
                                 message.append("Message:\n").append(e.getDescription()).append("\n");
-                            if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty())
+                            }
+                            if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty()) {
                                 message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
+                            }
                             message.append("\n-----------------");
                         }
+                        final String outMsg = Utils.convertMarkdownToMCFormatting(message.toString());
                         sendMcMsg(ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
-                                .replace("%id%", ev.getAuthor().getId()).replace("%msg%", (Configuration.INSTANCE.preventMcColorCodes.get() ? TextFormatting.getTextWithoutFormattingCodes(message.toString()) : message.toString())))
+                                .replace("%id%", ev.getAuthor().getId())
+                                .replace("%msg%", (Configuration.INSTANCE.preventDiscordFormattingCodesToMC.get() ? TextFormatting.getTextWithoutFormattingCodes(outMsg) : outMsg)))
                                 .setStyle(new Style().setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                     }
                 }
+                for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+                    o.onDiscordMessagePost(ev);
+                }
             } else if (ev.getChannelType().equals(ChannelType.PRIVATE)) {
                 if (!ev.getAuthor().getId().equals(jda.getSelfUser().getId())) {
-                    if (INSTANCE.whitelist.get() && INSTANCE.allowLink.get()) {
+                    for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+                        if (o.onDiscordPrivateMessage(ev)) return;
+                    }
+                    if (INSTANCE.whitelist.get() && INSTANCE.allowLink.get() && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) {
                         final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
                         if (command.length > 0 && command[0].equals("whitelist")) {
                             if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
@@ -574,11 +603,11 @@ public class Discord implements EventListener {
                             }
                             System.out.println(command.length);
                             if (command.length > 2) {
-                                ev.getChannel().sendMessage("Too many arguments. Use `!whitelist <uuid>`").queue();
+                                ev.getChannel().sendMessage("Too many arguments. Use `+" + INSTANCE.prefix.get() + "whitelist <uuid>`").queue();
                                 return;
                             }
                             if (command.length < 2) {
-                                ev.getChannel().sendMessage("Not enough arguments. Use `!whitelist <uuid>`").queue();
+                                ev.getChannel().sendMessage("Not enough arguments. Use `" + INSTANCE.prefix.get() + "whitelist <uuid>`").queue();
                                 return;
                             }
                             UUID u;
@@ -595,11 +624,11 @@ public class Discord implements EventListener {
                                 else
                                     ev.getChannel().sendMessage("Failed to link!").queue();
                             } catch (IllegalArgumentException e) {
-                                ev.getChannel().sendMessage("Argument is not an UUID. Use `!whitelist <uuid>`").queue();
+                                ev.getChannel().sendMessage("Argument is not an UUID. Use `" + INSTANCE.prefix.get() + "whitelist <uuid>`").queue();
                                 return;
                             }
                         }
-                    } else if (INSTANCE.allowLink.get() && !INSTANCE.whitelist.get()) {
+                    } else if (INSTANCE.allowLink.get() && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode() && !INSTANCE.whitelist.get()) {
                         if (!ev.getMessage().getContentRaw().startsWith(INSTANCE.prefix.get()))
                             try {
                                 int num = Integer.parseInt(ev.getMessage().getContentRaw());
@@ -623,13 +652,13 @@ public class Discord implements EventListener {
                                 return;
                             }
                     }
-                    if (INSTANCE.allowLink.get()) {
+                    if (INSTANCE.allowLink.get() && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) {
                         final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
                         if (command.length > 0) {
-                            final String cmdUsages = "Usages:\n\n/settings - lists all available keys\n/settings get <key> - Gets the current settings value\n/settings set <key> <value> - Sets an Settings value";
+                            final String cmdUsages = "Usages:\n\n" + INSTANCE.prefix.get() + "settings - lists all available keys\n" + INSTANCE.prefix.get() + "settings get <key> - Gets the current settings value\n" + INSTANCE.prefix.get() + "settings set <key> <value> - Sets an Settings value";
                             switch (command[0]) {
                                 case "help":
-                                    ev.getChannel().sendMessage("__Available commands here:__\n\n/help - Shows this\n/settings - Edit your personal settings").queue();
+                                    ev.getChannel().sendMessage("__Available commands here:__\n\n" + INSTANCE.prefix.get() + "help - Shows this\n" + INSTANCE.prefix.get() + "settings - Edit your personal settings").queue();
                                     break;
                                 case "settings":
                                     if (!PlayerLinkController.isDiscordLinked(ev.getAuthor().getId()))
@@ -701,21 +730,28 @@ public class Discord implements EventListener {
     void kill() {
         stopThreads();
         this.isKilled = true;
-        jda.shutdown();
+        jda.shutdownNow();
     }
 
     public boolean togglePlayerIgnore(PlayerEntity sender) {
-        if (ignoringPlayers.contains(sender.getName().getUnformattedComponentText())) {
-            ignoringPlayers.remove(sender.getName().getUnformattedComponentText());
-            try {
-                saveIgnoreList();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return true;
+        if (PlayerLinkController.isPlayerLinked(sender.getUniqueID())) {
+            final PlayerSettings settings = PlayerLinkController.getSettings(null, sender.getUniqueID());
+            settings.ignoreDiscordChatIngame = !settings.ignoreDiscordChatIngame;
+            PlayerLinkController.updatePlayerSettings(null, sender.getUniqueID(), settings);
+            return !settings.ignoreDiscordChatIngame;
         } else {
-            ignoringPlayers.add(sender.getName().getUnformattedComponentText());
-            return false;
+            if (ignoringPlayers.contains(sender.getName().getUnformattedComponentText())) {
+                ignoringPlayers.remove(sender.getName().getUnformattedComponentText());
+                try {
+                    saveIgnoreList();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            } else {
+                ignoringPlayers.add(sender.getName().getUnformattedComponentText());
+                return false;
+            }
         }
     }
 
@@ -728,7 +764,8 @@ public class Discord implements EventListener {
         FileWriter w = new FileWriter(IGNORED_PLAYERS);
         w.write("");
         for (String a : ignoringPlayers) {
-            w.append(a).append("\n");
+            if (!PlayerLinkController.isPlayerLinked(UUID.fromString(a)))
+                w.append(a).append("\n");
         }
         w.close();
     }
@@ -853,6 +890,46 @@ public class Discord implements EventListener {
         return jda.getTextChannelById(id);
     }
 
+    private HashMap<String, String> getSettings() {
+        final HashMap<String, String> out = new HashMap<>();
+        final Field[] fields = PlayerSettings.class.getFields();
+        final Field[] descFields = PlayerSettings.Descriptions.class.getDeclaredFields();
+        for (Field f : fields) {
+            out.put(f.getName(), "No Description Provided");
+        }
+        for (Field f : descFields) {
+            f.setAccessible(true);
+            try {
+                out.put(f.getName(), (String) f.get(new PlayerSettings.Descriptions()));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return out;
+    }
+
+    public int genLinkNumber(UUID uniqueID) {
+        final AtomicInteger r = new AtomicInteger(-1);
+        pendingLinks.forEach((k, v) -> {
+            if (v.getValue().equals(uniqueID))
+                r.set(k);
+        });
+        if (r.get() != -1) return r.get();
+        do {
+            r.set(new Random().nextInt(Integer.MAX_VALUE));
+        } while (pendingLinks.containsKey(r.get()));
+        pendingLinks.put(r.get(), new DefaultKeyValue<>(Instant.now(), uniqueID));
+        return r.get();
+    }
+
+    public enum GameTypes {
+        WATCHING,
+        PLAYING,
+        LISTENING,
+        //CUSTOM,
+        DISABLED
+    }
+
     public static final class DCMessage {
         private MessageEmbed embed = null;
 
@@ -889,8 +966,12 @@ public class Discord implements EventListener {
 
         Message buildMessage() {
             final MessageBuilder out = new MessageBuilder();
-            if (!message.isEmpty())
-                out.setContent(message);
+            if (!message.isEmpty()) {
+                if (INSTANCE.formattingCodesToDiscord.get())
+                    out.setContent(Utils.convertMCToMarkdown(message));
+                else
+                    out.setContent(TextFormatting.getTextWithoutFormattingCodes(Utils.convertMCToMarkdown(message)));
+            }
             if (embed != null)
                 out.setEmbed(embed);
             return out.build();
@@ -898,8 +979,12 @@ public class Discord implements EventListener {
 
         WebhookMessageBuilder buildWebhookMessage() {
             final WebhookMessageBuilder out = new WebhookMessageBuilder();
-            if (!message.isEmpty())
-                out.setContent(message);
+            if (!message.isEmpty()) {
+                if (INSTANCE.formattingCodesToDiscord.get())
+                    out.setContent(Utils.convertMCToMarkdown(message));
+                else
+                    out.setContent(TextFormatting.getTextWithoutFormattingCodes(Utils.convertMCToMarkdown(message)));
+            }
             if (embed != null) {
                 final WebhookEmbedBuilder eb = new WebhookEmbedBuilder();
                 if (embed.getAuthor() != null)
@@ -922,47 +1007,6 @@ public class Discord implements EventListener {
             }
             return out;
         }
-    }
-
-    private HashMap<String, String> getSettings() {
-        final HashMap<String, String> out = new HashMap<>();
-        final Field[] fields = PlayerSettings.class.getFields();
-        final Field[] descFields = PlayerSettings.Descriptions.class.getDeclaredFields();
-        for (Field f : fields) {
-            out.put(f.getName(), "No Description Provided");
-        }
-        for (Field f : descFields) {
-            f.setAccessible(true);
-            try {
-                out.put(f.getName(), (String) f.get(new PlayerSettings.Descriptions()));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return out;
-    }
-
-    public int genLinkNumber(UUID uniqueID) {
-        final AtomicInteger r = new AtomicInteger(-1);
-        pendingLinks.forEach((k, v) -> {
-            if (v.getValue().equals(uniqueID))
-                r.set(k);
-        });
-        if (r.get() != -1) return r.get();
-        do {
-            r.set(new Random().nextInt(Integer.MAX_VALUE));
-        } while (pendingLinks.containsKey(r.get()));
-        pendingLinks.put(r.get(), new DefaultKeyValue<>(Instant.now(), uniqueID));
-        return r.get();
-    }
-
-
-    public enum GameTypes {
-        WATCHING,
-        PLAYING,
-        LISTENING,
-        //CUSTOM,
-        DISABLED
     }
 }
 

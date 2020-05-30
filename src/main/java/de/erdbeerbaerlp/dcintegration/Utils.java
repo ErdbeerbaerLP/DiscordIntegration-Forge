@@ -6,8 +6,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
+import me.vankka.reserializer.discord.DiscordSerializer;
+import me.vankka.reserializer.minecraft.MinecraftSerializer;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
+import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -25,23 +29,34 @@ import net.minecraftforge.registries.IForgeRegistry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static de.erdbeerbaerlp.dcintegration.DiscordIntegration.LOGGER;
+
 
 public class Utils {
     static final JsonParser p = new JsonParser();
     private static final IForgeRegistry<Item> itemreg = GameRegistry.findRegistry(Item.class);
-
+    private static final String updateCheckerURL = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.15/update_checker.json";
 
     /**
      * Attempts to generate an {@link MessageEmbed} showing item info from an {@link ITextComponent} instance
      *
      * @param component The TextComponent to scan for item info
-     * @return an {@link MessageEmbed} when there was an Item info, or {@link null} if there was no item info
+     * @return an {@link MessageEmbed} when there was an Item info, or {@link null} if there was no item info OR the item info was disabled
      */
     public static MessageEmbed genItemStackEmbedIfAvailable(final ITextComponent component) {
+        if (!Configuration.INSTANCE.sendItemInfo.get()) return null;
         final JsonObject json = p.parse(ITextComponent.Serializer.toJson(component)).getAsJsonObject();
         if (json.has("with")) {
             final JsonArray args = json.getAsJsonArray("with");
@@ -179,10 +194,75 @@ public class Utils {
             final String nick = (Configuration.FTB_UTILITIES.CHAT_FORMATTING && chatFormat) ? d.getNameForChat((EntityPlayerMP) p).getUnformattedText().replace("<", "").replace(">", "").trim() : d.getNickname().trim();
             if (!nick.isEmpty()) return nick;
         }*/
+
         if (p.getDisplayName().getUnformattedComponentText().isEmpty())
-            return p.getName().getUnformattedComponentText();
+            return p.getName().getFormattedText();
         else
             return p.getDisplayName().getUnformattedComponentText();
+    }
+
+    public static String escapeMarkdown(String in) {
+        return MarkdownSanitizer.escape(in);
+    }
+
+    public static String escapeMarkdownCodeBlocks(String message) {
+        return message.replace("`", "\\`");
+    }
+
+    public static String convertMarkdownToMCFormatting(String in) {
+        if (!Configuration.INSTANCE.convertCodes.get()) return in;
+        in = escapeMarkdownCodeBlocks(in);
+        try {
+            return LegacyComponentSerializer.INSTANCE.serialize(MinecraftSerializer.INSTANCE.serialize(in));
+        } catch (NullPointerException | ConcurrentModificationException ex) {
+            ex.printStackTrace();
+            return in;
+        }
+    }
+
+    public static String convertMCToMarkdown(String in) {
+        if (!Configuration.INSTANCE.convertCodes.get()) {
+            if (Configuration.INSTANCE.formattingCodesToDiscord.get()) return in;
+            else return TextFormatting.getTextWithoutFormattingCodes(in);
+        }
+        in = escapeMarkdown(in);
+        try {
+            return DiscordSerializer.INSTANCE.serialize(LegacyComponentSerializer.INSTANCE.deserialize(in));
+        } catch (NullPointerException | ConcurrentModificationException ex) {
+            ex.printStackTrace();
+            return in;
+        }
+    }
+
+    static void runUpdateCheck() {
+        if (!Configuration.INSTANCE.enableUpdateChecker.get()) return;
+        final StringBuilder changelog = new StringBuilder();
+        try {
+            final HttpURLConnection conn = (HttpURLConnection) new URL(updateCheckerURL).openConnection();
+            conn.setRequestMethod("GET");
+            final InputStreamReader r = new InputStreamReader(conn.getInputStream());
+            final JsonArray parse = p.parse(r).getAsJsonArray();
+            final AtomicBoolean shouldNotify = new AtomicBoolean(false);
+            final AtomicInteger versionsBehind = new AtomicInteger();
+            parse.forEach((elm) -> {
+                final JsonObject versionDetails = elm.getAsJsonObject();
+                final String version = versionDetails.get("version").getAsString();
+                if (Integer.parseInt(version.replace(".", "")) > Integer.parseInt(DiscordIntegration.VERSION.replace(".", ""))) {
+                    versionsBehind.getAndIncrement();
+                    changelog.append("\n").append(version).append(":\n").append(versionDetails.get("changelog").getAsString()).append("\n");
+                    if (!shouldNotify.get()) {
+                        if (Configuration.ReleaseType.getFromName(versionDetails.get("type").getAsString()).value >= Configuration.INSTANCE.updateCheckerMinimumReleaseType.get().value)
+                            shouldNotify.set(true);
+                    }
+                }
+            });
+            final String changelogString = changelog.toString();
+            if (shouldNotify.get()) {
+                LOGGER.info("[Discord Integration] Updates available! You are " + versionsBehind.get() + " version" + (versionsBehind.get() == 1 ? "" : "s") + " behind\nChangelog since last update:\n" + changelogString);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 

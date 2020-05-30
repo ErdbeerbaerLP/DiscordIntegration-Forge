@@ -5,6 +5,7 @@ import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import com.google.gson.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import de.erdbeerbaerlp.dcintegration.api.DiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.commands.*;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.entities.Message;
@@ -52,16 +53,17 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.2.3";
+    public static final String VERSION = "1.2.4";
     /**
      * Modid
      */
     public static final String MODID = "dcintegration";
-    private static final Logger LOGGER = LogManager.getLogger();
+    static final Logger LOGGER = LogManager.getLogger();
     /**
      * The only instance of {@link Discord}
      */
     public static Discord discord_instance;
+    public static ArrayList<? extends DiscordEventHandler> eventHandlers = new ArrayList<>();
     /**
      * Time when the server was started
      */
@@ -126,11 +128,11 @@ public class DiscordIntegration {
 
     public static void registerConfigCommands() {
         final JsonObject commandJson = new JsonParser().parse(Configuration.INSTANCE.jsonCommands.get()).getAsJsonObject();
-        System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
+        LOGGER.info("Detected to load " + commandJson.size() + " commands to load from config");
         for (Map.Entry<String, JsonElement> cmd : commandJson.entrySet()) {
             final JsonObject cmdVal = cmd.getValue().getAsJsonObject();
             if (!cmdVal.has("mcCommand")) {
-                System.err.println("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
+                LOGGER.warn("Skipping command " + cmd.getKey() + " because it is invalid! Check your config!");
                 continue;
             }
             final String mcCommand = cmdVal.get("mcCommand").getAsString();
@@ -148,9 +150,9 @@ public class DiscordIntegration {
             String[] channelID = (cmdVal.has("channelID") && cmdVal.get("channelID") instanceof JsonArray) ? Utils.makeStringArray(cmdVal.get("channelID").getAsJsonArray()) : new String[]{"0"};
             final DiscordCommand regCmd = new CommandFromCFG(cmd.getKey(), desc, mcCommand, admin, aliases, useArgs, argText, channelID);
             if (!discord_instance.registerCommand(regCmd))
-                System.err.println("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
+                LOGGER.warn("Failed Registering command \"" + cmd.getKey() + "\" because it would override an existing command!");
         }
-        System.out.println("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
+        LOGGER.info("Finished registering! Registered " + discord_instance.getCommandList().size() + " commands");
     }
 
 
@@ -192,7 +194,7 @@ public class DiscordIntegration {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void preInit(final FMLDedicatedServerSetupEvent ev) {
-        System.out.println("Loading mod");
+        LOGGER.info("Loading mod");
         try {
             discord_instance = new Discord();
             if (Configuration.INSTANCE.cmdHelpEnabled.get()) discord_instance.registerCommand(new CommandHelp());
@@ -202,14 +204,14 @@ public class DiscordIntegration {
             if (ModList.get().isLoaded("serverutilities")) {
                 final File pdata = new File("./" + ev.getServerSupplier().get().getFolderName() + "/playerdata/" + Configuration.INSTANCE.senderUUID.get() + ".pdat");
                 if (pdata.exists()) pdata.delete();
-                else System.out.println("Generating playerdata file for comaptibility with ServerUtilities");
+                else LOGGER.info("Generating playerdata file for comaptibility with ServerUtilities");
                 pdata.createNewFile();
                 final FileWriter w = new FileWriter(pdata);
                 w.write("{\"uuid\":\"" + Configuration.INSTANCE.senderUUID.get() + "\",\"username\":\"DiscordFakeUser\",\"nickname\":\"Discord\",\"homes\":{},\"kitCooldowns\":{},\"perms\":[\"*\"],\"ranks\":[],\"maxHomes\":1,\"hasBeenRtpWarned\":false,\"enableFly\":false,\"isFlying\":false,\"godmode\":false,\"disableMsg\":false,\"firstKit\":false}");
                 w.close();
             }
         } catch (Exception e) {
-            System.err.println("Failed to login: " + e.getMessage());
+            LOGGER.fatal("Failed to login: " + e.getMessage());
             discord_instance = null;
         }
         if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get())
@@ -248,6 +250,7 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
+        Utils.runUpdateCheck();
         /*Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (discord_instance != null) {
                 if (!stopped) {
@@ -291,7 +294,7 @@ public class DiscordIntegration {
     public void serverStopping(final FMLServerStoppingEvent ev) {
         if (discord_instance != null) {
             discord_instance.stopThreads();
-            if (Configuration.INSTANCE.enableWebhook.get()) {
+            if (Configuration.INSTANCE.enableWebhook.get() && !Configuration.INSTANCE.msgServerStopped.get().isEmpty()) {
                 final WebhookMessageBuilder b = new WebhookMessageBuilder();
                 b.setContent(Configuration.INSTANCE.msgServerStopped.get());
                 b.setUsername(Configuration.INSTANCE.serverName.get());
@@ -299,7 +302,8 @@ public class DiscordIntegration {
                 final WebhookClient cli = WebhookClient.withUrl(discord_instance.getWebhook(Configuration.INSTANCE.serverChannelID.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.serverChannelID.get())).getUrl());
                 cli.send(b.build());
                 cli.close();
-            } else discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
+            } else if (!Configuration.INSTANCE.msgServerStopped.get().isEmpty())
+                discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
             if (Configuration.INSTANCE.botModifyDescription.get())
                 (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
         }
@@ -308,20 +312,17 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void serverStopped(final FMLServerStoppedEvent ev) {
-        ev.getServer().runImmediately(() -> {
-            if (discord_instance != null) {
+        if (discord_instance != null && !discord_instance.isKilled) {
+            ev.getServer().runImmediately(() -> {
                 if (!stopped) {
-                    if (!discord_instance.isKilled) {
-                        discord_instance.stopThreads();
-                        if (Configuration.INSTANCE.botModifyDescription.get())
-                            (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
-                        discord_instance.sendMessage(Configuration.INSTANCE.msgServerCrash.get());
-                    }
+                    discord_instance.stopThreads();
+                    if (Configuration.INSTANCE.botModifyDescription.get())
+                        (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
+                    discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerCrash.get()).submit();
                 }
                 discord_instance.kill();
-            }
-        });
-
+            });
+        }
     }
 
     /* TODO Find out more
@@ -346,9 +347,13 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
+        for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
+            if (o.onMcChatMessage(ev)) return;
+        }
         final MessageEmbed embed = Utils.genItemStackEmbedIfAvailable(ev.getComponent());
         if (discord_instance != null) {
-            discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here")));
+            if (Configuration.INSTANCE.ignoredPrefix.get().isEmpty() || !ev.getMessage().startsWith(Configuration.INSTANCE.ignoredPrefix.get()))
+                discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here")));
         }
     }
 

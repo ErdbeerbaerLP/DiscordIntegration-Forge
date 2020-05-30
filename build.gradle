@@ -41,8 +41,9 @@ repositories {
     }// Maybe needed for other mods in the future
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
+    maven { url "https://nexus.scarsz.me/content/groups/public/"}
 }
-version = "1.2.3"
+version = "1.2.4"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -52,7 +53,6 @@ compileJava {
 }
 
 minecraft {
-
     // The mappings can be changed at any time, and must be in the following format.
     // snapshot_YYYYMMDD   Snapshot are built nightly.
     // stable_#            Stables are built at the discretion of the MCP team.
@@ -113,12 +113,15 @@ shadowJar {
     relocate 'com.neovisionaries', 'dcshadow.com.neovisionaries'
     relocate 'gnu', 'dcshadow.gnu'
     relocate 'org.apache.commons.collections4', 'dcshadow.apache-collections4'
-    relocate 'org.slf4j', 'dcshadow.slf4j'
+    relocate 'org.slf4j', 'dcshadow.org.slf4j'
     relocate 'org.json', 'dcshadow.org.json'
-    relocate 'org.intellij', 'dcshadow.intellij'
-    relocate 'org.jetbrains', 'dcshadow.jetbrains'
+    relocate 'org.intellij', 'dcshadow.org.intellij'
+    relocate 'org.jetbrains', 'dcshadow.org.jetbrains'
     relocate 'tomp2p', 'dcshadow.tomp2p'
-    relocate 'com.fasterxml', 'dcshadow.fasterxml'
+    relocate 'com.fasterxml', 'dcshadow.com.fasterxml'
+    relocate 'me.vankka', 'dcshadow.me.vankka'
+    relocate 'net.kyori', 'dcshadow.net.kyori'
+    relocate 'org.checkerframework', 'dcshadow.org.checkerframework'
 }
 dependencies {
     minecraft 'net.minecraftforge:forge:1.15.2-31.2.5'
@@ -127,6 +130,13 @@ dependencies {
     }
     embed("net.dv8tion:JDA:4.1.1_101")
     embed 'club.minnced:discord-webhooks:0.1.8'
+
+    //Markdown <==> Discord conversion
+    embed "me.vankka:MCDiscordReserializer:2.1.0"
+    embed "me.vankka:SimpleAST:2.0.3"
+    embed "net.kyori:text-api:3.0.0"
+    embed "net.kyori:text-serializer-legacy:3.0.0"
+    embed group: 'org.slf4j', name: 'slf4j-nop', version: '2.0.0-alpha1'
     //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
     //deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
     //deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'

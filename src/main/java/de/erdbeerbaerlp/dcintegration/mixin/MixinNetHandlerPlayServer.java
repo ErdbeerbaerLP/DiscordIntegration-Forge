@@ -21,7 +21,6 @@ public class MixinNetHandlerPlayServer {
 
     @Inject(method = "disconnect", at = @At("HEAD"))
     private void onDisconnect(final ITextComponent textComponent, CallbackInfo ci) {
-        System.out.println(textComponent.getUnformattedComponentText());
         if (textComponent.equals(new TranslationTextComponent("disconnect.timeout")))
             DiscordIntegration.timeouts.add(this.player.getUniqueID());
     }
