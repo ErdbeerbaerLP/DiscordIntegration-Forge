@@ -2,6 +2,6 @@
   {
     "version": "1.2.4",
     "type": "beta",
-    "changelog": "Added update checker\nAdded config option to hide some chat messages\nAdded small event handler\nFix ingame /discord command to show the invite message again\nRemoved seconds from default uptime format because of rate limits\nFix disabling item tooltips\nFixed disabling shutdown message\nEmotes now no longer show thier ID but only the name"
+    "changelog": "Added update checker\nAdded small event handler\nFix ingame /discord command to show the invite message again\nRemoved seconds from default uptime format because of rate limits\nFix disabling item tooltips\nFixed disabling shutdown message\nEmotes now no longer show thier ID but only the name"
   }
 ]

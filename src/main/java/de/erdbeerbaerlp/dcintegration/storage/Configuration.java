@@ -40,7 +40,6 @@ public class Configuration {
     public final ForgeConfigSpec.BooleanValue whitelist;
     public final ForgeConfigSpec.BooleanValue allowLink;
     public final ForgeConfigSpec.EnumValue<ReleaseType> updateCheckerMinimumReleaseType;
-    public final ConfigValue<String> ignoredPrefix;
     //#########################
     //#       MESSAGES        #
     //#########################
@@ -139,7 +138,6 @@ public class Configuration {
         sendItemInfo = builder.comment("Show item information, which is visible on hover ingame, as embed in discord?").define("sendItemInfo", true);
         enableUpdateChecker = builder.comment("Enable checking for updates?", "Notification will be shown after every server start in log when update is available").define("enableUpdateChecker", true);
         updateCheckerMinimumReleaseType = builder.comment("The minimum release type for the update checker to notify").defineEnum("updateCheckerMinimumReleaseType", ReleaseType.beta);
-        ignoredPrefix = builder.comment("Allows you to blacklist chat messages beginning with this value to be sent to discord", "You can also use color codes", "Set empty to disable", "Default: [Announcement]").define("ignoredPrefix", "[Announcement]");
 
         builder.pop();
         //#########################

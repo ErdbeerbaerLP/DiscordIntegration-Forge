@@ -352,8 +352,7 @@ public class DiscordIntegration {
         }
         final MessageEmbed embed = Utils.genItemStackEmbedIfAvailable(ev.getComponent());
         if (discord_instance != null) {
-            if (Configuration.INSTANCE.ignoredPrefix.get().isEmpty() || !ev.getMessage().startsWith(Configuration.INSTANCE.ignoredPrefix.get()))
-                discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here")));
+            discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here")));
         }
     }
 
