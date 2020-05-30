@@ -21,11 +21,13 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
@@ -41,6 +43,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 
 @SuppressWarnings("ConstantConditions")
@@ -325,22 +328,20 @@ public class DiscordIntegration {
         }
     }
 
-    /* TODO Find out more
+
+    //Untested
     @SubscribeEvent
-    public void imc(InterModEnqueueEvent ev) {
-        for (InterModComms.IMCMessage e : ev.getMessages()) {
-            System.out.println("[IMC-Message] Sender: " + e.getSender() + "Key: " + e.key);
-            if (isModIDBlacklisted(e.getSender())) continue;
-            if (e.isStringMessage() && (e.key.equals("Discord-Message") || e.key.equals("sendMessage"))) {
-                discord_instance.sendMessage(e.getStringValue());
+    public void imc(InterModProcessEvent ev) {
+        final Stream<InterModComms.IMCMessage> stream = ev.getIMCStream();
+        stream.forEach((msg) -> {
+            System.out.println("[IMC-Message] Sender: " + msg.getSenderModId() + " method: " + msg.getMethod());
+            if (isModIDBlacklisted(msg.getSenderModId())) return;
+            if ((msg.getMethod().equals("Discord-Message") || msg.getMethod().equals("sendMessage"))) {
+                discord_instance.sendMessage(msg.getMessageSupplier().get().toString());
             }
-            //Compat with imc from another discord integration mod
-            if (e.isNBTMessage() && e.key.equals("sendMessage")) {
-                final CompoundNBT msg = e.getNBTValue();
-                discord_instance.sendMessage(msg.getString("message"));
-            }
-        }
-    } */
+        });
+    }
+
     private boolean isModIDBlacklisted(String sender) {
         return ArrayUtils.contains(Configuration.getArray(Configuration.INSTANCE.imcModIdBlacklist.get()), sender);
     }
