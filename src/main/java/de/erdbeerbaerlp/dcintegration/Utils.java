@@ -10,7 +10,6 @@ import me.vankka.reserializer.discord.DiscordSerializer;
 import me.vankka.reserializer.minecraft.MinecraftSerializer;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
@@ -195,18 +194,18 @@ public class Utils {
             if (!nick.isEmpty()) return nick;
         }*/
 
-        if (p.getDisplayName().getUnformattedComponentText().isEmpty())
+        if (p.getDisplayName().getFormattedText().isEmpty())
             return p.getName().getFormattedText();
         else
-            return p.getDisplayName().getUnformattedComponentText();
+            return TextFormatting.getTextWithoutFormattingCodes(p.getDisplayName().getFormattedText());
     }
 
     public static String escapeMarkdown(String in) {
-        return MarkdownSanitizer.escape(in);
+        return in.replace("(?<!\\\\)[`*_|~]/g", "\\\\$0");
     }
 
-    public static String escapeMarkdownCodeBlocks(String message) {
-        return message.replace("`", "\\`");
+    public static String escapeMarkdownCodeBlocks(String in) {
+        return in.replace("(?<!\\\\)`/g", "\\\\$0");
     }
 
     public static String convertMarkdownToMCFormatting(String in) {
@@ -225,7 +224,7 @@ public class Utils {
             if (Configuration.INSTANCE.formattingCodesToDiscord.get()) return in;
             else return TextFormatting.getTextWithoutFormattingCodes(in);
         }
-        in = escapeMarkdown(in);
+        in = escapeMarkdownCodeBlocks(in);
         try {
             return DiscordSerializer.INSTANCE.serialize(LegacyComponentSerializer.INSTANCE.deserialize(in));
         } catch (NullPointerException | ConcurrentModificationException ex) {

@@ -932,21 +932,30 @@ public class Discord implements EventListener {
     }
 
     public static final class DCMessage {
-        private MessageEmbed embed = null;
+        private final boolean isNotRaw;
+        private MessageEmbed embed;
 
         private String message = "";
 
-        public DCMessage(final MessageEmbed embed, final String message) {
+        /**
+         * @param isNotRaw set to true to enable markdown escaping and mc color conversion (default: false)
+         */
+        public DCMessage(final MessageEmbed embed, final String message, boolean isNotRaw) {
             this.embed = embed;
             this.message = message;
+            this.isNotRaw = isNotRaw;
+        }
+
+        public DCMessage(final MessageEmbed embed, final String message) {
+            this(embed, message, false);
         }
 
         public DCMessage(final String message) {
-            this.message = message;
+            this(null, message, false);
         }
 
         public DCMessage(final MessageEmbed embed) {
-            this.embed = embed;
+            this(embed, "", false);
         }
 
         public String getMessage() {
@@ -968,10 +977,14 @@ public class Discord implements EventListener {
         Message buildMessage() {
             final MessageBuilder out = new MessageBuilder();
             if (!message.isEmpty()) {
-                if (INSTANCE.formattingCodesToDiscord.get())
-                    out.setContent(Utils.convertMCToMarkdown(message));
-                else
-                    out.setContent(TextFormatting.getTextWithoutFormattingCodes(Utils.convertMCToMarkdown(message)));
+                if (isNotRaw) {
+                    if (INSTANCE.formattingCodesToDiscord.get())
+                        out.setContent(Utils.convertMCToMarkdown(message));
+                    else
+                        out.setContent(TextFormatting.getTextWithoutFormattingCodes(Utils.convertMCToMarkdown(message)));
+                } else {
+                    out.setContent(message);
+                }
             }
             if (embed != null)
                 out.setEmbed(embed);
@@ -981,10 +994,14 @@ public class Discord implements EventListener {
         WebhookMessageBuilder buildWebhookMessage() {
             final WebhookMessageBuilder out = new WebhookMessageBuilder();
             if (!message.isEmpty()) {
-                if (INSTANCE.formattingCodesToDiscord.get())
-                    out.setContent(Utils.convertMCToMarkdown(message));
-                else
-                    out.setContent(TextFormatting.getTextWithoutFormattingCodes(Utils.convertMCToMarkdown(message)));
+                if (isNotRaw) {
+                    if (INSTANCE.formattingCodesToDiscord.get())
+                        out.setContent(Utils.convertMCToMarkdown(message));
+                    else
+                        out.setContent(TextFormatting.getTextWithoutFormattingCodes(Utils.convertMCToMarkdown(message)));
+                } else {
+                    out.setContent(message);
+                }
             }
             if (embed != null) {
                 final WebhookEmbedBuilder eb = new WebhookEmbedBuilder();

@@ -272,13 +272,17 @@ public class DiscordIntegration {
     public void command(CommandEvent ev) {
         String command = ev.getParseResults().getReader().getString();
         if (discord_instance != null) {
+            boolean raw = false;
             if (((command.startsWith("/say") || command.startsWith("say")) && Configuration.INSTANCE.sayOutput.get()) || ((command.startsWith("/me") || command.startsWith("me")) && Configuration.INSTANCE.meOutput.get())) {
                 String msg = command.replace("/say ", "").replace("/me ", "");
                 if (command.startsWith("say") || command.startsWith("me"))
                     msg = msg.replaceFirst("say ", "").replaceFirst("me ", "");
-                if (command.startsWith("/me") || command.startsWith("me")) msg = "*" + msg.trim() + "*";
+                if (command.startsWith("/me") || command.startsWith("me")) {
+                    raw = true;
+                    msg = "*" + Utils.escapeMarkdown(msg.trim()) + "*";
+                }
                 try {
-                    discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), msg, Configuration.INSTANCE.chatOutputChannel.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.chatOutputChannel.get()));
+                    discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), new Discord.DCMessage(null, msg, !raw), Configuration.INSTANCE.chatOutputChannel.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.chatOutputChannel.get()));
                 } catch (CommandSyntaxException e) {
                     discord_instance.sendMessage(msg);
                 }
@@ -353,7 +357,7 @@ public class DiscordIntegration {
         }
         final MessageEmbed embed = Utils.genItemStackEmbedIfAvailable(ev.getComponent());
         if (discord_instance != null) {
-            discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here")));
+            discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, Utils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here")), true));
         }
     }
 

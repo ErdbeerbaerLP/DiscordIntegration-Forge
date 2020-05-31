@@ -1,5 +1,9 @@
 [
   {
+    "version": "1.2.5",
+    "changelog": "Fixed formatting issues with command, advancement and maybe more messages"
+  },
+  {
     "version": "1.2.4",
     "type": "beta",
     "changelog": "Added update checker\nAdded small event handler\nFix ingame /discord command to show the invite message again\nRemoved seconds from default uptime format because of rate limits\nFix disabling item tooltips\nFixed disabling shutdown message\nEmotes now no longer show thier ID but only the name"
