@@ -50,10 +50,6 @@ import java.util.stream.Stream;
 @Mod(DiscordIntegration.MODID)
 public class DiscordIntegration {
     /**
-     * Mod name
-     */
-    public static final String NAME = "Discord Integration";
-    /**
      * Mod version
      */
     public static final String VERSION = "1.2.4";
@@ -254,18 +250,6 @@ public class DiscordIntegration {
             discord_instance.startThreads();
         }
         Utils.runUpdateCheck();
-        /*Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (discord_instance != null) {
-                if (!stopped) {
-                    if (!discord_instance.isKilled) {
-                        discord_instance.stopThreads();
-                        if (Configuration.INSTANCE.botModifyDescription.get()) discord_instance.getChannelManager().setTopic(Configuration.INSTANCE.msgServerCrash.get()).complete();
-                        discord_instance.sendMessage(Configuration.INSTANCE.msgServerCrash.get());
-                    }
-                }
-                discord_instance.kill();
-            }
-        }));*/
     }
 
     @SubscribeEvent
@@ -338,7 +322,7 @@ public class DiscordIntegration {
     public void imc(InterModProcessEvent ev) {
         final Stream<InterModComms.IMCMessage> stream = ev.getIMCStream();
         stream.forEach((msg) -> {
-            System.out.println("[IMC-Message] Sender: " + msg.getSenderModId() + " method: " + msg.getMethod());
+            LOGGER.debug("[IMC-Message] Sender: " + msg.getSenderModId() + " method: " + msg.getMethod());
             if (isModIDBlacklisted(msg.getSenderModId())) return;
             if ((msg.getMethod().equals("Discord-Message") || msg.getMethod().equals("sendMessage"))) {
                 discord_instance.sendMessage(msg.getMessageSupplier().get().toString());
@@ -361,15 +345,6 @@ public class DiscordIntegration {
         }
     }
 
-    /* XX Not Working :/
-    @SubscribeEvent
-    public void renderName(PlayerEvent.NameFormat ev){
-        if (PlayerLinkController.isPlayerLinked(ev.getPlayer().getUniqueID()) && PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueID()).useDiscordNameIngame) {
-            ev.setDisplayname(PlayerLinkController.getDiscordFromPlayer(ev.getPlayer().getUniqueID()));
-        }else{
-            ev.setDisplayname(ev.getUsername());
-        }
-    }*/
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
         if (ev.getEntity() instanceof PlayerEntity || (ev.getEntity() instanceof TameableEntity && ((TameableEntity) ev.getEntity()).getOwner() instanceof PlayerEntity && Configuration.INSTANCE.tamedDeathEnabled.get())) {
@@ -389,8 +364,6 @@ public class DiscordIntegration {
             discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerTimeout.get().replace("%player%", Utils.formatPlayerName(ev.getPlayer())));
             timeouts.remove(ev.getPlayer().getUniqueID());
         }
-        /*if (Loader.isModLoaded("votifier")) {
-            MinecraftForge.EVENT_BUS.register(new VotifierEventHandler());
-        }*/
+
     }
 }

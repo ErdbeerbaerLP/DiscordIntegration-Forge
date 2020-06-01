@@ -193,7 +193,6 @@ public class Utils {
             final String nick = (Configuration.FTB_UTILITIES.CHAT_FORMATTING && chatFormat) ? d.getNameForChat((EntityPlayerMP) p).getUnformattedText().replace("<", "").replace(">", "").trim() : d.getNickname().trim();
             if (!nick.isEmpty()) return nick;
         }*/
-
         if (p.getDisplayName().getFormattedText().isEmpty())
             return p.getName().getFormattedText();
         else
@@ -241,17 +240,27 @@ public class Utils {
             conn.setRequestMethod("GET");
             final InputStreamReader r = new InputStreamReader(conn.getInputStream());
             final JsonArray parse = p.parse(r).getAsJsonArray();
+            if (parse == null) {
+                LOGGER.error("Could not check for updates");
+                return;
+            }
             final AtomicBoolean shouldNotify = new AtomicBoolean(false);
             final AtomicInteger versionsBehind = new AtomicInteger();
             parse.forEach((elm) -> {
-                final JsonObject versionDetails = elm.getAsJsonObject();
-                final String version = versionDetails.get("version").getAsString();
-                if (Integer.parseInt(version.replace(".", "")) > Integer.parseInt(DiscordIntegration.VERSION.replace(".", ""))) {
-                    versionsBehind.getAndIncrement();
-                    changelog.append("\n").append(version).append(":\n").append(versionDetails.get("changelog").getAsString()).append("\n");
-                    if (!shouldNotify.get()) {
-                        if (Configuration.ReleaseType.getFromName(versionDetails.get("type").getAsString()).value >= Configuration.INSTANCE.updateCheckerMinimumReleaseType.get().value)
-                            shouldNotify.set(true);
+                if (elm != null && elm.isJsonObject()) {
+                    final JsonObject versionDetails = elm.getAsJsonObject();
+                    final String version = versionDetails.get("version").getAsString();
+                    try {
+                        if (Integer.parseInt(version.replace(".", "")) > Integer.parseInt(DiscordIntegration.VERSION.replace(".", ""))) {
+                            versionsBehind.getAndIncrement();
+                            changelog.append("\n").append(version).append(":\n").append(versionDetails.get("changelog").getAsString()).append("\n");
+                            if (!shouldNotify.get()) {
+                                if (Configuration.ReleaseType.getFromName(versionDetails.get("type").getAsString()).value >= Configuration.INSTANCE.updateCheckerMinimumReleaseType.get().value)
+                                    shouldNotify.set(true);
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
                     }
                 }
             });
@@ -260,6 +269,7 @@ public class Utils {
                 LOGGER.info("[Discord Integration] Updates available! You are " + versionsBehind.get() + " version" + (versionsBehind.get() == 1 ? "" : "s") + " behind\nChangelog since last update:\n" + changelogString);
             }
         } catch (IOException e) {
+            LOGGER.error("Could not check for updates");
             e.printStackTrace();
         }
     }
