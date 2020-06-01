@@ -28,7 +28,6 @@ public class Configuration {
         }
     }
 
-    public final ForgeConfigSpec.BooleanValue enableUpdateChecker;
     //#########################
     //#        GENERAL        #
     //#########################
@@ -40,16 +39,17 @@ public class Configuration {
     public final ForgeConfigSpec.BooleanValue whitelist;
     public final ForgeConfigSpec.BooleanValue allowLink;
     public final ForgeConfigSpec.EnumValue<ReleaseType> updateCheckerMinimumReleaseType;
-    //#########################
-    //#       MESSAGES        #
-    //#########################
-    public final ForgeConfigSpec.BooleanValue convertCodes;
+    public final ForgeConfigSpec.BooleanValue enableUpdateChecker;
     //#########################
     //#        WEBHOOK        #
     //#########################
     public final ForgeConfigSpec.BooleanValue enableWebhook;
     public final ConfigValue<String> serverAvatar;
     public final ConfigValue<String> serverName;
+    //#########################
+    //#       MESSAGES        #
+    //#########################
+    public final ForgeConfigSpec.BooleanValue convertCodes;
     public final ForgeConfigSpec.BooleanValue formattingCodesToDiscord;
     public final ForgeConfigSpec.BooleanValue preventDiscordFormattingCodesToMC;
     public final ConfigValue<String> msgServerStarted;
@@ -74,6 +74,8 @@ public class Configuration {
     public final ConfigValue<String> msgIgnoreIgnore;
     public final ConfigValue<String> uptimeFormat;
     public final ForgeConfigSpec.BooleanValue sendItemInfo;
+    public final ConfigValue<String> sayCommandIgnoredPrefix;
+
     //#########################
     //#       COMMANDS        #
     //#########################
@@ -105,10 +107,6 @@ public class Configuration {
     public final ConfigValue<String> dcCmdMsg;
     public final ConfigValue<String> dcCmdMsgHover;
     public final ConfigValue<String> dcCmdURL;
-    //#########################
-    //#        ADVANCED       #
-    //#########################
-    public final ConfigValue<String> channelDescriptionID;
 
     //#########################
     //#      MOD-COMPAT       #
@@ -118,11 +116,18 @@ public class Configuration {
 //	public final ConfigValue<String> ftbutilitiesAFKMsgEnd;
 //	public final ConfigValue<String> ftbutilitiesAvatar;
 //	public final ConfigValue<String> ftbutilitiesShutdownMsg;
+
+
+    //#########################
+    //#        ADVANCED       #
+    //#########################
+    public final ConfigValue<String> channelDescriptionID;
     public final ConfigValue<String> serverChannelID;
     public final ConfigValue<String> deathChannelID;
     public final ConfigValue<String> chatOutputChannel;
     public final ConfigValue<String> chatInputChannel;
     public final ConfigValue<String> msgNotWhitelisted;
+
     Configuration(final ForgeConfigSpec.Builder builder) {
         //#########################
         //#        GENERAL        #
@@ -138,7 +143,6 @@ public class Configuration {
         sendItemInfo = builder.comment("Show item information, which is visible on hover ingame, as embed in discord?").define("sendItemInfo", true);
         enableUpdateChecker = builder.comment("Enable checking for updates?", "Notification will be shown after every server start in log when update is available").define("enableUpdateChecker", true);
         updateCheckerMinimumReleaseType = builder.comment("The minimum release type for the update checker to notify").defineEnum("updateCheckerMinimumReleaseType", ReleaseType.beta);
-
         builder.pop();
         //#########################
         //#        WEBHOOK        #
@@ -180,6 +184,7 @@ public class Configuration {
         msgIgnoreUnignore = builder.comment("Message sent when unignoring Discord messages").define("msgIgnoreUnignore", "You are no longer ignoring Discord messages!");
         uptimeFormat = builder.comment("The format of the uptime command and %uptime% placeholder", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html", "Note: The use of precise values like seconds might cause rate limits").define("uptimeFormat", "dd 'days' HH 'hours' mm 'minutes'");
         msgNotWhitelisted = builder.comment("Message shown to players who are not whitelisted using discord", "No effect if discord whitelist is off").define("msgWhitelist", TextFormatting.RED + "You are not whitelisted.\nJoin the discord server for more information\nhttps://discord.gg/someserver");
+        sayCommandIgnoredPrefix = builder.comment("When an /say command's message starts with this prefix it will not be sent to discord").define("sayCommandIgnoredPrefix", TextFormatting.RED.toString() + TextFormatting.ITALIC.toString() + TextFormatting.BLUE.toString() + TextFormatting.OBFUSCATED.toString() + TextFormatting.RESET.toString());
         builder.pop();
         //#########################
         //#       COMMANDS        #

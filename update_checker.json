@@ -1,5 +1,10 @@
 [
   {
+    "version": "1.2.7",
+    "changelog": "Added config option to ignore /say messages starting with an specific prefix",
+    "type": "beta"
+  },
+  {
     "version": "1.2.6",
     "changelog": "Fix possible crashes with update checker and fix forgetting to increment version number :/",
     "type": "beta"

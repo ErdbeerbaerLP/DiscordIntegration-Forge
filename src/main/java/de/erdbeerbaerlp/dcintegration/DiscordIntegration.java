@@ -52,7 +52,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.2.6";
+    public static final String VERSION = "1.2.7";
     /**
      * Modid
      */
@@ -268,6 +268,7 @@ public class DiscordIntegration {
                 try {
                     discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), new Discord.DCMessage(null, msg, !raw), Configuration.INSTANCE.chatOutputChannel.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.chatOutputChannel.get()));
                 } catch (CommandSyntaxException e) {
+                    if (msg.startsWith(Configuration.INSTANCE.sayCommandIgnoredPrefix.get())) return;
                     discord_instance.sendMessage(msg);
                 }
             }
