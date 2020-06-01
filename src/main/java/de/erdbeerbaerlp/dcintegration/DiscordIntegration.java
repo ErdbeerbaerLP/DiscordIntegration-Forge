@@ -61,7 +61,7 @@ public class DiscordIntegration
     /**
      * Mod version
      */
-    public static final String VERSION = "1.1.16";
+    public static final String VERSION = "1.1.18";
     /**
      * Modid
      */
@@ -231,12 +231,14 @@ public class DiscordIntegration
     @EventHandler
     public void serverStarted(FMLServerStartedEvent ev) {
         started = new Date().getTime();
-        if (discord_instance != null && startingMsg != null) try {
-            this.startingMsg.get().editMessage(Configuration.MESSAGES.SERVER_STARTED_MSG).queue();
+        if (discord_instance != null && !Configuration.MESSAGES.SERVER_STARTED_MSG.isEmpty()) try {
+            if (startingMsg != null)
+                this.startingMsg.get().editMessage(Configuration.MESSAGES.SERVER_STARTED_MSG).queue();
+            else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
-        else discord_instance.sendMessage(Configuration.MESSAGES.SERVER_STARTED_MSG);
+
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
