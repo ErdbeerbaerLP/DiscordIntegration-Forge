@@ -45,7 +45,7 @@ repositories {
     maven { url "https://nexus.scarsz.me/content/groups/public/"}
 
 }
-version = "1.2.7"
+version = "1.2.8"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 

@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.storage.PlayerLinkController;
+import de.erdbeerbaerlp.dcintegration.storage.PlayerSettings;
 import me.vankka.reserializer.discord.DiscordSerializer;
 import me.vankka.reserializer.minecraft.MinecraftSerializer;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -193,6 +195,15 @@ public class Utils {
             final String nick = (Configuration.FTB_UTILITIES.CHAT_FORMATTING && chatFormat) ? d.getNameForChat((EntityPlayerMP) p).getUnformattedText().replace("<", "").replace(">", "").trim() : d.getNickname().trim();
             if (!nick.isEmpty()) return nick;
         }*/
+        try {
+            if (Configuration.INSTANCE.allowLink.get() && PlayerLinkController.isPlayerLinked(p.getUniqueID())) {
+                final PlayerSettings settings = PlayerLinkController.getSettings(null, p.getUniqueID());
+                if (settings.useDiscordNameInChannel) {
+                    return DiscordIntegration.discord_instance.jda.getTextChannelById(Configuration.INSTANCE.serverChannelID.get()).getGuild().getMember(DiscordIntegration.discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(p.getUniqueID()))).getEffectiveName();
+                }
+            }
+        } catch (NullPointerException ignored) {
+        }
         if (p.getDisplayName().getFormattedText().isEmpty())
             return p.getName().getFormattedText();
         else
