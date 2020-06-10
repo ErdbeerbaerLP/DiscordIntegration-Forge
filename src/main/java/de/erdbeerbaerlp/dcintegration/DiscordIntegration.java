@@ -50,7 +50,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.2.8";
+    public static final String VERSION = "1.2.9";
     /**
      * Modid
      */
@@ -173,9 +173,7 @@ public class DiscordIntegration {
     public void advancement(AdvancementEvent ev) {
         if (discord_instance != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
             discord_instance.sendMessage(Configuration.INSTANCE.msgAdvancement.get().replace("%player%",
-                    TextFormatting.getTextWithoutFormattingCodes(ev.getPlayer()
-                            .getName()
-                            .getFormattedText()))
+                    TextFormatting.getTextWithoutFormattingCodes(Utils.formatPlayerName(ev.getPlayer())))
                     .replace("%name%",
                             TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
                                     .getDisplay()

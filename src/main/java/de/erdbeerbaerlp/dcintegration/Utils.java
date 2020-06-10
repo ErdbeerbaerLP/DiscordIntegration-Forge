@@ -199,7 +199,7 @@ public class Utils {
             if (Configuration.INSTANCE.allowLink.get() && PlayerLinkController.isPlayerLinked(p.getUniqueID())) {
                 final PlayerSettings settings = PlayerLinkController.getSettings(null, p.getUniqueID());
                 if (settings.useDiscordNameInChannel) {
-                    return DiscordIntegration.discord_instance.jda.getTextChannelById(Configuration.INSTANCE.serverChannelID.get()).getGuild().getMember(DiscordIntegration.discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(p.getUniqueID()))).getEffectiveName();
+                    return DiscordIntegration.discord_instance.jda.getTextChannelById(Configuration.INSTANCE.botChannel.get()).getGuild().getMember(DiscordIntegration.discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(p.getUniqueID()))).getEffectiveName();
                 }
             }
         } catch (NullPointerException ignored) {
