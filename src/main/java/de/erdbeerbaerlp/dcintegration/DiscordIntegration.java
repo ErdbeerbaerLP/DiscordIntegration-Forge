@@ -31,16 +31,14 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
+import net.teamfruit.emojicord.emoji.EmojiText;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -334,15 +332,25 @@ public class DiscordIntegration {
     private boolean isModIDBlacklisted(String sender) {
         return ArrayUtils.contains(Configuration.getArray(Configuration.INSTANCE.imcModIdBlacklist.get()), sender);
     }
-
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
         for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
             if (o.onMcChatMessage(ev)) return;
         }
+        String text = Utils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
+        if (ModList.get().isLoaded("emojicord")) {
+            final EmojiText emojiText = EmojiText.create(text, EnumSet.of(EmojiText.ParseFlag.PARSE));
+            for (EmojiText.EmojiTextElement emoji : emojiText.emojis) {
+                if (emoji.id == null)
+                    text = text.replace(emoji.raw, emoji.source);
+                else
+                    text = text.replace(emoji.raw, "<" + emoji.source
+                            + emoji.id.getId() + ">");
+            }
+        }
         final MessageEmbed embed = Utils.genItemStackEmbedIfAvailable(ev.getComponent());
         if (discord_instance != null) {
-            discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, Utils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here")), true));
+            discord_instance.sendMessage(ev.getPlayer(), new Discord.DCMessage(embed, text, true));
         }
     }
 

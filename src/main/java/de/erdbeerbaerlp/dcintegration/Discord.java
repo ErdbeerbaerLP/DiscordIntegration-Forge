@@ -28,7 +28,9 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import net.teamfruit.emojicord.util.Base64Utils;
 import org.apache.commons.collections4.KeyValue;
 import org.apache.commons.collections4.keyvalue.DefaultKeyValue;
 
@@ -552,12 +554,14 @@ public class Discord implements EventListener {
                             msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
                         }
                         for (final Emote e : ev.getMessage().getEmotes()) {
-                            /* Emojicord conversion?  Untested since mod is still 1.14
-                            if(!msg.contains(e.getAsMention())) return;
-                            final String s = Base64.getEncoder().encodeToString(e.getId().getBytes());
-                            msg = msg.replace(e.getAsMention(), e.getAsMention().replace(e.getId(), s));*/
-                            //Replace emote IDs (<:name:123456789> with easier to read ones (:name:)
-                            msg = msg.replace(e.getAsMention(), ":" + e.getName() + ":");
+                            if (ModList.get().isLoaded("emojicord")) {
+                                if (!msg.contains(e.getAsMention())) return;
+                                final String s = Base64Utils.encode(e.getIdLong());
+                                msg = msg.replace(e.getAsMention(), e.getAsMention().replace(e.getId(), s));
+                            } else
+                                //Replace emote IDs (<:name:123456789> with easier to read ones (:name:)
+                                msg = msg.replace(e.getAsMention(), ":" + e.getName() + ":");
+
                         }
                         StringBuilder message = new StringBuilder(msg);
                         for (Message.Attachment a : ev.getMessage().getAttachments()) {
