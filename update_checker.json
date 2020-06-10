@@ -1,7 +1,7 @@
 [
   {
     "version": "1.2.7",
-    "changelog": "Added config option to ignore /say messages starting with an specific prefix",
+    "changelog": "Added config option to ignore /say messages starting with an specific prefix\nAdded full Emojicord integration (required emotes enabled on client and emojicord on installed server!)",
     "type": "beta"
   },
   {
