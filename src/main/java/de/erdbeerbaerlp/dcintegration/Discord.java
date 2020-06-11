@@ -448,6 +448,8 @@ public class Discord implements EventListener {
                     avatarURL = dc.getUser().getAvatarUrl();
                 }
             }
+            if (avatarURL.isEmpty())
+                avatarURL = "https://minotar.net/avatar/" + uuid;
         }
         if (isServerMessage) {
             avatarURL = INSTANCE.serverAvatar.get();
