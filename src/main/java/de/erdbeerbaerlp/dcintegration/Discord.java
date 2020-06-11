@@ -6,6 +6,7 @@ import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import de.erdbeerbaerlp.dcintegration.api.DiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.commands.DiscordCommand;
+import de.erdbeerbaerlp.dcintegration.integrations.EmojicordFormatter;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.storage.PlayerSettings;
@@ -30,7 +31,6 @@ import net.minecraft.util.text.event.HoverEvent.Action;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
-import net.teamfruit.emojicord.util.Base64Utils;
 import org.apache.commons.collections4.KeyValue;
 import org.apache.commons.collections4.keyvalue.DefaultKeyValue;
 
@@ -53,7 +53,7 @@ import static de.erdbeerbaerlp.dcintegration.storage.Configuration.INSTANCE;
 public class Discord implements EventListener {
     private static final File IGNORED_PLAYERS = new File("./players_ignoring_discord");
     public final ArrayList<String> ignoringPlayers = new ArrayList<>();
-    final JDA jda;
+    public final JDA jda;
     /**
      * This thread is used to update the channel description
      */
@@ -449,6 +449,9 @@ public class Discord implements EventListener {
                 }
             }
         }
+        if (isServerMessage) {
+            avatarURL = INSTANCE.serverAvatar.get();
+        }
         sendMessage(playerName, msg, avatarURL, channel, !isServerMessage);
     }
 
@@ -555,13 +558,10 @@ public class Discord implements EventListener {
                         }
                         for (final Emote e : ev.getMessage().getEmotes()) {
                             if (ModList.get().isLoaded("emojicord")) {
-                                if (!msg.contains(e.getAsMention())) return;
-                                final String s = Base64Utils.encode(e.getIdLong());
-                                msg = msg.replace(e.getAsMention(), e.getAsMention().replace(e.getId(), s));
+                                msg = EmojicordFormatter.formatDiscordToChat(msg, e);
                             } else
                                 //Replace emote IDs (<:name:123456789> with easier to read ones (:name:)
                                 msg = msg.replace(e.getAsMention(), ":" + e.getName() + ":");
-
                         }
                         StringBuilder message = new StringBuilder(msg);
                         for (Message.Attachment a : ev.getMessage().getAttachments()) {
@@ -603,21 +603,21 @@ public class Discord implements EventListener {
                         final String[] command = ev.getMessage().getContentRaw().replaceFirst(INSTANCE.prefix.get(), "").split(" ");
                         if (command.length > 0 && command[0].equals("whitelist")) {
                             if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
-                                ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                ev.getChannel().sendMessage(INSTANCE.alreadyLinkedMessage.get().replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
                                 return;
                             }
                             System.out.println(command.length);
                             if (command.length > 2) {
-                                ev.getChannel().sendMessage("Too many arguments. Use `+" + INSTANCE.prefix.get() + "whitelist <uuid>`").queue();
+                                ev.getChannel().sendMessage(INSTANCE.msgTooManyArgs.get()).queue();
                                 return;
                             }
                             if (command.length < 2) {
-                                ev.getChannel().sendMessage("Not enough arguments. Use `" + INSTANCE.prefix.get() + "whitelist <uuid>`").queue();
+                                ev.getChannel().sendMessage(INSTANCE.msgNotEnoughArgs.get()).queue();
                                 return;
                             }
                             UUID u;
+                            String s = command[1];
                             try {
-                                String s = command[1];
                                 if (!s.contains("-"))
                                     s = s.replaceFirst(
                                             "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"
@@ -625,11 +625,11 @@ public class Discord implements EventListener {
                                 u = UUID.fromString(s);
                                 final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), u);
                                 if (linked)
-                                    ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(u)).queue();
+                                    ev.getChannel().sendMessage(INSTANCE.linkSuccessfulMessage.get().replace("%name%", PlayerLinkController.getNameFromUUID(u))).queue();
                                 else
-                                    ev.getChannel().sendMessage("Failed to link!").queue();
+                                    ev.getChannel().sendMessage(INSTANCE.linkFailedMessage.get()).queue();
                             } catch (IllegalArgumentException e) {
-                                ev.getChannel().sendMessage("Argument is not an UUID. Use `" + INSTANCE.prefix.get() + "whitelist <uuid>`").queue();
+                                ev.getChannel().sendMessage(INSTANCE.linkArgumentNotUUIDMessage.get().replace("%prefix%", INSTANCE.prefix.get()).replace("%arg%", s)).queue();
                                 return;
                             }
                         }
@@ -638,22 +638,22 @@ public class Discord implements EventListener {
                             try {
                                 int num = Integer.parseInt(ev.getMessage().getContentRaw());
                                 if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
-                                    ev.getChannel().sendMessage("You already linked your account with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                    ev.getChannel().sendMessage(INSTANCE.alreadyLinkedMessage.get().replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
                                     return;
                                 }
                                 if (pendingLinks.containsKey(num)) {
                                     final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), pendingLinks.get(num).getValue());
                                     if (linked) {
-                                        ev.getChannel().sendMessage("Your account is now linked with " + PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId()))).queue();
+                                        ev.getChannel().sendMessage(INSTANCE.linkSuccessfulMessage.get().replace("%name%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
                                         ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(pendingLinks.get(num).getValue()).sendMessage(new StringTextComponent("Your account is now linked with " + ev.getAuthor().getAsTag()));
                                     } else
-                                        ev.getChannel().sendMessage("Failed to link!").queue();
+                                        ev.getChannel().sendMessage(INSTANCE.linkFailedMessage.get()).queue();
                                 } else {
-                                    ev.getChannel().sendMessage("Use `/discord link` ingame to get your link number").queue();
+                                    ev.getChannel().sendMessage(INSTANCE.invalidLinkNumberMessage.get()).queue();
                                     return;
                                 }
                             } catch (NumberFormatException nfe) {
-                                ev.getChannel().sendMessage("This is not a number. Use `/discord link` ingame to get your link number").queue();
+                                ev.getChannel().sendMessage(INSTANCE.NANLinkNumberMessage.get()).queue();
                                 return;
                             }
                     }
@@ -667,7 +667,7 @@ public class Discord implements EventListener {
                                     break;
                                 case "settings":
                                     if (!PlayerLinkController.isDiscordLinked(ev.getAuthor().getId()))
-                                        ev.getChannel().sendMessage("Your account is not linked! Link it first using " + (INSTANCE.whitelist.get() ? (INSTANCE.prefix.get() + "whitelist <uuid>") : "`/discord link` ingame")).queue();
+                                        ev.getChannel().sendMessage(INSTANCE.accountNotLinkedMessage.get().replace("%method%", INSTANCE.whitelist.get() ? (INSTANCE.linkMethodWhitelist.get().replace("%prefix%", INSTANCE.prefix.get())) : INSTANCE.linkMethodIngame.get())).queue();
                                     else if (command.length == 1) {
                                         final MessageBuilder mb = new MessageBuilder();
                                         mb.setContent(cmdUsages);
@@ -682,19 +682,19 @@ public class Discord implements EventListener {
                                                 }
                                             }
                                         });
-                                        b.setAuthor("Personal Settings list:");
+                                        b.setAuthor(INSTANCE.personalSettingsHeader.get());
                                         mb.setEmbed(b.build());
                                         ev.getChannel().sendMessage(mb.build()).queue();
                                     } else if (command.length == 3 && command[1].equals("get")) {
                                         if (getSettings().containsKey(command[2])) {
                                             final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
                                             try {
-                                                ev.getChannel().sendMessage("This settings value is `" + (settings.getClass().getField(command[2]).getBoolean(settings) ? "true" : "false") + "`").queue();
+                                                ev.getChannel().sendMessage(INSTANCE.pSettingsGetMessage.get().replace("%bool%", settings.getClass().getField(command[2]).getBoolean(settings) ? "true" : "false")).queue();
                                             } catch (IllegalAccessException | NoSuchFieldException e) {
                                                 e.printStackTrace();
                                             }
                                         } else
-                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
+                                            ev.getChannel().sendMessage(INSTANCE.invalidPSettingsKeyMsg.get().replace("%key%", command[2])).queue();
                                     } else if (command.length == 4 && command[1].equals("set")) {
                                         if (getSettings().containsKey(command[2])) {
                                             final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
@@ -710,11 +710,11 @@ public class Discord implements EventListener {
                                                 PlayerLinkController.updatePlayerSettings(ev.getAuthor().getId(), null, settings);
                                             } catch (IllegalAccessException | NoSuchFieldException e) {
                                                 e.printStackTrace();
-                                                ev.getChannel().sendMessage("Failed to set value :/").queue();
+                                                ev.getChannel().sendMessage(INSTANCE.settingUpdateFailedMessage.get()).queue();
                                             }
-                                            ev.getChannel().sendMessage("Successfully updated setting!").queue();
+                                            ev.getChannel().sendMessage(INSTANCE.settingUpdatedSuccessfullyMessage.get()).queue();
                                         } else
-                                            ev.getChannel().sendMessage("`" + command[2] + "` is not an valid settings key!").queue();
+                                            ev.getChannel().sendMessage(INSTANCE.invalidPSettingsKeyMsg.get().replace("%key%", command[2])).queue();
                                     } else {
                                         ev.getChannel().sendMessage(cmdUsages).queue();
                                     }

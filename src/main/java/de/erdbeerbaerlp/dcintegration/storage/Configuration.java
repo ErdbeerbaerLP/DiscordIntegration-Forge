@@ -37,7 +37,6 @@ public class Configuration {
     public final ConfigValue<String> botChannel;
     public final ForgeConfigSpec.BooleanValue botModifyDescription;
     public final ForgeConfigSpec.BooleanValue whitelist;
-    public final ForgeConfigSpec.BooleanValue allowLink;
     public final ForgeConfigSpec.EnumValue<ReleaseType> updateCheckerMinimumReleaseType;
     public final ForgeConfigSpec.BooleanValue enableUpdateChecker;
     //#########################
@@ -46,6 +45,13 @@ public class Configuration {
     public final ForgeConfigSpec.BooleanValue enableWebhook;
     public final ConfigValue<String> serverAvatar;
     public final ConfigValue<String> serverName;
+    //#########################
+    //#       LINKING         #
+    //#########################
+    public final ForgeConfigSpec.BooleanValue allowLink;
+    public final ConfigValue<String> linkedRole;
+
+
     //#########################
     //#       MESSAGES        #
     //#########################
@@ -75,6 +81,21 @@ public class Configuration {
     public final ConfigValue<String> uptimeFormat;
     public final ForgeConfigSpec.BooleanValue sendItemInfo;
     public final ConfigValue<String> sayCommandIgnoredPrefix;
+    public final ConfigValue<String> linkSuccessfulMessage;
+    public final ConfigValue<String> linkFailedMessage;
+    public final ConfigValue<String> alreadyLinkedMessage;
+    public final ConfigValue<String> linkArgumentNotUUIDMessage;
+    public final ConfigValue<String> invalidLinkNumberMessage;
+    public final ConfigValue<String> NANLinkNumberMessage;
+    public final ConfigValue<String> personalSettingsHeader;
+    public final ConfigValue<String> invalidPSettingsKeyMsg;
+    public final ConfigValue<String> pSettingsGetMessage;
+    public final ConfigValue<String> settingUpdatedSuccessfullyMessage;
+    public final ConfigValue<String> settingUpdateFailedMessage;
+    public final ConfigValue<String> accountNotLinkedMessage;
+    public final ConfigValue<String> linkMethodWhitelist;
+    public final ConfigValue<String> linkMethodIngame;
+
 
     //#########################
     //#       COMMANDS        #
@@ -137,8 +158,7 @@ public class Configuration {
         botPresenceName = builder.comment("The Name of the Game", "", "PLACEHOLDERS:", "%online% - Online Players", "%max% - Maximum Player Amount").define("botPresenceName", "Minecraft with %online% players");
         botPresenceType = builder.defineEnum("botPresenceType", Discord.GameTypes.PLAYING);
         botChannel = builder.comment("The channel ID where the bot will be working in").define("botChannel", "000000000");
-        botModifyDescription = builder.comment("Whether or not the Bot should modify the channel description").define("botModifyDescription", true);
-        allowLink = builder.comment("Should discord linking be enabled?", "If whitelist is on, this can not be disabled", "DOES NOT WORK IN OFFLINE MODE!").define("allow-linking", true);
+        botModifyDescription = builder.comment("Whether or not the Bot should modify the channel description", "Disabled by default becuase of discord limits").define("botModifyDescription", false);
         whitelist = builder.comment("Enable discord based whitelist?", "This will override the link config!", "To whitelist use !whitelist <uuid> in the bot DMs").define("whitelist", false);
         sendItemInfo = builder.comment("Show item information, which is visible on hover ingame, as embed in discord?").define("sendItemInfo", true);
         enableUpdateChecker = builder.comment("Enable checking for updates?", "Notification will be shown after every server start in log when update is available").define("enableUpdateChecker", true);
@@ -151,6 +171,13 @@ public class Configuration {
         enableWebhook = builder.comment("Whether or not the bot should use a webhook (it will create one)").define("enableWebhook", false);
         serverAvatar = builder.comment("The avatar to be used for server messages").define("serverAvatar", "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/master/images/srv.png");
         serverName = builder.comment("Whether or not the bot should use a webhook (it will create one)").define("serverName", "Server");
+        builder.pop();
+        //#########################
+        //#       LINKING         #
+        //#########################
+        builder.comment("Discord linking configuration").push("linking");
+        allowLink = builder.comment("Should discord linking be enabled?", "If whitelist is on, this can not be disabled", "DOES NOT WORK IN OFFLINE MODE!").define("allow-linking", true);
+        linkedRole = builder.comment("Role ID of an role an player should get when he links his discord account", "Leave as 0 to disable").define("linkedRole", "0");
         builder.pop();
         //#########################
         //#       MESSAGES        #
@@ -185,6 +212,20 @@ public class Configuration {
         uptimeFormat = builder.comment("The format of the uptime command and %uptime% placeholder", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html", "Note: The use of precise values like seconds might cause rate limits").define("uptimeFormat", "dd 'days' HH 'hours' mm 'minutes'");
         msgNotWhitelisted = builder.comment("Message shown to players who are not whitelisted using discord", "No effect if discord whitelist is off").define("msgWhitelist", TextFormatting.RED + "You are not whitelisted.\nJoin the discord server for more information\nhttps://discord.gg/someserver");
         sayCommandIgnoredPrefix = builder.comment("When an /say command's message starts with this prefix it will not be sent to discord").define("sayCommandIgnoredPrefix", TextFormatting.RED.toString() + TextFormatting.ITALIC.toString() + TextFormatting.BLUE.toString() + TextFormatting.OBFUSCATED.toString() + TextFormatting.RESET.toString());
+        linkSuccessfulMessage = builder.comment("Sent to the user when he linked his discord successfully", "PLACEHOLDERS:", "%player% - The player\u00B4s name").define("linkSuccessfulMessage", "Your account is now linked with %player%.\nUse /settings here to view and set some user-specific settings");
+        linkFailedMessage = builder.comment("Sent to the user when he linked his discord successfully", "PLACEHOLDERS:", "%player% - The player\u00B4s name").define("linkFailedMessage", "Your account is now linked with %player%.\nUse /settings here to view and set some user-specific settings");
+        alreadyLinkedMessage = builder.comment("Sent when an already linked user attempts to link an account", "PLACEHOLDERS:", "%player% - The player\u00B4s name").define("alreadyLinkedMessage", "Your account is already linked with %player%");
+        linkArgumentNotUUIDMessage = builder.comment("Sent when attempting to whitelist-link with an non uuid string", "PLACEHOLDERS:", "%arg% - The provided argument", "%prefix% - Command prefix").define("linkArgumentNotUUIDMessage", "Argument \"%arg%\" is not an valid UUID. Use `%prefix%whitelist <uuid>`");
+        invalidLinkNumberMessage = builder.comment("Sent when attempting to whitelist-link with an non uuid string").define("invalidLinkNumberMessage", "Invalid link number! Use `/discord link` ingame to get your link number");
+        NANLinkNumberMessage = builder.comment("Sent when attempting to whitelist-link with an non uuid string").define("NANLinkNumberMessage", "This is not a number. Use `/discord link` ingame to get your link number");
+        personalSettingsHeader = builder.comment("Header of the personal settings list").define("NANLinkNumberMessage", "Personal Settings list:");
+        invalidPSettingsKeyMsg = builder.comment("Error message when providing an invalid personal setting name").define("invalidPSettingsKeyMsg", "`%key%` is not an valid setting!");
+        pSettingsGetMessage = builder.comment("Error message when providing an invalid personal setting name").define("invalidPSettingsKeyMsg", "This settings value is `%bool%`");
+        settingUpdatedSuccessfullyMessage = builder.comment("Sent when user sucessfully updates an prersonal setting").define("settingUpdatedSuccessfullyMessage", "Successfully updated setting!");
+        settingUpdateFailedMessage = builder.comment("Sent when setting an personal setting fails").define("settingUpdateFailedMessage", "Failed to set value :/");
+        accountNotLinkedMessage = builder.comment("Sent when attempting to use personal commands while not linked", "PLACEHOLDERS:", "%method% - The currently enabled method for linking").define("accountNotLinkedMessage", "Your account is not linked! Link it first using %method%");
+        linkMethodWhitelist = builder.comment("Message of the link method in whitelist mode").define("linkMethodWhitelist", "`%prefix%whitelist <uuid>` here");
+        linkMethodIngame = builder.comment("Message of the link method in normal mode").define("linkMethodIngame", "`/discord link` ingame");
         builder.pop();
         //#########################
         //#       COMMANDS        #

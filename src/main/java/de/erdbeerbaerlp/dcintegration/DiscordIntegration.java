@@ -7,9 +7,10 @@ import com.google.gson.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.api.DiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.commands.*;
+import de.erdbeerbaerlp.dcintegration.integrations.EmojicordFormatter;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
+import de.erdbeerbaerlp.dcintegration.storage.PlayerLinkController;
+import net.dv8tion.jda.api.entities.*;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.ITextComponent;
@@ -31,14 +32,16 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
-import net.teamfruit.emojicord.emoji.EmojiText;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -50,7 +53,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.2.9";
+    public static final String VERSION = "1.3.0";
     /**
      * Modid
      */
@@ -157,6 +160,24 @@ public class DiscordIntegration {
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (discord_instance != null) {
             discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerJoin.get().replace("%player%", Utils.formatPlayerName(ev.getPlayer())));
+
+            // Fix link status (if user does not have role, give the role to the user, or vice versa)
+            final Thread fixLinkStatus = new Thread(() -> {
+                if (Configuration.INSTANCE.linkedRole.get().equals("0")) return;
+                final UUID uuid = ev.getPlayer().getUniqueID();
+                final Guild guild = discord_instance.getChannel().getGuild();
+                final Role linkedRole = guild.getRoleById(Configuration.INSTANCE.linkedRole.get());
+                final Member member = guild.getMember(discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(uuid)));
+                if (PlayerLinkController.isPlayerLinked(uuid)) {
+                    if (!member.getRoles().contains(linkedRole))
+                        guild.addRoleToMember(member, linkedRole).queue();
+                } else {
+                    if (member.getRoles().contains(linkedRole))
+                        guild.removeRoleFromMember(member, linkedRole).queue();
+                }
+            });
+            fixLinkStatus.setDaemon(true);
+            fixLinkStatus.start();
         }
     }
 
@@ -337,14 +358,7 @@ public class DiscordIntegration {
         }
         String text = Utils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
         if (ModList.get().isLoaded("emojicord")) {
-            final EmojiText emojiText = EmojiText.create(text, EnumSet.of(EmojiText.ParseFlag.PARSE));
-            for (EmojiText.EmojiTextElement emoji : emojiText.emojis) {
-                if (emoji.id == null)
-                    text = text.replace(emoji.raw, emoji.source);
-                else
-                    text = text.replace(emoji.raw, "<" + emoji.source
-                            + emoji.id.getId() + ">");
-            }
+            text = EmojicordFormatter.formatChatToDiscord(text);
         }
         final MessageEmbed embed = Utils.genItemStackEmbedIfAvailable(ev.getComponent());
         if (discord_instance != null) {

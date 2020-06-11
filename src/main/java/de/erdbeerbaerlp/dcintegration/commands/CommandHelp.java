@@ -27,12 +27,12 @@ public class CommandHelp extends DiscordCommand {
 
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
-        String out = Configuration.INSTANCE.helpHeader.get() + " \n```\n";
+        StringBuilder out = new StringBuilder(Configuration.INSTANCE.helpHeader.get() + " \n```\n");
         for (final DiscordCommand cmd : discord.getCommandList()) {
             if (cmd.canUserExecuteCommand(cmdMsg.getAuthor()) && cmd.includeInHelp() && cmd.worksInChannel(cmdMsg.getTextChannel()))
-                out = out + cmd.getCommandUsage() + " - " + cmd.getDescription() + "\n";
+                out.append(cmd.getCommandUsage()).append(" - ").append(cmd.getDescription()).append("\n");
             else
-                out = out + "[NO PERMS] " + cmd.getCommandUsage() + " - " + cmd.getDescription() + "\n";
+                out.append("[NO PERMS] ").append(cmd.getCommandUsage()).append(" - ").append(cmd.getDescription()).append("\n");
         }
         discord.sendMessage(out + "\n```", cmdMsg.getTextChannel());
 

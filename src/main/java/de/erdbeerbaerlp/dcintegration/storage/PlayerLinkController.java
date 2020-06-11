@@ -4,12 +4,17 @@ import com.google.gson.*;
 import com.mojang.authlib.GameProfile;
 import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
 import de.erdbeerbaerlp.dcintegration.api.DiscordEventHandler;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import javax.annotation.Nullable;
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.*;
 import java.util.UUID;
+
+import static de.erdbeerbaerlp.dcintegration.DiscordIntegration.discord_instance;
 
 public class PlayerLinkController {
     private static final File playerLinkedFile = new File("./linkedPlayers.json");
@@ -106,14 +111,19 @@ public class PlayerLinkController {
             final PlayerLink link = new PlayerLink();
             link.discordID = discordID;
             link.mcPlayerUUID = player.toString();
-            final boolean ignoringMessages = DiscordIntegration.discord_instance.ignoringPlayers.contains(player.toString());
+            final boolean ignoringMessages = discord_instance.ignoringPlayers.contains(player.toString());
             link.settings.ignoreDiscordChatIngame = ignoringMessages;
-            if (ignoringMessages) DiscordIntegration.discord_instance.ignoringPlayers.remove(player.toString());
+            if (ignoringMessages) discord_instance.ignoringPlayers.remove(player.toString());
             a.add(gson.toJsonTree(link));
             saveJSON(a);
             for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
                 o.onPlayerLink(player, discordID);
             }
+            final Guild guild = discord_instance.getChannel().getGuild();
+            final Role linkedRole = guild.getRoleById(Configuration.INSTANCE.linkedRole.get());
+            final Member member = guild.getMember(discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(UUID.fromString(link.mcPlayerUUID))));
+            if (!member.getRoles().contains(linkedRole))
+                guild.addRoleToMember(member, linkedRole).queue();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -131,8 +141,14 @@ public class PlayerLinkController {
             try {
                 final JsonArray a = getJson();
                 final PlayerLink link = getUser(discordID, player);
+                for (JsonElement e : a) {
+                    final PlayerLink l = gson.fromJson(e, PlayerLink.class);
+                    if (l.equals(link)) {
+                        a.remove(e);
+                        break;
+                    }
+                }
                 if (link == null) return false;
-                a.remove(gson.toJsonTree(link));
                 link.settings = s;
                 a.add(gson.toJsonTree(link));
                 saveJSON(a);
@@ -161,6 +177,11 @@ public class PlayerLinkController {
                     try (Writer writer = new FileWriter(playerLinkedFile)) {
                         gson.toJson(json, writer);
                     }
+                    final Guild guild = discord_instance.getChannel().getGuild();
+                    final Role linkedRole = guild.getRoleById(Configuration.INSTANCE.linkedRole.get());
+                    final Member member = guild.getMember(discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(UUID.fromString(o.mcPlayerUUID))));
+                    if (member.getRoles().contains(linkedRole))
+                        guild.removeRoleFromMember(member, linkedRole).queue();
                     return true;
                 }
             }
@@ -193,6 +214,20 @@ public class PlayerLinkController {
         final JsonArray a = parser.parse(is).getAsJsonArray();
         is.close();
         return a;
+    }
+
+    /**
+     * Unused for now, might be needed in the future
+     *
+     * @return A all Player links as array or an empty array if parsing the json fails
+     */
+    public static PlayerLink[] getAllLinks() {
+        try {
+            return gson.fromJson(getJson(), PlayerLink[].class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new PlayerLink[0];
     }
 
     @Nullable

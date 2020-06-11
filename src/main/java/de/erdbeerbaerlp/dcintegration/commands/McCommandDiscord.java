@@ -17,12 +17,14 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 public class McCommandDiscord {
     public McCommandDiscord(CommandDispatcher<CommandSource> dispatcher) {
-        final LiteralArgumentBuilder<CommandSource> l = Commands.literal("discord").executes((ctx) -> {
+        final LiteralArgumentBuilder<CommandSource> l = Commands.literal("discord");
+        if (Configuration.INSTANCE.dcCmdEnabled.get()) l.executes((ctx) -> {
             ctx.getSource().sendFeedback(new StringTextComponent(Configuration.INSTANCE.dcCmdMsg.get()).setStyle(
                     new Style().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.INSTANCE.dcCmdMsgHover.get())))
                             .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
             return 0;
-        }).then(Commands.literal("restart").requires((p) -> p.hasPermissionLevel(3)).executes((ctx) -> {
+        });
+        l.then(Commands.literal("restart").requires((p) -> p.hasPermissionLevel(3)).executes((ctx) -> {
             new Thread(() -> {
                 if (DiscordIntegration.discord_instance.restart()) {
                     ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.GREEN + "Discord bot restarted!"), true);

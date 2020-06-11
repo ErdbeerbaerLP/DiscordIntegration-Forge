@@ -39,6 +39,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -195,19 +196,24 @@ public class Utils {
             final String nick = (Configuration.FTB_UTILITIES.CHAT_FORMATTING && chatFormat) ? d.getNameForChat((EntityPlayerMP) p).getUnformattedText().replace("<", "").replace(">", "").trim() : d.getNickname().trim();
             if (!nick.isEmpty()) return nick;
         }*/
-        try {
-            if (Configuration.INSTANCE.allowLink.get() && PlayerLinkController.isPlayerLinked(p.getUniqueID())) {
-                final PlayerSettings settings = PlayerLinkController.getSettings(null, p.getUniqueID());
-                if (settings.useDiscordNameInChannel) {
-                    return DiscordIntegration.discord_instance.jda.getTextChannelById(Configuration.INSTANCE.botChannel.get()).getGuild().getMember(DiscordIntegration.discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(p.getUniqueID()))).getEffectiveName();
-                }
-            }
-        } catch (NullPointerException ignored) {
-        }
+        final String discordName = getDiscordName(p.getUniqueID());
+        if (discordName != null)
+            return discordName;
         if (p.getDisplayName().getFormattedText().isEmpty())
             return p.getName().getFormattedText();
         else
             return TextFormatting.getTextWithoutFormattingCodes(p.getDisplayName().getFormattedText());
+    }
+
+    public static String getDiscordName(final UUID p) {
+        if (DiscordIntegration.discord_instance == null) return null;
+        if (Configuration.INSTANCE.allowLink.get() && PlayerLinkController.isPlayerLinked(p)) {
+            final PlayerSettings settings = PlayerLinkController.getSettings(null, p);
+            if (settings != null && settings.useDiscordNameInChannel) {
+                return DiscordIntegration.discord_instance.getChannel().getGuild().getMember(DiscordIntegration.discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(p))).getEffectiveName();
+            }
+        }
+        return null;
     }
 
     public static String escapeMarkdown(String in) {
