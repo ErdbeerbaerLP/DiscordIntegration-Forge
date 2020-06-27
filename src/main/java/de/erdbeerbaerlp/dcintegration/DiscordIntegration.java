@@ -199,12 +199,12 @@ public class DiscordIntegration {
                             TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
                                     .getDisplay()
                                     .getTitle()
-                                    .getFormattedText()))
+                                    .getString()))
                     .replace("%desc%",
                             TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
                                     .getDisplay()
                                     .getDescription()
-                                    .getFormattedText()))
+                                    .getString()))
                     .replace("\\n", "\n"));
     }
 
@@ -218,7 +218,7 @@ public class DiscordIntegration {
             if (Configuration.INSTANCE.cmdUptimeEnabled.get()) discord_instance.registerCommand(new CommandUptime());
             registerConfigCommands();
             if (ModList.get().isLoaded("serverutilities")) {
-                final File pdata = new File("./" + ev.getServerSupplier().get().getFolderName() + "/playerdata/" + Configuration.INSTANCE.senderUUID.get() + ".pdat");
+                final File pdata = new File("./" + ev.getServerSupplier().get().func_230542_k__() + "/playerdata/" + Configuration.INSTANCE.senderUUID.get() + ".pdat");
                 if (pdata.exists()) pdata.delete();
                 else LOGGER.info("Generating playerdata file for comaptibility with ServerUtilities");
                 pdata.createNewFile();
@@ -372,7 +372,7 @@ public class DiscordIntegration {
             if (discord_instance != null) {
                 final ITextComponent deathMessage = ev.getSource().getDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = Utils.genItemStackEmbedIfAvailable(deathMessage);
-                discord_instance.sendMessage(new Discord.DCMessage(embed, Configuration.INSTANCE.msgPlayerDeath.get().replace("%player%", Utils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getFormattedText()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", ""))), Configuration.INSTANCE.deathChannelID.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.deathChannelID.get()));
+                discord_instance.sendMessage(new Discord.DCMessage(embed, Configuration.INSTANCE.msgPlayerDeath.get().replace("%player%", Utils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", ""))), Configuration.INSTANCE.deathChannelID.get().isEmpty() ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.INSTANCE.deathChannelID.get()));
             }
         }
     }

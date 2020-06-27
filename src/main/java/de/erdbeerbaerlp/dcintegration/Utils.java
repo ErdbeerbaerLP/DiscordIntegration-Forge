@@ -103,7 +103,7 @@ public class Utils {
                                                         level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
                                                     } else
                                                         level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
-                                                    tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(level).getFormattedText())).append("\n");
+                                                    tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(level).getString())).append("\n");
                                                 }
                                             });
                                         }/* Broken Code
@@ -199,10 +199,10 @@ public class Utils {
         final String discordName = getDiscordName(p.getUniqueID());
         if (discordName != null)
             return discordName;
-        if (p.getDisplayName().getFormattedText().isEmpty())
-            return p.getName().getFormattedText();
+        if (p.getDisplayName().getString().isEmpty())
+            return p.getName().getString();
         else
-            return TextFormatting.getTextWithoutFormattingCodes(p.getDisplayName().getFormattedText());
+            return TextFormatting.getTextWithoutFormattingCodes(p.getDisplayName().getString());
     }
 
     public static String getDiscordName(final UUID p) {

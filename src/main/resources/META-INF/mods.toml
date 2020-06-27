@@ -28,6 +28,6 @@ This mod links your server chat with a channel on your discord server.
 [[dependencies.dcintegration]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.15.1,1.15.2]"
+    versionRange="[1.16.1,1.16.10]" # Assuming Mojang does not spit out more updates
     ordering="NONE"
     side="SERVER"

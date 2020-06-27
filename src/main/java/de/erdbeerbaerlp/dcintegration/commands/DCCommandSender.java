@@ -7,9 +7,8 @@ import de.erdbeerbaerlp.dcintegration.DiscordIntegration;
 import de.erdbeerbaerlp.dcintegration.Utils;
 import de.erdbeerbaerlp.dcintegration.storage.Configuration;
 import net.dv8tion.jda.api.entities.User;
-import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
@@ -28,7 +27,7 @@ public class DCCommandSender extends FakePlayer {
     private String channelID;
 
     public DCCommandSender(User user, CommandFromCFG command, String channel) {
-        super(ServerLifecycleHooks.getCurrentServer().getWorld(DimensionType.OVERWORLD), new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
+        super(ServerLifecycleHooks.getCurrentServer().getWorld(World.field_234918_g_), new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
         this.command = command;
         this.channelID = channel;
     }
@@ -41,12 +40,12 @@ public class DCCommandSender extends FakePlayer {
 
     private static String textComponentToDiscordMessage(ITextComponent component) {
         if (component == null) return "";
-        return Utils.convertMCToMarkdown(component.getFormattedText());
+        return Utils.convertMCToMarkdown(component.getString());
     }
 
     @Override
-    public void sendMessage(ITextComponent textComponent, ChatType chatTypeIn) {
-        DiscordIntegration.discord_instance.sendMessage(textComponentToDiscordMessage(textComponent));
+    public void sendMessage(ITextComponent textComponent, UUID uuid) {
+        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(textComponent), channelID);
     }
 
     @Override
@@ -59,11 +58,6 @@ public class DCCommandSender extends FakePlayer {
         return true;
     }
 
-    @Override
-    public void sendMessage(ITextComponent component) {
-        Preconditions.checkNotNull(component);
-        DiscordIntegration.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component), channelID);
-    }
 
     @Override
     public void sendStatusMessage(ITextComponent component, boolean actionBar) {
