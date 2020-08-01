@@ -68,9 +68,6 @@ public class Configuration {
     public final ConfigValue<String> ingameDiscordMsg;
     public final ConfigValue<String> msgAdvancement;
     public final ConfigValue<String> msgChatMessage;
-    public final ConfigValue<String> description;
-    public final ConfigValue<String> descriptionOffline;
-    public final ConfigValue<String> descriptionStarting;
     public final ConfigValue<String> msgPlayerTimeout;
     public final ForgeConfigSpec.BooleanValue sayOutput;
     public final ForgeConfigSpec.BooleanValue meOutput;
@@ -199,10 +196,6 @@ public class Configuration {
         msgAdvancement = builder.comment("Supports MulitLined messages using \\n", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%name% - The advancement name", "%desc% - The advancement description").define("msgAdvancement",
                 "%player% just gained the advancement **%name%**\\n_%desc%_");
         msgChatMessage = builder.comment("Chat message", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%msg% - The chat message").define("msgChatMessage", "%player%: %msg%");
-        description = builder.comment("Channel description while the server is online", "New discord limitation: Description will only be updated every 10 minutes!", "PLACEHOLDERS:", "%online% - Online player amount", "%max% - Maximum player count", "%tps% - Server TPS",
-                "%motd% - The server MOTD (from server.properties!)", "%uptime% - The uptime of the server").define("description", "%motd% (%online%/%max%) | %tps% TPS | Uptime: %uptime%");
-        descriptionOffline = builder.comment("Channel description while the server is offline").define("descriptionOffline", "Server is Offline!");
-        descriptionStarting = builder.comment("Channel description while the server is starting").define("descriptionStarting", "Starting...");
         msgPlayerTimeout = builder.comment("PLACEHOLDERS:", "%player% - The player\u00B4s name", "NOTE: This is currently not implemented because mixins are not working in 1.15!").define("msgPlayerTimeout", "%player% timed out!");
         sayOutput = builder.comment("Should /say output be sent to discord?").define("enableSayOutput", true);
         meOutput = builder.comment("Should /me output be sent to discord?").define("enableMeOutput", true);

@@ -21,7 +21,6 @@ import net.dv8tion.jda.internal.managers.ChannelManagerImpl;
 import net.dv8tion.jda.internal.utils.PermissionUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.HoverEvent;
@@ -40,10 +39,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
-import java.util.stream.LongStream;
 
 import static de.erdbeerbaerlp.dcintegration.storage.Configuration.INSTANCE;
 
@@ -52,49 +49,6 @@ public class Discord implements EventListener {
     private static final File IGNORED_PLAYERS = new File("./players_ignoring_discord");
     public final ArrayList<String> ignoringPlayers = new ArrayList<>();
     public final JDA jda;
-    /**
-     * This thread is used to update the channel description
-     */
-    final Thread updateChannelDesc = new Thread() {
-        private String cachedDescription = "";
-
-        {
-            this.setName("[DC INTEGRATION] Channel Description Updater");
-            this.setDaemon(true);
-            this.setPriority(MAX_PRIORITY);
-        }
-
-        private double getAverageTickCount() {
-            final MinecraftServer minecraftServer = ServerLifecycleHooks.getCurrentServer();
-            //noinspection IntegerDivisionInFloatingPointContext
-            return LongStream.of(minecraftServer.tickTimeArray).sum() / minecraftServer.tickTimeArray.length * 1.0E-6D;
-        }
-
-        private double getAverageTPS() {
-            return Math.min(1000.0 / getAverageTickCount(), 20);
-        }
-
-        public void run() {
-            try {
-                while (true) {
-                    final String newDesc = Configuration.INSTANCE.description.get().replace("%tps%", "" + Math.round(getAverageTPS())).replace("%online%", "" + ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length)
-                            .replace("%max%", "" + ServerLifecycleHooks.getCurrentServer().getMaxPlayers()).replace("%motd%", ServerLifecycleHooks.getCurrentServer().getMOTD())
-                            .replace("%uptime%", Utils.getFullUptime())
-                            .replace("%seconds%", Utils.getUptimeSeconds() + "")
-                            .replace("%minutes%", Utils.getUptimeMinutes() + "")
-                            .replace("%hours%", Utils.getUptimeHours() + "")
-                            .replace("%days%", Utils.getUptimeDays() + "");
-                    if (!newDesc.equals(cachedDescription)) {
-                        (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? getChannelManager() : getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(newDesc).complete();
-                        cachedDescription = newDesc;
-                    }
-                    sleep(TimeUnit.MINUTES.toMillis(10)); // Only do it about once per 10 minutes! New discord limitation
-                }
-            } catch (InterruptedException | RuntimeException ignored) {
-
-            }
-        }
-    };
     private final HashMap<Integer, KeyValue<Instant, UUID>> pendingLinks = new HashMap<>();
     final Thread updatePresence = new Thread() {
         {
@@ -846,7 +800,6 @@ public class Discord implements EventListener {
      * Starts all threads
      */
     public void startThreads() {
-        if (Configuration.INSTANCE.botModifyDescription.get()) updateChannelDesc.start();
         if (!messageSender.isAlive()) messageSender.start();
         if (!updatePresence.isAlive()) updatePresence.start();
         /*if (Loader.isModLoaded("ftbutilities")) {
@@ -861,7 +814,6 @@ public class Discord implements EventListener {
      */
     void stopThreads() {
 //		if(ftbUtilitiesAFKDetectThread.isAlive()) ftbUtilitiesAFKDetectThread.interrupt();
-        if (updateChannelDesc.isAlive()) updateChannelDesc.interrupt();
 //		if(ftbUtilitiesShutdownDetectThread.isAlive()) ftbUtilitiesShutdownDetectThread.interrupt();
         if (messageSender.isAlive()) messageSender.interrupt();
         if (updatePresence.isAlive()) updatePresence.interrupt();

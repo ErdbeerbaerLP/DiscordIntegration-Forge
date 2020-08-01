@@ -239,9 +239,7 @@ public class DiscordIntegration {
         if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get())
             if (!Configuration.INSTANCE.msgServerStarting.get().isEmpty())
                 this.startingMsg = discord_instance.sendMessageReturns(Configuration.INSTANCE.msgServerStarting.get());
-        if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get())
-            (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
-    }
+        }
 
     @SubscribeEvent
     public void serverAboutToStart(final FMLServerStartedEvent ev) {
@@ -318,8 +316,6 @@ public class DiscordIntegration {
                 cli.close();
             } else if (!Configuration.INSTANCE.msgServerStopped.get().isEmpty())
                 discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
-            if (Configuration.INSTANCE.botModifyDescription.get())
-                (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
         }
         stopped = true;
     }
