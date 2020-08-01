@@ -56,7 +56,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.3.2";
+    public static final String VERSION = "1.3.3";
     /**
      * Modid
      */
@@ -170,16 +170,13 @@ public class DiscordIntegration {
             final Thread fixLinkStatus = new Thread(() -> {
                 if (Configuration.INSTANCE.linkedRole.get().equals("0")) return;
                 final UUID uuid = ev.getPlayer().getUniqueID();
+                if (!PlayerLinkController.isPlayerLinked(uuid)) return;
                 final Guild guild = discord_instance.getChannel().getGuild();
                 final Role linkedRole = guild.getRoleById(Configuration.INSTANCE.linkedRole.get());
                 final Member member = guild.getMember(discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(uuid)));
-                if (PlayerLinkController.isPlayerLinked(uuid)) {
-                    if (!member.getRoles().contains(linkedRole))
-                        guild.addRoleToMember(member, linkedRole).queue();
-                } else {
-                    if (member.getRoles().contains(linkedRole))
-                        guild.removeRoleFromMember(member, linkedRole).queue();
-                }
+                if (!member.getRoles().contains(linkedRole))
+                    guild.addRoleToMember(member, linkedRole).queue();
+
             });
             fixLinkStatus.setDaemon(true);
             fixLinkStatus.start();
@@ -238,8 +235,6 @@ public class DiscordIntegration {
         if (discord_instance != null && !Configuration.INSTANCE.enableWebhook.get())
             if (!Configuration.INSTANCE.msgServerStarting.get().isEmpty())
                 this.startingMsg = discord_instance.sendMessageReturns(Configuration.INSTANCE.msgServerStarting.get());
-        if (discord_instance != null && Configuration.INSTANCE.botModifyDescription.get())
-            (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionStarting.get()).complete();
     }
 
     @SubscribeEvent
@@ -318,8 +313,6 @@ public class DiscordIntegration {
                 cli.close();
             } else if (!Configuration.INSTANCE.msgServerStopped.get().isEmpty())
                 discord_instance.getChannel().sendMessage(Configuration.INSTANCE.msgServerStopped.get()).queue();
-            if (Configuration.INSTANCE.botModifyDescription.get())
-                (Configuration.INSTANCE.channelDescriptionID.get().isEmpty() ? discord_instance.getChannelManager() : discord_instance.getChannelManager(Configuration.INSTANCE.channelDescriptionID.get())).setTopic(Configuration.INSTANCE.descriptionOffline.get()).complete();
         }
         stopped = true;
     }
