@@ -494,7 +494,7 @@ public class Discord implements EventListener {
                     for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
                         if (o.onDiscordMessagePre(ev)) return;
                     }
-                    if (ev.getMessage().getContentRaw().startsWith(Configuration.INSTANCE.prefix.get())) {
+                    if (ev.getMessage().getContentRaw().startsWith(Configuration.INSTANCE.prefix.get() + (INSTANCE.prefixSpace.get() ? " " : ""))) {
                         final String[] command = ev.getMessage().getContentRaw().replaceFirst(Configuration.INSTANCE.prefix.get(), "").split(" ");
                         String argumentsRaw = "";
                         for (int i = 1; i < command.length; i++) {
@@ -589,7 +589,7 @@ public class Discord implements EventListener {
                         sendMcMsg(TextComponentUtils.func_240648_a_((IFormattableTextComponent) ForgeHooks.newChatWithLinks(Configuration.INSTANCE.ingameDiscordMsg.get().replace("%user%", (ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
                                         .replace("%id%", ev.getAuthor().getId())
                                         .replace("%msg%", (Configuration.INSTANCE.preventDiscordFormattingCodesToMC.get() ? TextFormatting.getTextWithoutFormattingCodes(outMsg) : outMsg))),
-                                Style.field_240709_b_.func_240716_a_(new HoverEvent(Action.field_230550_a_, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
+                                Style.EMPTY.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new StringTextComponent("Sent by discord user \"" + ev.getAuthor().getAsTag() + "\"")))));
                     }
                 }
                 for (DiscordEventHandler o : DiscordIntegration.eventHandlers) {
@@ -646,7 +646,7 @@ public class Discord implements EventListener {
                                     final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), pendingLinks.get(num).getValue());
                                     if (linked) {
                                         ev.getChannel().sendMessage(INSTANCE.linkSuccessfulMessage.get().replace("%name%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
-                                        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(pendingLinks.get(num).getValue()).sendMessage(new StringTextComponent("Your account is now linked with " + ev.getAuthor().getAsTag()), Util.field_240973_b_);
+                                        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(pendingLinks.get(num).getValue()).sendMessage(new StringTextComponent("Your account is now linked with " + ev.getAuthor().getAsTag()), Util.DUMMY_UUID);
                                     } else
                                         ev.getChannel().sendMessage(INSTANCE.linkFailedMessage.get()).queue();
                                 } else {
@@ -789,7 +789,7 @@ public class Discord implements EventListener {
         final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         for (final ServerPlayerEntity p : l) {
             if (!ignoringPlayers.contains(p.getName().getUnformattedComponentText()) && !(PlayerLinkController.isPlayerLinked(p.getUniqueID()) && PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame))
-                p.sendMessage(msg, Util.field_240973_b_);
+                p.sendMessage(msg, Util.DUMMY_UUID);
         }
     }
 

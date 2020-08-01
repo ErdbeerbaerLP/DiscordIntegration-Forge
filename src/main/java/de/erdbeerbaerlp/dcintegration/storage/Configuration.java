@@ -102,6 +102,7 @@ public class Configuration {
     //#########################
     public final ConfigValue<String> adminRoleId;
     public final ConfigValue<String> prefix;
+    public final ForgeConfigSpec.BooleanValue prefixSpace;
     public final ConfigValue<String> msgListEmpty;
     public final ConfigValue<String> msgListOne;
     public final ConfigValue<String> msgListHeader;
@@ -269,6 +270,7 @@ public class Configuration {
         }
         adminRoleId = builder.comment("The Role ID of your Admin Role").define("adminRoleId", "0");
         prefix = builder.comment("The prefix of the commands like list").define("prefix", "/");
+        prefixSpace = builder.comment("Set to true to require an space after the prefix").define("prefixSpace", false);
         msgListEmpty = builder.comment("The message for 'list' when no player is online").define("msgListEmpty", "There is no player online...");
         msgListOne = builder.comment("The header for 'list' when one player is online").define("msgListOne", "There is 1 player online:");
         msgListHeader = builder.comment("The header for 'list'", "PLACEHOLDERS:", "%amount% - The amount of players online").define("msgListHeader", "There are %amount% players online:");

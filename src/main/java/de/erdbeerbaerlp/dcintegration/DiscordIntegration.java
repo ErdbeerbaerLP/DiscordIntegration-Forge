@@ -17,6 +17,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
@@ -30,7 +31,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
-import net.minecraftforge.fml.event.server.*;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
@@ -39,8 +42,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class DiscordIntegration {
     /**
      * Mod version
      */
-    public static final String VERSION = "1.3.2";
+    public static final String VERSION = "1.3.3";
     /**
      * Modid
      */
@@ -170,15 +171,13 @@ public class DiscordIntegration {
             final Thread fixLinkStatus = new Thread(() -> {
                 if (Configuration.INSTANCE.linkedRole.get().equals("0")) return;
                 final UUID uuid = ev.getPlayer().getUniqueID();
+                if (!PlayerLinkController.isPlayerLinked(uuid)) return;
                 final Guild guild = discord_instance.getChannel().getGuild();
                 final Role linkedRole = guild.getRoleById(Configuration.INSTANCE.linkedRole.get());
                 final Member member = guild.getMember(discord_instance.jda.getUserById(PlayerLinkController.getDiscordFromPlayer(uuid)));
                 if (PlayerLinkController.isPlayerLinked(uuid)) {
                     if (!member.getRoles().contains(linkedRole))
                         guild.addRoleToMember(member, linkedRole).queue();
-                } else {
-                    if (member.getRoles().contains(linkedRole))
-                        guild.removeRoleFromMember(member, linkedRole).queue();
                 }
             });
             fixLinkStatus.setDaemon(true);
@@ -213,7 +212,6 @@ public class DiscordIntegration {
                     .replace("\\n", "\n"));
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void preInit(final FMLDedicatedServerSetupEvent ev) {
         LOGGER.info("Loading mod");
         try {
@@ -222,15 +220,18 @@ public class DiscordIntegration {
             if (Configuration.INSTANCE.cmdListEnabled.get()) discord_instance.registerCommand(new CommandList());
             if (Configuration.INSTANCE.cmdUptimeEnabled.get()) discord_instance.registerCommand(new CommandUptime());
             registerConfigCommands();
+            /*
+            Temporarily patching it out
             if (ModList.get().isLoaded("serverutilities")) {
-                final File pdata = new File("./" + ev.getServerSupplier().get().func_230542_k__() + "/playerdata/" + Configuration.INSTANCE.senderUUID.get() + ".pdat");
+
+                final File pdata = new File("./" + .getServerSupplier().get().func_230542_k__() + "/playerdata/" + Configuration.INSTANCE.senderUUID.get() + ".pdat");
                 if (pdata.exists()) pdata.delete();
                 else LOGGER.info("Generating playerdata file for comaptibility with ServerUtilities");
                 pdata.createNewFile();
                 final FileWriter w = new FileWriter(pdata);
                 w.write("{\"uuid\":\"" + Configuration.INSTANCE.senderUUID.get() + "\",\"username\":\"DiscordFakeUser\",\"nickname\":\"Discord\",\"homes\":{},\"kitCooldowns\":{},\"perms\":[\"*\"],\"ranks\":[],\"maxHomes\":1,\"hasBeenRtpWarned\":false,\"enableFly\":false,\"isFlying\":false,\"godmode\":false,\"disableMsg\":false,\"firstKit\":false}");
                 w.close();
-            }
+            }*/
         } catch (Exception e) {
             LOGGER.fatal("Failed to login: " + e.getMessage());
             discord_instance = null;
@@ -243,13 +244,12 @@ public class DiscordIntegration {
     }
 
     @SubscribeEvent
-    public void serverAboutToStart(final FMLServerAboutToStartEvent ev) {
-
+    public void serverAboutToStart(final FMLServerStartedEvent ev) {
     }
 
     @SubscribeEvent
-    public void serverStarting(final FMLServerStartingEvent ev) {
-        new McCommandDiscord(ev.getCommandDispatcher());
+    public void registerCommands(final RegisterCommandsEvent ev) {
+        new McCommandDiscord(ev.getDispatcher());
     }
 
     @SubscribeEvent
@@ -384,6 +384,7 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
+        if (stopped) return; //Try to fix player leave messages after stop!
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueID()))
             discord_instance.sendMessage(Configuration.INSTANCE.msgPlayerLeave.get().replace("%player%", Utils.formatPlayerName(ev.getPlayer())));
         else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueID())) {

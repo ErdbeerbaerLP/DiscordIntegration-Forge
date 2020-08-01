@@ -21,8 +21,8 @@ public class McCommandDiscord {
         final LiteralArgumentBuilder<CommandSource> l = Commands.literal("discord");
         if (Configuration.INSTANCE.dcCmdEnabled.get()) l.executes((ctx) -> {
             ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent(Configuration.INSTANCE.dcCmdMsg.get()),
-                    Style.field_240709_b_.func_240716_a_(new HoverEvent(HoverEvent.Action.field_230550_a_, new StringTextComponent(Configuration.INSTANCE.dcCmdMsgHover.get())))
-                            .func_240715_a_(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
+                    Style.EMPTY.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.INSTANCE.dcCmdMsgHover.get())))
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.INSTANCE.dcCmdURL.get()))), false);
             return 0;
         });
         l.then(Commands.literal("restart").requires((p) -> p.hasPermissionLevel(3)).executes((ctx) -> {
@@ -44,7 +44,7 @@ public class McCommandDiscord {
                     return 0;
                 }
                 final int r = DiscordIntegration.discord_instance.genLinkNumber(ctx.getSource().asPlayer().getUniqueID());
-                ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent("Send this number as an direct message to the bot to link your account: " + r + "\nThis number will expire after 10 minutes"), Style.field_240709_b_.func_240721_b_(TextFormatting.AQUA).func_240715_a_(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r + "")).func_240716_a_(new HoverEvent(HoverEvent.Action.field_230550_a_, new StringTextComponent("Click to copy number to clipboard")))), false);
+                ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent("Send this number as an direct message to the bot to link your account: " + r + "\nThis number will expire after 10 minutes"), Style.EMPTY.setFormatting(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r + "")).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Click to copy number to clipboard")))), false);
             } else {
                 ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + "This subcommand is disabled!"), false);
             }
