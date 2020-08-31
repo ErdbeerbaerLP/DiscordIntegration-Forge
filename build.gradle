@@ -106,7 +106,7 @@ dependencies {
 
     //Discord libraries
     embed("net.dv8tion:JDA:4.2.0_192")
-    embed 'club.minnced:discord-webhooks:0.3.2'
+    embed 'club.minnced:discord-webhooks:0.4.0'
 
     // Emojicord
     compile('curse.maven:emojicord:2972949')
