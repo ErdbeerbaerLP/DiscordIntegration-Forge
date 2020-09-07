@@ -105,7 +105,7 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.16.1-32.0.98'
 
     //Discord libraries
-    embed("net.dv8tion:JDA:4.2.0_192")
+    embed("net.dv8tion:JDA:4.2.0_204")
     embed 'club.minnced:discord-webhooks:0.3.2'
 
     // Emojicord
