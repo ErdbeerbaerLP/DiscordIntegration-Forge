@@ -50,6 +50,7 @@ public class Discord implements EventListener {
     public final ArrayList<String> ignoringPlayers = new ArrayList<>();
     public final JDA jda;
     private final HashMap<Integer, KeyValue<Instant, UUID>> pendingLinks = new HashMap<>();
+    private final HashMap<String, Webhook> webhookHashMap = new HashMap<>();
     final Thread updatePresence = new Thread() {
         {
             setName("[DC INTEGRATION] Discord Presence Updater and link cleanup");
@@ -243,17 +244,19 @@ public class Discord implements EventListener {
     @Nullable
     public Webhook getWebhook(TextChannel c) {
         if (!Configuration.INSTANCE.enableWebhook.get()) return null;
-        if (!PermissionUtil.checkPermission(c, c.getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
-            Configuration.setValueAndSave(DiscordIntegration.cfg, Configuration.INSTANCE.enableWebhook.getPath(), false);
-            System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
-            return null;
-        }
-        for (Webhook web : c.retrieveWebhooks().complete()) {
-            if (web.getName().equals("MC_DISCORD_INTEGRATION")) {
-                return web;
+        return webhookHashMap.computeIfAbsent(c.getId(), cid-> {
+            if (!PermissionUtil.checkPermission(c, c.getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
+                Configuration.setValueAndSave(DiscordIntegration.cfg, Configuration.INSTANCE.enableWebhook.getPath(), false);
+                System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
+                return null;
             }
-        }
-        return c.createWebhook("MC_DISCORD_INTEGRATION").complete();
+            for (Webhook web : c.retrieveWebhooks().complete()) {
+                if (web.getName().equals("MC_DISCORD_INTEGRATION")) {
+                    return web;
+                }
+            }
+            return c.createWebhook("MC_DISCORD_INTEGRATION").complete();
+        });
     }
 
     /**
