@@ -8,16 +8,16 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:3.+'
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
         classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
     }
 }
 plugins {
-    id "com.matthewprenger.cursegradle" version "1.1.0"
+    id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 repositories {
@@ -33,7 +33,7 @@ repositories {
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
 }
-version = "1.1.18"
+version = "1.1.19"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -43,17 +43,28 @@ compileJava {
 }
  
 minecraft {
-    version = "1.12.2-14.23.5.2768"
-    runDir = "run"
-	makeObfSourceJar = false
-    mappings = "snapshot_20171003"
+
+    mappings channel: 'snapshot', version: '20171003-1.12'
+    runs {
+        server {
+
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'debug'
+        }
+    }
 }
 configurations {
     embed
     compile.extendsFrom(embed)
 }
 reobf {
-    shadowJar { mappingType = 'SEARGE' }
+    shadowJar {
+        dependsOn tasks.createMcpToSrg
+        mappings = tasks.createMcpToSrg.outputs.files.singleFile
+    }
 }
 shadowJar {
     classifier = '1.12'
@@ -74,37 +85,23 @@ shadowJar {
     relocate 'com.fasterxml', 'dcshadow.fasterxml'
 }
 dependencies {
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2854'
 	embed("org.spongepowered:mixin:0.8-SNAPSHOT") {
         transitive = false
     }
-    embed("net.dv8tion:JDA:4.0.0_39")
+    embed("net.dv8tion:JDA:4.2.0_211")
     embed 'club.minnced:discord-webhooks:0.1.8'
-    deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
-    deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
-    deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'
+    compile "com.feed_the_beast.mods:FTBUtilities:5.+"
+    compile "com.feed_the_beast.mods:FTBLib:5.+"
+    compile 'com.github.upcraftlp:votifier:master-SNAPSHOT'
 }
-tasks.build.dependsOn reobfShadowJar
+artifacts {
+    archives tasks.shadowJar
+}
 mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
 }
-processResources {
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
 
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-                
-        // replace version and mcversion
-        expand 'version':project.version, 'mcversion':project.minecraft.version
-    }
-        
-    // copy everything else except the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
-}
 jar {
     classifier = "1.12"
     manifest {
@@ -127,8 +124,6 @@ curseforge {
             changelog = project.changelog
             releaseType = 'release'
             addGameVersion '1.12.2'
-            addGameVersion '1.12.1'
-            addGameVersion '1.12'
             mainArtifact(jar) {
                 displayName = "DiscordIntegration-$version (MC 1.12)"
             }

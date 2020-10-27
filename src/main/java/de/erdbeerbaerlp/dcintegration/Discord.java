@@ -52,6 +52,9 @@ public class Discord implements EventListener {
     private final JDA jda;
     public boolean isKilled = false;
     final ArrayList<String> ignoringPlayers = new ArrayList<>();
+
+    private final HashMap<String, Webhook> webhookHashMap = new HashMap<>();
+
     /**
      * This thread is used to update the channel description
      */
@@ -213,7 +216,7 @@ public class Discord implements EventListener {
     };
 
 
-    private HashMap<String, ArrayList<String>> messages = new HashMap<>();
+    private final HashMap<String, ArrayList<String>> messages = new HashMap<>();
     /**
      * Thread to send messages from vanilla commands
      */
@@ -238,23 +241,26 @@ public class Discord implements EventListener {
 
     private static final File IGNORED_PLAYERS = new File("./players_ignoring_discord");
 
+
     /**
      * @return an instance of the webhook or null
      */
     @Nullable
     public Webhook getWebhook(TextChannel c) {
         if (!Configuration.WEBHOOK.BOT_WEBHOOK) return null;
-        if (!PermissionUtil.checkPermission(c, c.getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
-            Configuration.WEBHOOK.BOT_WEBHOOK = false;
-            System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
-            return null;
-        }
-        for (Webhook web : c.retrieveWebhooks().complete()) {
-            if (web.getName().equals("MC_DISCORD_INTEGRATION")) {
-                return web;
+        return webhookHashMap.computeIfAbsent(c.getId(), cid -> {
+            if (!PermissionUtil.checkPermission(c, c.getGuild().getMember(jda.getSelfUser()), Permission.MANAGE_WEBHOOKS)) {
+                Configuration.WEBHOOK.BOT_WEBHOOK = false;
+                System.out.println("ERROR! Bot does not have permission to manage webhooks, disabling webhook");
+                return null;
             }
-        }
-        return c.createWebhook("MC_DISCORD_INTEGRATION").complete();
+            for (Webhook web : c.retrieveWebhooks().complete()) {
+                if (web.getName().equals("MC_DISCORD_INTEGRATION")) {
+                    return web;
+                }
+            }
+            return c.createWebhook("MC_DISCORD_INTEGRATION").complete();
+        });
     }
 
     /**
