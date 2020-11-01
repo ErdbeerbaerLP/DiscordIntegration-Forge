@@ -1,8 +1,13 @@
 [
   {
+    "version": "2.0.0",
+    "changelog": "FINALLY fixed mod shutdown delay\nFixed mod not loading in newer forge versions\nUpdated dependencies\nDone some code cleanup and rewriting\nAdded webhook caching\n\nNOTE: Update will use new config file!\nTo migrate, you can use this default configuration file: https://gist.githubusercontent.com/ErdbeerbaerLP/2b8e4ad30c14bc2941e0f7de63bcaf62/raw/Discord-Integration.toml (save it as Discord-Integration.toml)",
+    "type": "beta"
+  },
+  {
     "version": "1.3.4",
     "changelog": "Fixed mod not loading in newer forge versions\nUpdated dependencies",
-    "type": "beta"
+    "type": "6"
   },
   {
     "version": "1.3.3",

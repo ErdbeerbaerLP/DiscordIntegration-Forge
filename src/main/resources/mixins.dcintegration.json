@@ -1,11 +1,10 @@
 {
-  "package": "de.erdbeerbaerlp.dcintegration.mixin",
+  "package": "de.erdbeerbaerlp.dcintegration.forge.mixin",
   "refmap": "mixins.dcintegration.refmap.json",
   "minVersion": "0.8",
   "compatibilityLevel": "JAVA_8",
   "server": [
     "MixinNetHandlerPlayServer",
-    "MixinNoIdleTimeout",
     "MixinWhitelist"
   ]
 }

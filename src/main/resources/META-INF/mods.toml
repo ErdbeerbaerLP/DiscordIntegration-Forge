@@ -1,40 +1,34 @@
-# This is an example mods.toml file. It contains the data relating to the loading mods.
-# There are several mandatory fields (#mandatory), and many more that are optional (#optional).
-# The overall format is standard TOML format, v0.5.0.
-# Note that there are a couple of TOML lists in this file.
-# Find more information on toml format here:  https://github.com/toml-lang/toml
-# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
-modLoader="javafml" #mandatory
+modLoader = "javafml" #mandatory
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
-loaderVersion="[31,)" #mandatory (26 is current forge version)
-license="MIT License"
+loaderVersion = "[32,)" #mandatory
+license = "MIT License"
 # A URL to refer people to when problems occur with this mod
-issueTrackerURL="https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/issues" #optional
+issueTrackerURL = "https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/issues" #optional
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
 # The modid of the mod
-modId="dcintegration" #mandatory
+modId = "dcintegration" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
-version="${file.jarVersion}" #mandatory
- # A display name for the mod
-displayName="Discord Integration" #mandatory
+version = "${file.jarVersion}" #mandatory
+# A display name for the mod
+displayName = "Discord Integration" #mandatory
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL="https://minecraft.curseforge.com/projects/dcintegration" #optional
+displayURL = "https://minecraft.curseforge.com/projects/dcintegration" #optional
 # A text field displayed in the mod UI
-authors="ErdbeerbaerLP" #optional
+authors = "ErdbeerbaerLP" #optional
 # The description text for the mod (multi line!) (#mandatory)
-description='''
+description = '''
 This mod links your server chat with a channel on your discord server.
 '''
 [[dependencies.dcintegration]]
-    modId="minecraft"
-    mandatory=true
-    versionRange="[1.16.1,1.16.3]" # Assuming Mojang does not spit out more updates
-    ordering="NONE"
-    side="SERVER"
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.16.3,1.16.4]" # Assuming Mojang does not spit out more updates
+ordering = "NONE"
+side = "SERVER"
 [[dependencies.dcintegration]]
-    modId = "forge"
-    mandatory = true
-    versionRange = "[32.0.98,)"
-    ordering = "NONE"
-    side = "BOTH"
+modId = "forge"
+mandatory = true
+versionRange = "[32.0.98,)"
+ordering = "NONE"
+side = "BOTH"

@@ -42,10 +42,15 @@ repositories {
     }// Maybe needed for other mods in the future
     maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
-    maven { url "https://nexus.scarsz.me/content/groups/public/"}
+    maven { url "https://nexus.vankka.dev/repository/maven-public/"}
+    maven { url "https://repository.dev.gotan.io/repository/gotan.os/"}
+    maven {
+        name = 'sonatype-oss'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
 
 }
-version = "1.3.4"
+version = "2.0.0"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -55,7 +60,7 @@ compileJava {
 }
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200723-1.16.1'
+    mappings channel: 'snapshot', version: '20200916-1.16.2'
     // accessTransformer = file('build/resources/main/META-INF/accesstransformer.cfg')
     runs {
         server {
@@ -96,33 +101,39 @@ shadowJar {
     relocate 'org.jetbrains', 'dcshadow.org.jetbrains'
     relocate 'tomp2p', 'dcshadow.tomp2p'
     relocate 'com.fasterxml', 'dcshadow.com.fasterxml'
-    relocate 'me.vankka', 'dcshadow.me.vankka'
+    relocate 'dev.vankka', 'dcshadow.me.vankka'
     relocate 'net.kyori', 'dcshadow.net.kyori'
     relocate 'org.checkerframework', 'dcshadow.org.checkerframework'
+    relocate "com.moandjiezana", "dcshadow.com.moandjiezana"
+    relocate "ch.lambdaj", "dcshadow.ch.lambdaj"
+    relocate "emoji4j", "dcshadow.emoji4j"
+    relocate "javax.annotation", "dcshadow.javax.annotation"
+    relocate "net.sf", "dcshadow.net.sf"
+    relocate "org.hamcrest", "dcshadow.org.hamcrest"
+    relocate "org.objenesis", "dcshadow.org.objenesis"
 }
 dependencies {
     //Minecraft Forge
-    minecraft 'net.minecraftforge:forge:1.16.1-32.0.98'
+    minecraft 'net.minecraftforge:forge:1.16.3-34.1.11'
 
     //Discord libraries
-    embed("net.dv8tion:JDA:4.2.0_211")
+    embed("net.dv8tion:JDA:4.2.0_211"){
+        exclude group: 'okhttp3', module: "okhttp"
+    }
+    embed "com.squareup.okhttp3:okhttp:4.9.0"
     embed 'club.minnced:discord-webhooks:0.5.0'
 
-    // Emojicord
-    compile('curse.maven:emojicord:2972949')
+    //Emoji-Java
+    embed('com.vdurmont:emoji-java:5.1.1')
 
-    //Markdown <==> Discord conversion
-    embed "me.vankka:MCDiscordReserializer:2.1.0"
-    embed "me.vankka:SimpleAST:2.0.3"
-    embed "net.kyori:text-api:3.0.4"
-    embed "net.kyori:text-serializer-legacy:3.0.4"
+    //Minecraft <==> Discord conversion
+    embed 'net.kyori:adventure-text-serializer-gson:4.0.0'
+    embed "dev.vankka:MCDiscordReserializer:4.0.0"
+    embed "dev.vankka:SimpleAST:2.2.2-SNAPSHOT"
+    embed "net.kyori:adventure-text-serializer-legacy:4.0.0"
 
-    ////FTB Utilities
-    //deobfCompile "com.feed_the_beast.mods:FTBUtilities:5.+"
-    //deobfCompile "com.feed_the_beast.mods:FTBLib:5.+"
-
-    ////Votifier
-    //deobfCompile 'com.github.upcraftlp:votifier:master-SNAPSHOT'
+    //Toml4j
+    embed "com.github.ErdbeerbaerLP:toml4j:wip-SNAPSHOT"
 }
 mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
@@ -150,7 +161,7 @@ jar {
                 "Implementation-Version"  : "${version}",
                 "Implementation-Vendor"   : "dcintegration",
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                'MixinConnector': 'de.erdbeerbaerlp.dcintegration.DCMixinConnector'
+                'MixinConnector': 'de.erdbeerbaerlp.dcintegration.forge.DCMixinConnector'
         ])
     }
 }
@@ -162,16 +173,15 @@ curseforge {
             id = '324952'
             changelog = project.changelog
             releaseType = 'beta'
-            addGameVersion '1.16.1'
-            addGameVersion '1.16.2'
+            addGameVersion '1.16.3'
                 mainArtifact(jar) {
-                displayName = "DiscordIntegration-$version (MC 1.16)"
+                displayName = "DiscordIntegration-$version (MC 1.16.3)"
             }
-            relations {
-                optionalDependency 'ftb-utilities'
-                optionalDependency 'emojicord'
-                optionalDependency 'voting'
-            }
+            //relations {
+                // optionalDependency 'ftb-utilities' // Mod seems to be dead
+                // optionalDependency 'emojicord'  // Not yet on 1.16
+                // optionalDependency 'voting' //Dead?
+            //}
         }
     }
 }
