@@ -13,7 +13,7 @@ public class Variables {
     /**
      * Mod version
      */
-    public static final String VERSION = "2.0.0";
+    public static final String VERSION = "2.0.1";
     /**
      * Discord Integration data directory
      */

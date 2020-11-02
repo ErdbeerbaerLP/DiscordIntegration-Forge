@@ -27,11 +27,9 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -134,13 +132,6 @@ public class Discord extends Thread {
             jda.shutdownNow();
             jda = null;
         }
-    }
-
-    /**
-     * @return The admin role of the server
-     */
-    public Role getAdminRole() {
-        return (Configuration.instance().commands.adminRoleID.equals("0") || Configuration.instance().commands.adminRoleID.trim().isEmpty()) ? null : jda.getRoleById(Configuration.instance().commands.adminRoleID);
     }
 
     /**
@@ -490,6 +481,16 @@ public class Discord extends Thread {
                 w.append(a.toString()).append("\n");
         }
         w.close();
+    }
+
+    public boolean hasAdminRole(List<Role> roles) {
+        final AtomicBoolean ret = new AtomicBoolean(false);
+        roles.forEach((r) -> {
+            for (String id : Configuration.instance().commands.adminRoleIDs) {
+                if (id.equals(r.getId())) ret.set(true);
+            }
+        });
+        return ret.get();
     }
 
 

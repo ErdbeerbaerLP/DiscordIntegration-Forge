@@ -165,8 +165,8 @@ public class Configuration {
     }
 
     public static class Commands {
-        @TomlComment("The Role ID of your Admin Role")
-        public String adminRoleID = "0";
+        @TomlComment({"The Role IDs of your Admin Roles", "Now supports multiple roles which can access admin commands"})
+        public String[] adminRoleIDs = new String[0];
 
         @TomlComment("The prefix of the commands usable in discord")
         public String prefix = "/";

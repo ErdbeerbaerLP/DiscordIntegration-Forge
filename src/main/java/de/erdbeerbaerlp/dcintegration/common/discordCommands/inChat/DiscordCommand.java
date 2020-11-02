@@ -113,7 +113,7 @@ public abstract class DiscordCommand {
             }
         }
         if (m == null) return false;
-        return !this.adminOnly() || m.getRoles().contains(discord_instance.getAdminRole());
+        return !this.adminOnly() || discord_instance.hasAdminRole(m.getRoles());
     }
 
 

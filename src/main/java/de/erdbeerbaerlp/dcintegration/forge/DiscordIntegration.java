@@ -104,8 +104,21 @@ public class DiscordIntegration {
     public void serverSetup(FMLDedicatedServerSetupEvent ev) {
         CommandRegistry.registerDefaultCommandsFromConfig();
         Variables.discord_instance = new Discord(new ForgeServerInterface());
-        if (!Configuration.instance().localization.serverStarting.isEmpty())
-            Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting);
+        if (!Configuration.instance().webhook.enable)
+            try {
+                //Wait a short time to allow JDA to get initiaized
+                System.out.println("Waiting for JDA to initialize to send starting message... (max 5 seconds before skipping)");
+                for (int i = 0; i <= 5; i++) {
+                    if (discord_instance.getJDA() == null) Thread.sleep(1000);
+                    else break;
+                }
+                if (discord_instance.getJDA() != null && !Configuration.instance().localization.serverStarting.isEmpty()) {
+                    Thread.sleep(2000); //Testing if that loads the channels
+                    if (discord_instance.getChannel() != null)
+                        Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting);
+                }
+            } catch (InterruptedException | NullPointerException ignored) {
+            }
     }
 
     @SubscribeEvent
@@ -160,13 +173,9 @@ public class DiscordIntegration {
         System.out.println("Started");
         Variables.started = new Date().getTime();
         if (discord_instance != null)
-            if (Variables.startingMsg != null)
-                try {
-                    Variables.startingMsg.get().editMessage(Configuration.instance().localization.serverStarted).queue();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                }
-            else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
+            if (Variables.startingMsg != null) {
+                Variables.startingMsg.thenAccept((a) -> a.editMessage(Configuration.instance().localization.serverStarted).queue());
+            } else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
