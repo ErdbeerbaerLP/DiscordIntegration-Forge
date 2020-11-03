@@ -129,7 +129,7 @@ dependencies {
     //Minecraft <==> Discord conversion
     embed 'net.kyori:adventure-text-serializer-gson:4.1.1'
     embed "dev.vankka:MCDiscordReserializer:4.0.0"
-    embed "dev.vankka:SimpleAST:2.2.2-SNAPSHOT"
+    embed "dev.vankka:SimpleAST:2.2.4-SNAPSHOT"
     embed "net.kyori:adventure-text-serializer-legacy:4.1.1"
 
     //Toml4j
