@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.0.2",
+    "changelog": "Add workaround for memory leak with newlines\nFix caching\nAdd config option for player avatar url",
+    "type": "beta"
+  },
+  {
     "version": "2.0.1",
     "changelog": "Fixed non-webhook mode crash\n[Config Change] Changed Admin role ID to Admin role IDs (array) to support multiple roles",
     "type": "beta"
