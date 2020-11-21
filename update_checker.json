@@ -17,7 +17,7 @@
   {
     "version": "1.3.4",
     "changelog": "Fixed mod not loading in newer forge versions\nUpdated dependencies",
-    "type": "6"
+    "type": "beta"
   },
   {
     "version": "1.3.3",
