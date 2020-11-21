@@ -93,15 +93,6 @@ public class MessageUtils {
         }
     }
 
-    public static Component convertMarkdownToMCFormattingComponent(String in) {
-        try {
-            return MinecraftSerializer.INSTANCE.serialize(in);
-        } catch (NullPointerException | ConcurrentModificationException ex) {
-            ex.printStackTrace();
-            return Component.text().build();
-        }
-    }
-
     public static String convertMCToMarkdown(String in) {
         if (!Configuration.instance().messages.convertCodes) {
             if (Configuration.instance().messages.formattingCodesToDiscord) return in;
@@ -117,8 +108,6 @@ public class MessageUtils {
     }
 
     public static Component makeURLsClickable(final Component in) {
-        return in.replaceText(URL_PATTERN, url -> {
-            return url.decorate(TextDecoration.UNDERLINED).color(TextColor.color(0x06, 0x45, 0xAD)).clickEvent(ClickEvent.openUrl(url.content()));
-        });
+        return in.replaceText(URL_PATTERN, url -> url.decorate(TextDecoration.UNDERLINED).color(TextColor.color(0x06, 0x45, 0xAD)).clickEvent(ClickEvent.openUrl(url.content())));
     }
 }

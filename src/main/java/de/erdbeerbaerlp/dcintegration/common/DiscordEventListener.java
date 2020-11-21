@@ -21,9 +21,10 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
-import net.minecraft.util.text.TextFormatting;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +52,8 @@ public class DiscordEventListener implements EventListener {
      */
     @Override
     public void onEvent(GenericEvent event) {
-        final JDA jda = Variables.discord_instance.getJDA();
         final Discord dc = Variables.discord_instance;
+        final JDA jda = dc.getJDA();
         if (jda == null) return;
         if (event instanceof MessageReceivedEvent) {
             final MessageReceivedEvent ev = (MessageReceivedEvent) event;
@@ -128,33 +129,38 @@ public class DiscordEventListener implements EventListener {
                             msg = msg.replace(Pattern.quote("<@" + r.getId() + ">"), "@" + r.getName());
                         }
                         msg = dc.srv.formatEmoteMessage(ev.getMessage().getEmotes(), msg);
-                        StringBuilder message = new StringBuilder(msg);
+                        Component attachmentComponent = Component.text("\n");
+                        if (!ev.getMessage().getAttachments().isEmpty())
+                            attachmentComponent.append(Component.text("Attachments:").decorate(TextDecoration.UNDERLINED));
                         for (Message.Attachment a : ev.getMessage().getAttachments()) {
-                            message.append("\nAttachment: ").append(a.getProxyUrl());
+                            System.out.println(a);
+                            attachmentComponent.append(Component.text(a.getFileName()).decorate(TextDecoration.UNDERLINED).color(TextColor.color(0x06, 0x45, 0xAD)).clickEvent(ClickEvent.openUrl(a.getUrl())));
+                            attachmentComponent.append(Component.text("\n"));
                         }
                         for (MessageEmbed e : embeds) {
                             if (e.isEmpty()) continue;
-                            message.append("\n\n-----[Embed]-----\n");
+                            attachmentComponent.append(Component.text("\n-----[Embed]-----\n"));
                             if (e.getAuthor() != null && !e.getAuthor().getName().trim().isEmpty()) {
-                                message.append(TextFormatting.BOLD).append(TextFormatting.ITALIC).append(e.getAuthor().getName()).append("\n");
+                                attachmentComponent.append(Component.text(e.getAuthor().getName() + "\n").decorate(TextDecoration.BOLD).decorate(TextDecoration.ITALIC));
                             }
                             if (e.getTitle() != null && !e.getTitle().trim().isEmpty()) {
-                                message.append(TextFormatting.BOLD).append(e.getTitle()).append("\n");
+                                attachmentComponent.append(Component.text(e.getTitle() + "\n").decorate(TextDecoration.BOLD));
                             }
                             if (e.getDescription() != null && !e.getDescription().trim().isEmpty()) {
-                                message.append("Message:\n").append(e.getDescription()).append("\n");
+                                attachmentComponent.append(Component.text("Message:\n" + e.getDescription() + "\n"));
                             }
-                            if (e.getImage() != null && !e.getImage().getProxyUrl().isEmpty()) {
-                                message.append("Image: ").append(e.getImage().getProxyUrl()).append("\n");
+                            if (e.getImage() != null && e.getImage().getUrl() != null && !e.getImage().getUrl().isEmpty()) {
+                                attachmentComponent.append(Component.text("Image: " + e.getImage().getUrl() + "\n"));
                             }
-                            message.append("\n-----------------");
+                            attachmentComponent.append(Component.text("\n-----------------"));
                         }
 
                         Component out = Component.text(Configuration.instance().localization.ingame_discordMessage);
-                        final Component outMsg = MinecraftSerializer.INSTANCE.serialize(message.toString(), options);
+                        final Component outMsg = MinecraftSerializer.INSTANCE.serialize(msg.replace("\n", "\\n"), options);
                         final int memberColor = (ev.getMember() != null ? ev.getMember().getColorRaw() : 0);
                         out = out.replaceText("%user%", Component.text((ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName())).color(TextColor.color(memberColor)).hoverEvent(HoverEvent.showText(Component.text("Sent by Discord user @" + ev.getAuthor().getAsTag()))));
                         out = out.replaceText("%msg%", MessageUtils.makeURLsClickable(outMsg)).replaceText("%id%", Component.text(ev.getAuthor().getId()));
+                        out.append(attachmentComponent);
                         dc.srv.sendMCMessage(out);
                     }
                 }

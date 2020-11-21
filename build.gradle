@@ -40,7 +40,7 @@ repositories {
         name = "CurseForge"
         url = "https://minecraft.curseforge.com/api/maven/"
     }// Maybe needed for other mods in the future
-    maven { url "https://maven.latmod.com/" } //FTB
+    //maven { url "https://maven.latmod.com/" } //FTB
     maven { url 'https://jitpack.io' }
     maven { url "https://nexus.vankka.dev/repository/maven-public/"}
     maven { url "https://repository.dev.gotan.io/repository/gotan.os/"}
@@ -50,7 +50,7 @@ repositories {
     }
 
 }
-version = "2.0.1"
+version = "2.0.2"
 group = "de.erdbeerbaerlp.dcintegration" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "dcintegration"
 
@@ -60,7 +60,7 @@ compileJava {
 }
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200916-1.16.2'
+    mappings channel: 'snapshot', version: '20201028-1.16.3'
     // accessTransformer = file('build/resources/main/META-INF/accesstransformer.cfg')
     runs {
         server {
@@ -114,7 +114,7 @@ shadowJar {
 }
 dependencies {
     //Minecraft Forge
-    minecraft 'net.minecraftforge:forge:1.16.3-34.1.11'
+    minecraft 'net.minecraftforge:forge:1.16.4-35.0.3'
 
     //Discord libraries
     embed("net.dv8tion:JDA:4.2.0_217"){
@@ -174,8 +174,9 @@ curseforge {
             changelog = project.changelog
             releaseType = 'beta'
             addGameVersion '1.16.3'
+            addGameVersion '1.16.4'
                 mainArtifact(jar) {
-                displayName = "DiscordIntegration-$version (MC 1.16.3)"
+                displayName = "DiscordIntegration-$version (MC 1.16.3+)"
             }
             //relations {
                 // optionalDependency 'ftb-utilities' // Mod seems to be dead

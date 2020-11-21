@@ -1,7 +1,6 @@
 package de.erdbeerbaerlp.dcintegration.forge.util;
 
 import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.vdurmont.emoji.EmojiParser;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.ServerInterface;
@@ -32,7 +31,7 @@ public class ForgeServerInterface extends ServerInterface {
     @Override
     public void sendMCMessage(Component msg) {
         final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
-        final String jsonComp = GsonComponentSerializer.gson().serialize(msg);
+        final String jsonComp = GsonComponentSerializer.gson().serialize(msg).replace("\\\\n", "\n");
         try {
             final ITextComponent comp = ComponentArgument.component().parse(new StringReader(jsonComp));
             for (final ServerPlayerEntity p : l) {
@@ -40,7 +39,9 @@ public class ForgeServerInterface extends ServerInterface {
                     p.sendMessage(comp, Util.DUMMY_UUID);
                 }
             }
-        } catch (CommandSyntaxException e) {
+            //Send to server console too
+            ServerLifecycleHooks.getCurrentServer().sendMessage(comp, Util.DUMMY_UUID);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

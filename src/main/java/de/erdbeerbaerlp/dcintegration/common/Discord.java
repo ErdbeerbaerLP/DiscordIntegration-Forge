@@ -424,7 +424,7 @@ public class Discord extends Thread {
                 }
             }
             if (avatarURL != null && avatarURL.isEmpty())
-                avatarURL = "https://minotar.net/avatar/" + uuid;
+                avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", uUUID.toString()).replace("%uuid_dashless%", uUUID.toString().replace("-", "")).replace("%name%", playerName).replace("%randomUUID%", UUID.randomUUID().toString());
         }
         if (isServerMessage) {
             avatarURL = Configuration.instance().webhook.serverAvatarURL;
