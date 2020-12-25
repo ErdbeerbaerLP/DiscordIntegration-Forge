@@ -121,7 +121,7 @@ dependencies {
         exclude group: 'okhttp3', module: "okhttp"
     }
     embed "com.squareup.okhttp3:okhttp:4.9.0"
-    embed 'club.minnced:discord-webhooks:0.5.0'
+    embed 'club.minnced:discord-webhooks:0.5.4'
 
     //Emoji-Java
     embed('com.vdurmont:emoji-java:5.1.1')
