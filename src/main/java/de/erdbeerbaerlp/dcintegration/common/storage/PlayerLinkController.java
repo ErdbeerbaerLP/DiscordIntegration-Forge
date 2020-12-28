@@ -1,16 +1,11 @@
 package de.erdbeerbaerlp.dcintegration.common.storage;
 
 import com.google.gson.*;
-import com.mojang.authlib.GameProfile;
-import de.erdbeerbaerlp.dcintegration.common.api.DiscordEventHandler;
-import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import javax.annotation.Nullable;
-import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.*;
 import java.util.UUID;
 
@@ -23,7 +18,7 @@ public class PlayerLinkController {
     private static final JsonParser parser = new JsonParser();
 
     public static boolean isPlayerLinked(UUID player) throws IllegalStateException {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
+        if (!discord_instance.srv.isOnlineMode()) return false;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -38,7 +33,7 @@ public class PlayerLinkController {
     }
 
     public static boolean isDiscordLinked(String discordID) {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
+        if (!discord_instance.srv.isOnlineMode()) return false;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -54,7 +49,7 @@ public class PlayerLinkController {
 
     @Nullable
     public static UUID getPlayerFromDiscord(String discordID) {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
+        if (!discord_instance.srv.isOnlineMode()) return null;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -70,7 +65,7 @@ public class PlayerLinkController {
 
     @Nullable
     public static String getDiscordFromPlayer(UUID player) {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
+        if (!discord_instance.srv.isOnlineMode()) return null;
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -85,11 +80,11 @@ public class PlayerLinkController {
     }
 
     public static PlayerSettings getSettings(String discordID, UUID player) {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
-        if (player == null && discordID == null) throw new NullPointerException();
+        if (!discord_instance.srv.isOnlineMode()) return new PlayerSettings();
+        if (player == null && discordID == null) throw new IllegalArgumentException();
         else if (discordID == null) discordID = getDiscordFromPlayer(player);
         else if (player == null) player = getPlayerFromDiscord(discordID);
-        if (player == null || discordID == null) throw new NullPointerException();
+        if (player == null || discordID == null) throw new IllegalArgumentException();
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -100,30 +95,46 @@ public class PlayerLinkController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return new PlayerSettings();
     }
 
-    public static boolean linkPlayer(String discordID, UUID player) throws KeyAlreadyExistsException {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
-        if (isDiscordLinked(discordID) || isPlayerLinked(player)) throw new KeyAlreadyExistsException();
+    /**
+     * Only to be used for migration<br>
+     * Does not add role and nothing, only saves link into json
+     */
+    public static void migrateLinkPlayer(String discordID, UUID player) {
+        try {
+            final JsonArray a = getJson();
+            final PlayerLink link = new PlayerLink();
+            link.discordID = discordID;
+            link.mcPlayerUUID = player.toString();
+            a.add(gson.toJsonTree(link));
+            saveJSON(a);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean linkPlayer(String discordID, UUID player) throws IllegalArgumentException {
+        if (!discord_instance.srv.isOnlineMode()) return false;
+        if (isDiscordLinked(discordID) || isPlayerLinked(player))
+            throw new IllegalArgumentException("One link side already exists");
         try {
             if (PlayerLinkController.getNameFromUUID(player) == null) return false;
             final JsonArray a = getJson();
             final PlayerLink link = new PlayerLink();
             link.discordID = discordID;
             link.mcPlayerUUID = player.toString();
-            final boolean ignoringMessages = discord_instance.ignoringPlayers.contains(player.toString());
+            final boolean ignoringMessages = discord_instance.ignoringPlayers.contains(player);
             link.settings.ignoreDiscordChatIngame = ignoringMessages;
-            if (ignoringMessages) discord_instance.ignoringPlayers.remove(player.toString());
+            if (ignoringMessages) discord_instance.ignoringPlayers.remove(player);
             a.add(gson.toJsonTree(link));
             saveJSON(a);
-            for (DiscordEventHandler o : Variables.eventHandlers) {
-                o.onPlayerLink(player, discordID);
-            }
+            discord_instance.callEventC((e) -> e.onPlayerLink(player, discordID));
             final Guild guild = discord_instance.getChannel().getGuild();
             final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
             final Member member = guild.getMember(discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromPlayer(UUID.fromString(link.mcPlayerUUID))));
-            if (!member.getRoles().contains(linkedRole))
+            if (linkedRole != null && !member.getRoles().contains(linkedRole))
                 guild.addRoleToMember(member, linkedRole).queue();
             return true;
         } catch (IOException e) {
@@ -133,7 +144,7 @@ public class PlayerLinkController {
     }
 
     public static boolean updatePlayerSettings(String discordID, UUID player, PlayerSettings s) {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
+        if (!discord_instance.srv.isOnlineMode()) return false;
         if (player == null && discordID == null) throw new NullPointerException();
         else if (discordID == null) discordID = getDiscordFromPlayer(player);
         else if (player == null) player = getPlayerFromDiscord(discordID);
@@ -167,7 +178,7 @@ public class PlayerLinkController {
     }
 
     public static boolean unlinkPlayer(String discordID, UUID player) {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return false;
+        if (!discord_instance.srv.isOnlineMode()) return false;
         if (!isDiscordLinked(discordID) && !isPlayerLinked(player)) return false;
         try {
             for (JsonElement e : getJson()) {
@@ -193,7 +204,7 @@ public class PlayerLinkController {
     }
 
     private static PlayerLink getUser(String discordID, UUID player) throws IOException {
-        if (!ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) return null;
+        if (!discord_instance.srv.isOnlineMode()) return null;
         final JsonArray a = getJson();
         for (JsonElement e : a) {
             final PlayerLink l = gson.fromJson(e, PlayerLink.class);
@@ -233,7 +244,7 @@ public class PlayerLinkController {
 
     @Nullable
     public static String getNameFromUUID(UUID uuid) {
-        final String name = ServerLifecycleHooks.getCurrentServer().getMinecraftSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();
+        final String name = discord_instance.srv.getNameFromUUID(uuid);
         return name.isEmpty() ? null : name;
     }
 

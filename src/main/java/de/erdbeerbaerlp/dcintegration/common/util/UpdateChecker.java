@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -72,7 +71,7 @@ public class UpdateChecker {
 
         public static ReleaseType getFromName(String name) {
             for (ReleaseType t : values()) {
-                if (StringUtils.equalsIgnoreCase(name, t.name())) return t;
+                if (name.toLowerCase().equals(t.name().toLowerCase())) return t;
             }
             return ReleaseType.beta;
         }

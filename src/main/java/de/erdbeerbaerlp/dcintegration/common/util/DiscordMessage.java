@@ -7,7 +7,6 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.minecraft.util.text.TextFormatting;
 
 public final class DiscordMessage {
     private final boolean isNotRaw;
@@ -59,7 +58,7 @@ public final class DiscordMessage {
                 if (Configuration.instance().messages.formattingCodesToDiscord)
                     out.setContent(MessageUtils.convertMCToMarkdown(message));
                 else
-                    out.setContent(TextFormatting.getTextWithoutFormattingCodes(MessageUtils.convertMCToMarkdown(message)));
+                    out.setContent(MessageUtils.removeFormatting(MessageUtils.convertMCToMarkdown(message)));
             } else {
                 out.setContent(message);
             }
@@ -76,7 +75,7 @@ public final class DiscordMessage {
                 if (Configuration.instance().messages.formattingCodesToDiscord)
                     out.setContent(MessageUtils.convertMCToMarkdown(message));
                 else
-                    out.setContent(TextFormatting.getTextWithoutFormattingCodes(MessageUtils.convertMCToMarkdown(message)));
+                    out.setContent(MessageUtils.removeFormatting(MessageUtils.convertMCToMarkdown(message)));
             } else {
                 out.setContent(message);
             }

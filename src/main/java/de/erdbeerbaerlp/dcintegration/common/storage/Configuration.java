@@ -48,12 +48,12 @@ public class Configuration {
         kill.addProperty("useArgs", true);
         kill.addProperty("argText", "<player>");
         a.add("kill", kill);
-        final JsonObject tps = new JsonObject();
+        /*final JsonObject tps = new JsonObject();
         tps.addProperty("adminOnly", false);
         tps.addProperty("mcCommand", "forge tps");
         tps.addProperty("description", "Displays TPS");
         tps.addProperty("useArgs", false);
-        a.add("tps", tps);
+        a.add("tps", tps);*/
         final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         defaultCommandJson = gson.toJson(a);
 
@@ -69,7 +69,7 @@ public class Configuration {
     @TomlComment("Configuration options for commands")
     public Commands commands = new Commands();
 
-    @TomlComment("Everything message related")
+    @TomlComment("Toggle some message related features")
     public Messages messages = new Messages();
 
     @TomlComment("Advanced options")
@@ -93,6 +93,12 @@ public class Configuration {
     @TomlComment("The command log channel is an channel where every command execution gets logged")
     public CommandLog commandLog = new CommandLog();
 
+    @TomlComment({"Configure votifier integration here", "(Spigot only)"})
+    public Votifier votifier = new Votifier();
+
+    @TomlComment("Configure Dynmap integration here")
+    public Dynmap dynmap = new Dynmap();
+
     public static Configuration instance() {
         return INSTANCE;
     }
@@ -109,7 +115,10 @@ public class Configuration {
 
     public void saveConfig() {
         try {
-            if (!configFile.exists()) configFile.createNewFile();
+            if (!configFile.exists()) {
+                if (!configFile.getParentFile().exists()) configFile.getParentFile().mkdirs();
+                configFile.createNewFile();
+            }
             final TomlWriter w = new TomlWriter.Builder()
                     .indentValuesBy(2)
                     .indentTablesBy(4)
@@ -153,7 +162,6 @@ public class Configuration {
 
         @TomlComment("Should /me output be sent to discord?")
         public boolean sendOnMeCommand = true;
-
 
         @TomlComment("When an /say command's message starts with this prefix, it will not be sent to discord")
         public String sayCommandIgnoredPrefix = "\u00a74\u00a76\u00a7k\u00a7r";
@@ -272,7 +280,6 @@ public class Configuration {
         @TomlComment({"Gets sent when an player joins", "", "PLACEHOLDERS:", "%player% - The player's name"})
         public String playerJoin = "%player% joined";
 
-
         @TomlComment({"Gets sent when an player leaves", "", "PLACEHOLDERS:", "%player% - The player's name"})
         public String playerLeave = "%player% left";
 
@@ -288,93 +295,159 @@ public class Configuration {
         @TomlComment({"The chat message in discord, sent from an player in-game", "", "PLACEHOLDERS:", "%player% - The player's name", "%msg% - The chat message"})
         public String discordChatMessage = "%player%: %msg%";
 
-        @TomlComment("Message sent when ignoring Discord messages")
-        public String commandIgnore_ignore = "You are now ignoring Discord messages!";
 
-        @TomlComment("Message sent when unignoring Discord messages")
-        public String commandIgnore_unignore = "You are no longer ignoring Discord messages!";
+        @TomlComment({"Sent to a player when someone reacts to his messages", "PLACEHOLDERS:", "%name% - (Nick-)Name of the user who reacted (format: 'SomeNickName')", "%name2% - Name of the user who reacted with discord discriminator (format: 'SomeName#0123')", "%msg% - Content of the message which got the reaction", "%emote% - The reacted emote"})
+        public String reactionMessage = "\u00a76[\u00a75DISCORD\u00a76]\u00a7r\u00a77 %name% reacted to your message \"\u00a79%msg%\u00a77\" with '%emote%'";
 
-        @TomlComment({"The format of the uptime command", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html"})
-        public String uptimeFormat = "dd 'days' HH 'hours' mm 'minutes'";
 
-        @TomlComment({"Sent to the user when he linked his discord successfully", "PLACEHOLDERS:", "%player% - The in-game player name", "%prefix% - Command prefix"})
-        public String linkSuccessful = "Your account is now linked with %player%.\nUse %prefix%settings here to view and set some user-specific settings";
+        @TomlComment("Strings about the discord commands")
+        public Commands commands = new Commands();
 
-        @TomlComment({"Sent to the user when linking fails"})
-        public String linkFailed = "Account link failed";
+        @TomlComment("Strings about the account linking feature")
+        public Linking linking = new Linking();
 
-        @TomlComment({"Sent when an already linked user attempts to link an account", "PLACEHOLDERS:", "%player% - The in-game player name"})
-        public String alreadyLinked = "Your account is already linked with %player%";
+        @TomlComment("Strings about the personal settings feature")
+        public PersonalSettings personalSettings = new PersonalSettings();
 
-        @TomlComment({"Sent when attempting to use personal commands while not linked", "PLACEHOLDERS:", "%method% - The currently enabled method for linking"})
-        public String notLinked = "Your account is not linked! Link it first using %method%";
+        public static class Linking {
 
-        @TomlComment({"Message of the link method in whitelist mode", "Used by %method% placeholder"})
-        public String linkMethodWhitelist = "`%prefix%whitelist <uuid>` here";
+            @TomlComment({"Sent to the user when he linked his discord successfully", "PLACEHOLDERS:", "%player% - The in-game player name", "%prefix% - Command prefix"})
+            public String linkSuccessful = "Your account is now linked with %player%.\nUse %prefix%settings here to view and set some user-specific settings";
 
-        @TomlComment({"Message of the link method in normal mode", "Used by %method% placeholder"})
-        public String linkMethodIngame = "`/discord link` ingame";
+            @TomlComment({"Sent to the user when linking fails"})
+            public String linkFailed = "Account link failed";
 
-        @TomlComment({"Sent when attempting to whitelist-link with an non uuid string", "PLACEHOLDERS:", "%arg% - The provided argument", "%prefix% - Command prefix"})
-        public String link_argumentNotUUID = "Argument \"%arg%\" is not an valid UUID. Use `%prefix%whitelist <uuid>`";
+            @TomlComment({"Sent when an already linked user attempts to link an account", "PLACEHOLDERS:", "%player% - The in-game player name"})
+            public String alreadyLinked = "Your account is already linked with %player%";
 
-        @TomlComment("Sent when attempting to link with an unknown number")
-        public String invalidLinkNumber = "Invalid link number! Use `/discord link` ingame to get your link number";
+            @TomlComment({"Sent when attempting to use personal commands while not linked", "PLACEHOLDERS:", "%method% - The currently enabled method for linking"})
+            public String notLinked = "Your account is not linked! Link it first using %method%";
 
-        @TomlComment("Sent when attempting to link with an invalid number")
-        public String linkNumberNAN = "This is not a number. Use `/discord link` ingame to get your link number";
+            @TomlComment({"Message of the link method in whitelist mode", "Used by %method% placeholder"})
+            public String linkMethodWhitelist = "`%prefix%whitelist <uuid>` here";
 
-        @TomlComment("Header of the personal settings list")
-        public String personalSettingsHeader = "Personal Settings list:";
+            @TomlComment({"Message of the link method in normal mode", "Used by %method% placeholder"})
+            public String linkMethodIngame = "`/discord link` ingame";
 
-        @TomlComment("Error message when providing an invalid personal setting name")
-        public String invalidPersonalSettingKey = "`%key%` is not an valid setting!";
+            @TomlComment({"Sent when attempting to whitelist-link with an non uuid string", "PLACEHOLDERS:", "%arg% - The provided argument", "%prefix% - Command prefix"})
+            public String link_argumentNotUUID = "Argument \"%arg%\" is not an valid UUID. Use `%prefix%whitelist <uuid>`";
 
-        @TomlComment("Message for getting an setting's value")
-        public String personalSettingGet = "This settings value is `%bool%`";
+            @TomlComment("Sent when attempting to link with an unknown number")
+            public String invalidLinkNumber = "Invalid link number! Use `/discord link` ingame to get your link number";
 
-        @TomlComment("Sent when user sucessfully updates an prersonal setting")
-        public String settingUpdateSuccessful = "Successfully updated setting!";
+            @TomlComment("Sent when attempting to link with an invalid number")
+            public String linkNumberNAN = "This is not a number. Use `/discord link` ingame to get your link number";
 
-        @TomlComment("Sent when setting an personal setting fails")
-        public String settingUpdateFailed = "Failed to set value :/";
+            @TomlComment({"Message shown to players who are not whitelisted using discord", "No effect if discord whitelist is off"})
+            public String notWhitelisted = "\u00a7cYou are not whitelisted.\nJoin the discord server for more information\nhttps://discord.gg/someserver";
 
-        @TomlComment("Message sent when user does not have permission to run a command")
-        public String noPermission = "You don't have permission to execute this command!";
+            @TomlComment("Sent when trying to link without an required role")
+            public String link_requiredRole = "You need to have an role to use this";
 
-        @TomlComment({"Message sent when an invalid command was typed", "", "PLACEHOLDERS:", "%prefix% - Command prefix"})
-        public String unknownCommand = "Unknown command, try `%prefix%help` for a list of commands";
+            @TomlComment("Sent when trying to link as an non-member")
+            public String link_notMember = "You are not member of the Discord-Server this bot is operating in!";
+            @TomlComment({"Sent to the user when he linked his discord successfully", "PLACEHOLDERS:", "%name% - The linked discord name", "%name#tag% - The linked discord name with tag"})
+            public String linkSuccessfulIngame = "Your account is now linked with discord-user %name#tag%";
+            @TomlComment({"Message shown to players who want to link their discord account ingame", "", "PLACEHOLDERS:", "%num% - The link number", "%prefix% - Command prefix"})
+            public String linkMsgIngame = "Send this command as a direct message to the bot to link your account: %prefix%link %num%\nThis number will expire after 10 minutes";
 
-        @TomlComment("Message if a player provides less arguments than required")
-        public String notEnoughArguments = "Not enough arguments";
+            @TomlComment("Shown when hovering over the link message")
+            public String hoverMsg_copyClipboard = "Click to copy command to clipboard";
+        }
 
-        @TomlComment("Message if a player provides too many arguments")
-        public String tooManyArguments = "Too many arguments";
+        public static class Commands {
 
-        @TomlComment({"Message if a player can not be found", "", "PLACEHOLDERS:", "%player% - The player's name"})
-        public String playerNotFound = "Can not find player \"%player%\"";
+            public String ingameOnly = "This command can only be executed ingame";
 
-        @TomlComment("The message for 'list' when no player is online")
-        public String cmdList_empty = "There is no player online...";
+            @TomlComment("Shown when successfully reloading the config file")
+            public String configReloaded = "Config reloaded!";
 
-        @TomlComment("The header for 'list' when one player is online")
-        public String cmdList_one = "There is 1 player online:";
+            @TomlComment("Shown when an subcommand is disabled")
+            public String subcommandDisabled = "This subcommand is disabled!";
 
-        @TomlComment({"The header for 'list'", "PLACEHOLDERS:", "%amount% - The amount of players online"})
-        public String cmdList_header = "There are %amount% players online:";
+            @TomlComment("Message sent when user does not have permission to run a command")
+            public String noPermission = "You don't have permission to execute this command!";
 
-        @TomlComment("Header of the help command")
-        public String cmdHelp_header = "Your available commands in this channel:";
+            @TomlComment({"Message sent when an invalid command was typed", "", "PLACEHOLDERS:", "%prefix% - Command prefix"})
+            public String unknownCommand = "Unknown command, try `%prefix%help` for a list of commands";
 
-        @TomlComment({"Message shown to players who are not whitelisted using discord", "No effect if discord whitelist is off"})
-        public String notWhitelisted = "\u00a7cYou are not whitelisted.\nJoin the discord server for more information\nhttps://discord.gg/someserver";
+            @TomlComment("Message if a player provides less arguments than required")
+            public String notEnoughArguments = "Not enough arguments";
 
-        @TomlComment("Sent when trying to link without an required role")
-        public String link_requiredRole = "You need to have an role to use this";
+            @TomlComment("Message if a player provides too many arguments")
+            public String tooManyArguments = "Too many arguments";
 
-        @TomlComment("Sent when trying to link as an non-member")
-        public String link_notMember = "You are not member of the Discord-Server this bot is operating in!";
+            @TomlComment({"Message if a player can not be found", "", "PLACEHOLDERS:", "%player% - The player's name"})
+            public String playerNotFound = "Can not find player \"%player%\"";
+
+            @TomlComment("The message for 'list' when no player is online")
+            public String cmdList_empty = "There is no player online...";
+
+            @TomlComment("The header for 'list' when one player is online")
+            public String cmdList_one = "There is 1 player online:";
+
+            @TomlComment({"The header for 'list'", "PLACEHOLDERS:", "%amount% - The amount of players online"})
+            public String cmdList_header = "There are %amount% players online:";
+
+            @TomlComment("Header of the help command")
+            public String cmdHelp_header = "Your available commands in this channel:";
+
+            @TomlComment("Message sent when ignoring Discord messages")
+            public String commandIgnore_ignore = "You are now ignoring Discord messages!";
+
+            @TomlComment("Message sent when unignoring Discord messages")
+            public String commandIgnore_unignore = "You are no longer ignoring Discord messages!";
+
+            @TomlComment({"Message sent when using the uptime command", "", "PLACEHOLDERS:", "%uptime% - Uptime in uptime format, see uptimeFormat"})
+            public String cmdUptime_message = "The server is running for %uptime%";
+
+            @TomlComment({"The format of the uptime command", "For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html"})
+            public String uptimeFormat = "dd 'days' HH 'hours' mm 'minutes'";
+            @TomlComment("Command descriptions")
+            public Descriptions descriptions = new Descriptions();
+
+            public static class Descriptions {
+                public String settings = "Allows you to edit your personal settings";
+                public String uptime = "Displays the server uptime";
+                public String help = "Displays a list of all commands";
+                public String list = "Lists all players currently online";
+                public String link = "Links your Discord account with your Minecraft account";
+                public String whitelist = "Whitelists you on the server by linking with Discord";
+            }
+        }
+
+        public static class PersonalSettings {
+
+            @TomlComment("Message for getting an setting's value")
+            public String personalSettingGet = "This settings value is `%bool%`";
+
+            @TomlComment("Sent when user sucessfully updates an prersonal setting")
+            public String settingUpdateSuccessful = "Successfully updated setting!";
+
+            @TomlComment("Header of the personal settings list")
+            public String personalSettingsHeader = "Personal Settings list:";
+
+            @TomlComment("Error message when providing an invalid personal setting name")
+            public String invalidPersonalSettingKey = "`%key%` is not an valid setting!";
+
+            @TomlComment({"PLACEHOLDERS:", "%prefix% - Returns the current command prefix"})
+            public String settingsCommandUsage = "Usages:\n\n%prefix%settings - lists all available keys\n%prefix%settings get <key> - Gets the current settings value\n%prefix%settings set <key> <value> - Sets an Settings value";
+
+            @TomlComment("Sent when setting an personal setting fails")
+            public String settingUpdateFailed = "Failed to set value :/";
+
+            @TomlComment("Descriptions of the settings")
+            public Descriptions descriptons = new Descriptions();
+
+            public static class Descriptions {
+                public String ignoreDiscordChatIngame = "Configure if you want to ignore discord chat ingame";
+                public String useDiscordNameInChannel = "Should the bot send messages using your discord name and avatar instead of your in-game name and skin?";
+                public String ignoreReactions = "Configure if you want to ignore discord reactions ingame";
+                public String pingSound = "Toggle the ingame ping sound";
+            }
+        }
     }
+
 
     public static class Webhook {
         @TomlComment("Whether or not the bot should use a webhook (it will create one)")
@@ -402,6 +475,15 @@ public class Configuration {
 
         @TomlComment("Adding Role IDs here will require the players to have at least ONE of these roles to link account")
         public String[] requiredRoles = new String[0];
+
+        @TomlComment("Allows you to configure the default values of some personal settings")
+        PersonalSettingsDefaults personalSettingsDefaults = new PersonalSettingsDefaults();
+
+        public static class PersonalSettingsDefaults {
+            public boolean default_useDiscordNameInChannel = true;
+            public boolean default_ignoreReactions = false;
+            public boolean default_pingSound = true;
+        }
     }
 
     public static class CommandLog {
@@ -410,5 +492,41 @@ public class Configuration {
 
         @TomlComment({"The format of the log messages", "", "PLACEHOLDERS:", "%sender% - The name of the Command Source", "%cmd% - executed command (e.g. \"/say Hello World\"", "%cmd-no-args% - Command without arguments (e.g. \"/say\""})
         public String message = "%sender% executed command `%cmd%`";
+    }
+
+    public static class Votifier {
+        @TomlComment("Should votifier messages be sent to discord?")
+        public boolean enabled = true;
+
+        @TomlComment({"Custom channel ID for Votifier messages", "Leave 'default' to use default channel"})
+        public String votifierChannelID = "default";
+
+        @TomlComment({"The message format of the votifier message", "", "PLACEHOLDERS:", "%player% - The player\u00B4s name", "%site% - The name of the vote site", "%addr% - (IP) Address of the site"})
+        public String message = ":ballot_box: %player% just voted on %site%";
+
+        @TomlComment("Name of the webhook title")
+        public String name = "Votifier";
+
+        @TomlComment("URL of the webhook avatar image")
+        public String avatarURL = "https://www.cubecraft.net/attachments/bkjvmqn-png.126824/";
+    }
+
+    public static class Dynmap {
+        @TomlComment({"The message format of the message forwarded to discord", "", "PLACEHOLDERS:", "%sender% - The sender\u00B4s name", "%msg% - The Message"})
+        public String dcMessage = "<%sender%> %msg%";
+
+        @TomlComment({"Custom channel ID for dynmap chat", "Leave 'default' to use default channel"})
+        public String dynmapChannelID = "default";
+
+        @TomlComment("Name of the webhook title")
+        public String name = "Dynmap Web-Chat";
+
+        @TomlComment("URL of the webhook avatar image")
+        public String avatarURL = "https://styles.redditmedia.com/t5_2kl3ct/styles/communityIcon_am5zopqnjhs41.png";
+
+        @TomlComment({"The name format of the message forwarded to the dynmap webchat", "", "PLACEHOLDERS:", "%name% - The discord name of the sender (including nickname)", "%name#tag% - The discord name with tag of the sender (without nickname)"})
+        public String webName = "%name% (discord)";
+        @TomlComment("Name shown in discord when no name was specified on the website")
+        public String unnamed = "Unnamed";
     }
 }

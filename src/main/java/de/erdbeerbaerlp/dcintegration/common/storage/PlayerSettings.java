@@ -1,17 +1,19 @@
 package de.erdbeerbaerlp.dcintegration.common.storage;
 
 public class PlayerSettings {
-    public boolean useDiscordNameInChannel = true;
+    public boolean useDiscordNameInChannel = Configuration.instance().linking.personalSettingsDefaults.default_useDiscordNameInChannel;
     public boolean ignoreDiscordChatIngame = false;
-    //public boolean useDiscordNameIngame = false;
+    public boolean ignoreReactions = Configuration.instance().linking.personalSettingsDefaults.default_ignoreReactions;
+    public boolean pingSound = Configuration.instance().linking.personalSettingsDefaults.default_pingSound;
 
     /**
      * Class used for key descriptions using reflection
      */
     @SuppressWarnings("unused")
     public static final class Descriptions {
-        private final String useDiscordNameInChannel = "Should the bot send messages using your discord name and avatar instead";
-        private final String ignoreDiscordChatIngame = "Configure if you want to ignore discord chat ingame";
-        //private final String useDiscordNameIngame = "Should your Discord (nick-)name be shown instead of your IGN on the server?";
+        private final String useDiscordNameInChannel = Configuration.instance().localization.personalSettings.descriptons.useDiscordNameInChannel;
+        private final String ignoreDiscordChatIngame = Configuration.instance().localization.personalSettings.descriptons.ignoreDiscordChatIngame;
+        private final String ignoreReactions = Configuration.instance().localization.personalSettings.descriptons.ignoreReactions;
+        private final String pingSound = Configuration.instance().localization.personalSettings.descriptons.pingSound;
     }
 }

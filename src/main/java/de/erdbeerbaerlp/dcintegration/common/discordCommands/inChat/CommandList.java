@@ -1,11 +1,11 @@
 package de.erdbeerbaerlp.dcintegration.common.discordCommands.inChat;
 
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
-import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
 
@@ -27,23 +27,24 @@ public class CommandList extends DiscordCommand {
 
     @Override
     public String getDescription() {
-        return "Lists all players currently online";
+        return Configuration.instance().localization.commands.descriptions.list;
     }
 
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
-        final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server.getPlayerList().getPlayers().isEmpty()) {
-            discord_instance.sendMessage(Configuration.instance().localization.cmdList_empty, cmdMsg.getTextChannel());
+        final HashMap<UUID, String> players = discord_instance.srv.getPlayers();
+        if (players.isEmpty()) {
+            discord_instance.sendMessage(Configuration.instance().localization.commands.cmdList_empty, cmdMsg.getTextChannel());
             return;
         }
-        String out = (server.getPlayerList().getPlayers().size() == 1 ? Configuration.instance().localization.cmdList_one
-                : Configuration.instance().localization.cmdList_header.replace("%amount%", "" + server.getPlayerList().getPlayers().size())) + "\n```\n";
-        for (final ServerPlayerEntity p : server.getPlayerList().getPlayers()) {
-            out += ForgeMessageUtils.formatPlayerName(p) + ",";
+        String out = (players.size() == 1 ? Configuration.instance().localization.commands.cmdList_one
+                : Configuration.instance().localization.commands.cmdList_header.replace("%amount%", "" + players.size())) + "\n```\n";
 
-
+        for (Map.Entry<UUID, String> p : players.entrySet()) {
+            out += p + ",";
         }
+
+
         out = out.substring(0, out.length() - 1);
         discord_instance.sendMessage(out + "\n```", cmdMsg.getTextChannel());
     }

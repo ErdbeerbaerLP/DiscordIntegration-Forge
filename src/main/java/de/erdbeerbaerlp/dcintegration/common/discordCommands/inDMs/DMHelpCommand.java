@@ -17,12 +17,12 @@ public class DMHelpCommand extends DMCommand {
 
     @Override
     public String getDescription() {
-        return "Displays a list of all commands";
+        return Configuration.instance().localization.commands.descriptions.help;
     }
 
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
-        StringBuilder out = new StringBuilder(Configuration.instance().localization.cmdHelp_header + " \n```\n");
+        StringBuilder out = new StringBuilder(Configuration.instance().localization.commands.cmdHelp_header + " \n```\n");
         for (final DMCommand cmd : CommandRegistry.getDMCommandList()) {
             if (cmd.canUserExecuteCommand(cmdMsg.getAuthor()) && cmd.includeInHelp())
                 out.append(cmd.getCommandUsage()).append(" - ").append(cmd.getDescription()).append("\n");

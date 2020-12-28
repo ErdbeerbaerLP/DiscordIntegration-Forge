@@ -35,18 +35,18 @@ public class McCommandDiscord {
             return 0;
         })).then(Commands.literal("ignore").executes((ctx) -> {
             ctx.getSource().sendFeedback(
-                    new StringTextComponent(Variables.discord_instance.togglePlayerIgnore(ctx.getSource().asPlayer().getUniqueID()) ? Configuration.instance().localization.commandIgnore_unignore : Configuration.instance().localization.commandIgnore_ignore), true);
+                    new StringTextComponent(Variables.discord_instance.togglePlayerIgnore(ctx.getSource().asPlayer().getUniqueID()) ? Configuration.instance().localization.commands.commandIgnore_unignore : Configuration.instance().localization.commands.commandIgnore_ignore), true);
             return 0;
         })).then(Commands.literal("link").executes((ctx) -> {
             if (Configuration.instance().linking.enableLinking && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode() && !Configuration.instance().linking.whitelistMode) {
                 if (PlayerLinkController.isPlayerLinked(ctx.getSource().asPlayer().getUniqueID())) {
-                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + "You are already linked with " + PlayerLinkController.getDiscordFromPlayer(ctx.getSource().asPlayer().getUniqueID())), false);
+                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + "You are already linked with " + Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getDiscordFromPlayer(ctx.getSource().asPlayer().getUniqueID()))), false);
                     return 0;
                 }
                 final int r = Variables.discord_instance.genLinkNumber(ctx.getSource().asPlayer().getUniqueID());
                 ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent("Send this number as an direct message to the bot to link your account: " + r + "\nThis number will expire after 10 minutes"), Style.EMPTY.setFormatting(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r + "")).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Click to copy number to clipboard")))), false);
             } else {
-                ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + "This subcommand is disabled!"), false);
+                ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Configuration.instance().localization.commands.subcommandDisabled), false);
             }
             return 0;
         })).then(Commands.literal("stop").requires((p) -> p.hasPermissionLevel(4)).executes((ctx) -> {
@@ -55,7 +55,7 @@ public class McCommandDiscord {
             return 0;
         })).then(Commands.literal("reload").requires((p) -> p.hasPermissionLevel(4)).executes((ctx) -> {
             Configuration.instance().loadConfig();
-            ctx.getSource().sendFeedback(new StringTextComponent("Config reloaded!"), true);
+            ctx.getSource().sendFeedback(new StringTextComponent(Configuration.instance().localization.commands.configReloaded), true);
             return 0;
         }));
         dispatcher.register(l);

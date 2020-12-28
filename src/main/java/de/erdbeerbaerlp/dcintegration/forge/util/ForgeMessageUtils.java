@@ -23,27 +23,28 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
+import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.UUID;
 
 public class ForgeMessageUtils extends MessageUtils {
     private static final JsonParser p = new JsonParser();
 
     private static final IForgeRegistry<Item> itemreg = GameRegistry.findRegistry(Item.class);
 
-    public static String formatPlayerName(Entity p) {
+    public static String formatPlayerName(Map.Entry<UUID, String> p) {
         return formatPlayerName(p, true);
     }
 
-    public static String formatPlayerName(Entity p, boolean chatFormat) {
-        final String discordName = getDiscordName(p.getUniqueID());
+    public static String formatPlayerName(Map.Entry<UUID, String> p, boolean chatFormat) {
+        final String discordName = getDiscordName(p.getKey());
         if (discordName != null)
             return discordName;
-        if (p.getDisplayName().getString().isEmpty())
-            return p.getName().getString();
         else
-            return TextFormatting.getTextWithoutFormattingCodes(p.getDisplayName().getString());
+            return TextFormatting.getTextWithoutFormattingCodes(p.getValue());
     }
 
     /**
@@ -148,5 +149,8 @@ public class ForgeMessageUtils extends MessageUtils {
         return null;
     }
 
-
+    public static String formatPlayerName(Entity p) {
+        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUniqueID(), p.getDisplayName().getUnformattedComponentText().isEmpty() ? p.getName().getUnformattedComponentText() : p.getDisplayName().getUnformattedComponentText());
+        return formatPlayerName(e);
+    }
 }

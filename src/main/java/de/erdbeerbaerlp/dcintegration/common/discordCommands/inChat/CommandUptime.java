@@ -24,11 +24,11 @@ public class CommandUptime extends DiscordCommand {
 
     @Override
     public String getDescription() {
-        return "Displays the server uptime";
+        return Configuration.instance().localization.commands.descriptions.uptime;
     }
 
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
-        discord_instance.sendMessage("The server is running for " + MessageUtils.getFullUptime(), cmdMsg.getTextChannel());
+        discord_instance.sendMessage(Configuration.instance().localization.commands.cmdUptime_message.replace("%uptime%", MessageUtils.getFullUptime()), cmdMsg.getTextChannel());
     }
 }

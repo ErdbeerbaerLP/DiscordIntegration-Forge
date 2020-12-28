@@ -2,7 +2,6 @@ package de.erdbeerbaerlp.dcintegration.forge.command;
 
 import com.google.common.base.Preconditions;
 import com.mojang.authlib.GameProfile;
-import de.erdbeerbaerlp.dcintegration.common.discordCommands.inChat.CommandFromCFG;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
@@ -19,18 +18,15 @@ import java.util.UUID;
 public class DCCommandSender extends FakePlayer {
 
     private static final UUID uuid = UUID.fromString(Configuration.instance().commands.senderUUID);
-    private final CommandFromCFG command;
     private final String channelID;
 
-    public DCCommandSender(User user, CommandFromCFG command, String channel) {
+    public DCCommandSender(User user, String channel) {
         super(ServerLifecycleHooks.getCurrentServer().getWorld(World.OVERWORLD), new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
-        this.command = command;
         this.channelID = channel;
     }
 
-    public DCCommandSender(ServerWorld world, String name, CommandFromCFG command, String channel) {
+    public DCCommandSender(ServerWorld world, String name, String channel) {
         super(world, new GameProfile(uuid, "@" + name));
-        this.command = command;
         this.channelID = channel;
     }
 

@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.common;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import de.erdbeerbaerlp.dcintegration.common.api.DiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
@@ -31,6 +32,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 
 public class Discord extends Thread {
@@ -39,6 +42,12 @@ public class Discord extends Thread {
      * Cache file for players which ignore discord chat
      */
     private static final File IGNORED_PLAYERS = new File(Variables.discordDataDir, ".PlayerIgnores");
+    public static final UUID dummyUUID = new UUID(0L, 0L);
+    public final ServerInterface srv;
+    /**
+     * Holds messages recently forwarded to discord in format MessageID,Sender UUID
+     */
+    private final HashMap<String, UUID> recentMessages = new HashMap<>(150);
 
     /**
      * ArrayList with players which ignore the discord chat
@@ -48,7 +57,7 @@ public class Discord extends Thread {
      * Pending /discord link requests
      */
     public final HashMap<Integer, KeyValue<Instant, UUID>> pendingLinks = new HashMap<>();
-    final ServerInterface srv;
+    ArrayList<DiscordEventHandler> eventHandlers = new ArrayList<>();
     /**
      * Pending messages from command sender
      */
@@ -61,12 +70,39 @@ public class Discord extends Thread {
      */
     private JDA jda = null;
     private Thread messageSender, statusUpdater;
+    private DiscordEventListener listener;
 
     public Discord(ServerInterface srv) {
         this.srv = srv;
         setDaemon(true);
         setName("Discord Integration Launch Thread");
         start();
+    }
+
+    public void registerEvent(final DiscordEventHandler handler) {
+        if (!eventHandlers.contains(handler))
+            eventHandlers.add(handler);
+    }
+
+    public void unregisterEvent(final DiscordEventHandler handler) {
+        eventHandlers.remove(handler);
+    }
+
+    private void unregisterAllEvents() {
+        eventHandlers.clear();
+    }
+
+    public void addRecentMessage(String msgID, UUID uuid) {
+        if (recentMessages.size() + 1 >= 150) {
+            do {
+                recentMessages.remove(recentMessages.keySet().toArray(new String[0])[0]);
+            } while (recentMessages.size() + 1 >= 150);
+        }
+        recentMessages.put(msgID, uuid);
+    }
+
+    public UUID getSenderUUIDFromMessageID(String messageID) {
+        return recentMessages.getOrDefault(messageID, dummyUUID);
     }
 
 
@@ -76,7 +112,7 @@ public class Discord extends Thread {
             final JDABuilder b = JDABuilder.createDefault(Configuration.instance().general.botToken);
             b.setAutoReconnect(true);
             b.setEnableShutdownHook(false);
-            b.enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES);
+            b.enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES);
             b.setMemberCachePolicy(MemberCachePolicy.ALL);
             b.setChunkingFilter(ChunkingFilter.ALL);
             try {
@@ -99,7 +135,7 @@ public class Discord extends Thread {
             }
         }
         System.out.println("Bot Ready");
-        jda.addEventListener(new DiscordEventListener());
+        jda.addEventListener(listener = new DiscordEventListener());
 
         if (!PermissionUtil.checkPermission(getChannel(), getChannel().getGuild().getMember(jda.getSelfUser()), Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS, Permission.MESSAGE_MANAGE)) {
             System.err.println("ERROR! Bot does not have all permissions to work!");
@@ -125,13 +161,24 @@ public class Discord extends Thread {
     /**
      * Kills the discord bot
      */
-    public void kill() {
+    public void kill(boolean instant) {
         if (jda != null) {
+            jda.removeEventListener(listener);
             stopThreads();
+            unregisterAllEvents();
             webhookClis.forEach((i, w) -> w.close());
-            jda.shutdownNow();
+            if (instant) jda.shutdownNow();
+            else jda.shutdown();
             jda = null;
+            Variables.discord_instance = null;
         }
+    }
+
+    /**
+     * Kills the discord bot
+     */
+    public void kill() {
+        kill(true);
     }
 
     /**
@@ -142,10 +189,11 @@ public class Discord extends Thread {
     }
 
     /**
-     * @return the specified text channel
+     * @return the specified text channel (supports "default" to return the default server channel
      */
     public TextChannel getChannel(String id) {
         if (jda == null) return null;
+        if (id.equals("default")) id = Configuration.instance().general.botChannel;
         return jda.getTextChannelById(id);
     }
 
@@ -291,23 +339,42 @@ public class Discord extends Thread {
      * @param isChatMessage true to send it as chat message (when not using webhook)
      */
     public void sendMessage(String name, DiscordMessage message, String avatarURL, TextChannel channel, boolean isChatMessage) {
+        sendMessage(name, message, avatarURL, channel, isChatMessage, dummyUUID.toString());
+    }
+
+    /**
+     * Sends an discord message
+     *
+     * @param name          Player name or Webhook user name
+     * @param message       Message to send
+     * @param avatarURL     Avatar URL for the webhook
+     * @param channel       Target channel
+     * @param isChatMessage true to send it as chat message (when not using webhook)
+     * @param uuid          UUID of the player (required for in-game pinging)
+     */
+    public void sendMessage(String name, DiscordMessage message, String avatarURL, TextChannel channel, boolean isChatMessage, String uuid) {
         if (jda == null) return;
         try {
             if (Configuration.instance().webhook.enable) {
                 final WebhookMessageBuilder b = message.buildWebhookMessage();
                 b.setUsername(name);
                 b.setAvatarUrl(avatarURL);
-                getWebhookCli(channel.getId()).send(b.build());
+                getWebhookCli(channel.getId()).send(b.build()).thenAccept((a) -> {
+                    addRecentMessage(a.getId() + "", UUID.fromString(uuid));
+                });
             } else if (isChatMessage) {
                 message.setMessage(Configuration.instance().localization.discordChatMessage.replace("%player%", name).replace("%msg%", message.getMessage()));
-                channel.sendMessage(message.buildMessage()).queue();
+                channel.sendMessage(message.buildMessage()).submit().thenAccept((a) -> {
+                    addRecentMessage(a.getId(), UUID.fromString(uuid));
+                });
             } else {
-                channel.sendMessage(message.buildMessage()).queue();
+                channel.sendMessage(message.buildMessage()).submit().thenAccept((a) -> {
+                    addRecentMessage(a.getId(), UUID.fromString(uuid));
+                });
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -429,7 +496,7 @@ public class Discord extends Thread {
         if (isServerMessage) {
             avatarURL = Configuration.instance().webhook.serverAvatarURL;
         }
-        sendMessage(playerName, msg, avatarURL, channel, !isServerMessage);
+        sendMessage(playerName, msg, avatarURL, channel, !isServerMessage, uuid);
     }
 
     public boolean togglePlayerIgnore(UUID sender) {
@@ -491,6 +558,19 @@ public class Discord extends Thread {
             }
         });
         return ret.get();
+    }
+
+    public boolean callEvent(Function<DiscordEventHandler, Boolean> func) {
+        for (DiscordEventHandler h : eventHandlers) {
+            if (func.apply(h)) return true;
+        }
+        return false;
+    }
+
+    public void callEventC(Consumer<DiscordEventHandler> consumer) {
+        for (DiscordEventHandler h : eventHandlers) {
+            consumer.accept(h);
+        }
     }
 
 

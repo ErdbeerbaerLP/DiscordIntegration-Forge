@@ -1,10 +1,7 @@
 package de.erdbeerbaerlp.dcintegration.common.discordCommands.inChat;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
-import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
@@ -90,15 +87,7 @@ public class CommandFromCFG extends DiscordCommand {
         }
         if (!cmd.contains("%args%")) cmd = cmd + argString;
         else cmd = cmd.replace("%args%", argString.trim());
-        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), this, cmdMsg.getTextChannel().getId());
-        if (s.hasPermissionLevel(4)) {
-            try {
-                ServerLifecycleHooks.getCurrentServer().getCommandManager().getDispatcher().execute(cmd.trim(), s.getCommandSource());
-            } catch (CommandSyntaxException e) {
-                discord_instance.sendMessage(e.getMessage());
-            }
-        } else
-            discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```", cmdMsg.getTextChannel());
+        discord_instance.srv.runMcCommand(cmd, cmdMsg);
     }
 
 }

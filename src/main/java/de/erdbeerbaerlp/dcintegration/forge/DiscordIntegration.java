@@ -2,7 +2,6 @@ package de.erdbeerbaerlp.dcintegration.forge;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
-import de.erdbeerbaerlp.dcintegration.common.api.DiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
@@ -104,21 +103,20 @@ public class DiscordIntegration {
     public void serverSetup(FMLDedicatedServerSetupEvent ev) {
         CommandRegistry.registerDefaultCommandsFromConfig();
         Variables.discord_instance = new Discord(new ForgeServerInterface());
-        if (!Configuration.instance().webhook.enable)
-            try {
-                //Wait a short time to allow JDA to get initiaized
-                System.out.println("Waiting for JDA to initialize to send starting message... (max 5 seconds before skipping)");
-                for (int i = 0; i <= 5; i++) {
-                    if (discord_instance.getJDA() == null) Thread.sleep(1000);
-                    else break;
-                }
-                if (discord_instance.getJDA() != null && !Configuration.instance().localization.serverStarting.isEmpty()) {
-                    Thread.sleep(2000); //Testing if that loads the channels
-                    if (discord_instance.getChannel() != null)
-                        Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting);
-                }
-            } catch (InterruptedException | NullPointerException ignored) {
+        try {
+            //Wait a short time to allow JDA to get initiaized
+            System.out.println("Waiting for JDA to initialize to send starting message... (max 5 seconds before skipping)");
+            for (int i = 0; i <= 5; i++) {
+                if (discord_instance.getJDA() == null) Thread.sleep(1000);
+                else break;
             }
+            if (discord_instance.getJDA() != null && !Configuration.instance().localization.serverStarting.isEmpty()) {
+                Thread.sleep(2000); //Wait for it to cache the channels
+                if (discord_instance.getChannel() != null)
+                    Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting);
+            }
+        } catch (InterruptedException | NullPointerException ignored) {
+        }
     }
 
     @SubscribeEvent
@@ -251,14 +249,13 @@ public class DiscordIntegration {
             }
         });
     }
-
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
-        for (DiscordEventHandler o : Variables.eventHandlers) {
-            if (o instanceof ForgeDiscordEventHandler)
-                if (((ForgeDiscordEventHandler) o).onMcChatMessage(ev))
-                    return;
-        }
+        if (discord_instance.callEvent((e) -> {
+            if (e instanceof ForgeDiscordEventHandler)
+                return ((ForgeDiscordEventHandler) e).onMcChatMessage(ev);
+            return false;
+        })) return;
         String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
         final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(ev.getComponent());
         if (discord_instance != null) {

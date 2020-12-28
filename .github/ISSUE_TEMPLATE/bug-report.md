@@ -21,18 +21,22 @@ assignees: ''
 **Version**
 -
 - [ ] 1.12
-- [ ] 1.14
-- [ ] 1.15
+- [ ] 1.16
 
-Mod version _0.0.0_
+**Platform**
+-
+- [ ] Forge
+- [ ] Spigot
+
+Mod version: 
 
 **Config file**
 -
 *REMOVE YOUR BOT TOKEN BEFORE UPLOADING!!!*
 
-**Crash report if available (use https://paste.dimdev.org)**
+**Crash report if available (use https://hastebin.com)**
 -
 
 **Additional info**
-
 -
+

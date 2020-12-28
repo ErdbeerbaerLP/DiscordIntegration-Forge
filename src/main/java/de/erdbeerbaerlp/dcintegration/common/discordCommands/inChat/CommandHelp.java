@@ -25,12 +25,12 @@ public class CommandHelp extends DiscordCommand {
 
     @Override
     public String getDescription() {
-        return "Displays a list of all commands";
+        return Configuration.instance().localization.commands.descriptions.help;
     }
 
     @Override
     public void execute(String[] args, final MessageReceivedEvent cmdMsg) {
-        StringBuilder out = new StringBuilder(Configuration.instance().localization.cmdHelp_header + " \n```\n");
+        StringBuilder out = new StringBuilder(Configuration.instance().localization.commands.cmdHelp_header + " \n```\n");
         for (final DiscordCommand cmd : CommandRegistry.getCommandList()) {
             if (cmd.canUserExecuteCommand(cmdMsg.getAuthor()) && cmd.includeInHelp() && cmd.worksInChannel(cmdMsg.getTextChannel()))
                 out.append(cmd.getCommandUsage()).append(" - ").append(cmd.getDescription()).append("\n");

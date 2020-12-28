@@ -4,9 +4,6 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -27,7 +24,7 @@ public class LinkCommand extends DMCommand {
 
     @Override
     public String getDescription() {
-        return "Links your Discord account with your Minecraft account";
+        return Configuration.instance().localization.commands.descriptions.link;
     }
 
     @Override
@@ -42,41 +39,42 @@ public class LinkCommand extends DMCommand {
                     }
                 });
                 if (!ok.get()) {
-                    ev.getChannel().sendMessage(Configuration.instance().localization.link_requiredRole).queue();
+                    ev.getChannel().sendMessage(Configuration.instance().localization.linking.link_requiredRole).queue();
                     return;
                 }
             }
         } else {
-            ev.getChannel().sendMessage(Configuration.instance().localization.link_notMember).queue();
+            ev.getChannel().sendMessage(Configuration.instance().localization.linking.link_notMember).queue();
             return;
         }
         if (args.length > 1) {
-            ev.getChannel().sendMessage(Configuration.instance().localization.tooManyArguments).queue();
+            ev.getChannel().sendMessage(Configuration.instance().localization.commands.tooManyArguments).queue();
             return;
         }
         if (args.length < 1) {
-            ev.getChannel().sendMessage(Configuration.instance().localization.notEnoughArguments).queue();
+            ev.getChannel().sendMessage(Configuration.instance().localization.commands.notEnoughArguments).queue();
             return;
         }
         if (!args[0].startsWith(Configuration.instance().commands.prefix))
             try {
                 int num = Integer.parseInt(args[0]);
                 if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
-                    ev.getChannel().sendMessage(Configuration.instance().localization.alreadyLinked.replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
+                    ev.getChannel().sendMessage(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
                     return;
                 }
                 if (discord_instance.pendingLinks.containsKey(num)) {
                     final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), discord_instance.pendingLinks.get(num).getValue());
                     if (linked) {
-                        ev.getChannel().sendMessage(Configuration.instance().localization.linkSuccessful.replace("%name%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
-                        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(discord_instance.pendingLinks.get(num).getValue()).sendMessage(new StringTextComponent("Your account is now linked with " + ev.getAuthor().getAsTag()), Util.DUMMY_UUID);
+                        ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%prefix%", Configuration.instance().commands.prefix).replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
+                        discord_instance.srv.sendMCMessage(Configuration.instance().localization.linking.linkSuccessfulIngame.replace("%name%", ev.getAuthor().getName()).replace("%name#tag%", ev.getAuthor().getAsTag()), discord_instance.pendingLinks.get(num).getValue());
+
                     } else
-                        ev.getChannel().sendMessage(Configuration.instance().localization.linkFailed).queue();
+                        ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkFailed).queue();
                 } else {
-                    ev.getChannel().sendMessage(Configuration.instance().localization.invalidLinkNumber).queue();
+                    ev.getChannel().sendMessage(Configuration.instance().localization.linking.invalidLinkNumber).queue();
                 }
             } catch (NumberFormatException nfe) {
-                ev.getChannel().sendMessage(Configuration.instance().localization.linkNumberNAN).queue();
+                ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkNumberNAN).queue();
             }
     }
 

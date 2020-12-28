@@ -6,5 +6,10 @@ labels: enhancement
 assignees: ''
 
 ---
+**Platform**
+-
+- [ ] Forge
+- [ ] Spigot
 
 **What you want to be added?**
+-

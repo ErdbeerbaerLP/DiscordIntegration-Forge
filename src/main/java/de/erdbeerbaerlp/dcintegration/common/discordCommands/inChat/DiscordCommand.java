@@ -5,8 +5,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
@@ -21,10 +19,6 @@ public abstract class DiscordCommand {
 
     private final String[] EVERYWHERE = new String[]{"00"};
     private final String[] ONLY_IN_BOT_CHANNEL = new String[]{"0"};
-    /**
-     * Instance of {@link MinecraftServer}
-     */
-    final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
     /**
      * The channel ID the command listens to
      */
@@ -55,7 +49,8 @@ public abstract class DiscordCommand {
      */
     public boolean worksInChannel(String channelID) {
         if (Arrays.equals(channelIDs, EVERYWHERE)) return true;
-        if (Arrays.equals(channelIDs, ONLY_IN_BOT_CHANNEL)) return true;
+        if (Arrays.equals(channelIDs, ONLY_IN_BOT_CHANNEL))
+            return channelID.equals(Configuration.instance().general.botChannel);
         return ArrayUtils.contains(channelIDs, channelID);
     }
 
@@ -136,7 +131,7 @@ public abstract class DiscordCommand {
      * @return The message
      */
     public final String getPlayerNotFoundMsg(String playerName) {
-        return Configuration.instance().localization.playerNotFound.replace("%player%", playerName);
+        return Configuration.instance().localization.commands.playerNotFound.replace("%player%", playerName);
     }
 
     public final boolean isConfigCommand() {
