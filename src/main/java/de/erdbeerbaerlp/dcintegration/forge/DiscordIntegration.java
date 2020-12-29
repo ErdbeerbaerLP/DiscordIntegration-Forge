@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discordDataDir;
@@ -159,6 +160,7 @@ public class DiscordIntegration {
                                     .getString()))
                     .replace("\\n", "\n"));
 
+
     }
 
     @SubscribeEvent
@@ -182,23 +184,24 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void command(CommandEvent ev) {
-        String command = ev.getParseResults().getReader().getString();
+        String command = ev.getParseResults().getReader().getString().replaceFirst(Pattern.quote("/"), "");
         if (!Configuration.instance().commandLog.channelID.equals("0")) {
-            discord_instance.sendMessage(Configuration.instance().commandLog.message
-                    .replace("%sender%", ev.getParseResults().getContext().getLastChild().getSource().getName())
-                    .replace("%cmd%", command)
-                    .replace("%cmd-no-args%", command.split(" ")[0]), discord_instance.getChannel(Configuration.instance().commandLog.channelID));
+            if (!ArrayUtils.contains(Configuration.instance().commandLog.ignoredCommands, command.split(" ")[0]))
+                discord_instance.sendMessage(Configuration.instance().commandLog.message
+                        .replace("%sender%", ev.getParseResults().getContext().getLastChild().getSource().getName())
+                        .replace("%cmd%", command)
+                        .replace("%cmd-no-args%", command.split(" ")[0]), discord_instance.getChannel(Configuration.instance().commandLog.channelID));
         }
         if (discord_instance != null) {
             boolean raw = false;
 
-            if (((command.startsWith("/say") || command.startsWith("say")) && Configuration.instance().messages.sendOnSayCommand) || ((command.startsWith("/me") || command.startsWith("me")) && Configuration.instance().messages.sendOnMeCommand)) {
-                String msg = command.replace("/say ", "").replace("/me ", "");
-                if (command.startsWith("say") || command.startsWith("me"))
-                    msg = msg.replaceFirst("say ", "").replaceFirst("me ", "");
-                if (command.startsWith("/me") || command.startsWith("me")) {
+            if (((command.startsWith("say")) && Configuration.instance().messages.sendOnSayCommand) || (command.startsWith("me") && Configuration.instance().messages.sendOnMeCommand)) {
+                String msg = command.replace("say ", "");
+                if (command.startsWith("say"))
+                    msg = msg.replaceFirst("say ", "");
+                if (command.startsWith("me")) {
                     raw = true;
-                    msg = "*" + MessageUtils.escapeMarkdown(msg.trim()) + "*";
+                    msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
                 }
                 try {
                     discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), new DiscordMessage(null, msg, !raw), Configuration.instance().advanced.chatOutputChannelID.equals("default") ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));

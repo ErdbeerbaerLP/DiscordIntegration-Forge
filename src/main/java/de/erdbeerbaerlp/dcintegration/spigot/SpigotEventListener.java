@@ -10,11 +10,15 @@ import de.erdbeerbaerlp.dcintegration.spigot.util.SpigotMessageUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -61,6 +65,68 @@ public class SpigotEventListener implements Listener {
     }
 
     @EventHandler
+    public void onAdvancement(PlayerAdvancementDoneEvent ev) {
+        if (discord_instance != null) {
+            try {
+                final Object adv = ((Object) ev.getAdvancement());
+                final Class<?> test = adv.getClass();
+                final Field h = test.getDeclaredField("handle");
+                h.setAccessible(true);
+                Object handle = h.get(adv);
+                Class<?> handleClass = handle.getClass();
+                final Field d = handleClass.getDeclaredField("display");
+                d.setAccessible(true);
+                Object display = d.get(handle);
+                if (display == null) return;  //Cannot be displayed
+                Class<?> displayClass = display.getClass();
+
+                final Field shouldAnnounceToChat = displayClass.getDeclaredField("g");
+                shouldAnnounceToChat.setAccessible(true);
+                final boolean isVisible = (boolean) shouldAnnounceToChat.get(display);
+
+                final Field titleTxt = displayClass.getDeclaredField("a");
+                titleTxt.setAccessible(true);
+                Object titleTextComp = titleTxt.get(display);
+                Class<?> titleTextCompClass = titleTextComp.getClass();
+
+                final Method getStrTitle = titleTextCompClass.getMethod("getString");
+                getStrTitle.setAccessible(true);
+                String title = (String) getStrTitle.invoke(titleTextComp, new Object[0]);
+
+                final Field descTxt = displayClass.getDeclaredField("b");
+                descTxt.setAccessible(true);
+                Object descTextComp = descTxt.get(display);
+                Class<?> descTextCompClass = descTextComp.getClass();
+
+                final Method getStrDesc = descTextCompClass.getMethod("getString");
+                getStrDesc.setAccessible(true);
+                String description = (String) getStrDesc.invoke(descTextComp, new Object[0]);
+
+                /* //Used for finding the required fields and methods
+                for (Field s : titleTextCompClass.getDeclaredFields()) {
+                    s.setAccessible(true);
+                    System.out.println(s.toString() + " : " + s.get(titleTextComp));
+                }
+                for (Field s : titleTextCompClass.getFields()) {
+                    s.setAccessible(true);
+                    System.out.println(s.toString() + " : " + s.get(titleTextComp));
+                }
+                for (Method m : titleTextCompClass.getMethods()) System.out.println(m.toString());*/
+                discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
+                        MessageUtils.removeFormatting(SpigotMessageUtils.formatPlayerName(ev.getPlayer())))
+                        .replace("%name%",
+                                MessageUtils.removeFormatting(title))
+                        .replace("%desc%",
+                                MessageUtils.removeFormatting(description))
+                        .replace("\\n", "\n"));
+            } catch (IllegalAccessException | NoSuchFieldException | NoSuchMethodException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    @EventHandler
     public void onPlayerLeave(PlayerQuitEvent ev) {
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueId()))
             discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", SpigotMessageUtils.formatPlayerName(ev.getPlayer())));
@@ -74,10 +140,11 @@ public class SpigotEventListener implements Listener {
     public void onCommand(PlayerCommandPreprocessEvent ev) {
         String command = ev.getMessage().replaceFirst(Pattern.quote("/"), "");
         if (!Configuration.instance().commandLog.channelID.equals("0")) {
-            discord_instance.sendMessage(Configuration.instance().commandLog.message
-                    .replace("%sender%", ev.getPlayer().getName())
-                    .replace("%cmd%", command)
-                    .replace("%cmd-no-args%", command.split(" ")[0]), discord_instance.getChannel(Configuration.instance().commandLog.channelID));
+            if (!ArrayUtils.contains(Configuration.instance().commandLog.ignoredCommands, command.split(" ")[0]))
+                discord_instance.sendMessage(Configuration.instance().commandLog.message
+                        .replace("%sender%", ev.getPlayer().getName())
+                        .replace("%cmd%", command)
+                        .replace("%cmd-no-args%", command.split(" ")[0]), discord_instance.getChannel(Configuration.instance().commandLog.channelID));
         }
         if (discord_instance != null) {
             boolean raw = false;

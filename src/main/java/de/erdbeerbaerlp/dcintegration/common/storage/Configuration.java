@@ -290,7 +290,7 @@ public class Configuration {
         public String playerTimeout = "%player% timed out!";
 
         @TomlComment({"Gets sent when an player finishes an advancement", "Supports MulitLined messages using \\n", "", "PLACEHOLDERS:", "%player% - The player's name", "%name% - The advancement name", "%desc% - The advancement description"})
-        public String advancementMessage = "%player% just made the advancement **%name%**\\n_%desc%_";
+        public String advancementMessage = "%player% just made the advancement **%name%**\n_%desc%_";
 
         @TomlComment({"The chat message in discord, sent from an player in-game", "", "PLACEHOLDERS:", "%player% - The player's name", "%msg% - The chat message"})
         public String discordChatMessage = "%player%: %msg%";
@@ -490,8 +490,11 @@ public class Configuration {
         @TomlComment({"Channel ID for the command log channel", "Leave 0 to disable"})
         public String channelID = "0";
 
-        @TomlComment({"The format of the log messages", "", "PLACEHOLDERS:", "%sender% - The name of the Command Source", "%cmd% - executed command (e.g. \"/say Hello World\"", "%cmd-no-args% - Command without arguments (e.g. \"/say\""})
+        @TomlComment({"The format of the log messages", "", "PLACEHOLDERS:", "%sender% - The name of the Command Source", "%cmd% - executed command (e.g. \"say Hello World\"", "%cmd-no-args% - Command without arguments (e.g. \"say\""})
         public String message = "%sender% executed command `%cmd%`";
+
+        @TomlComment("A list of commands that should NOT be logged")
+        public String[] ignoredCommands = new String[]{"list", "help", "?"};
     }
 
     public static class Votifier {
