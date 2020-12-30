@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.0.6",
+    "changelog": "New Features:\nID mentions (<@userid>) from ingame are now visible as name mentions (@SomeUser) after sending\nMoved another hardcoded String into config file\n\nBug Fixes:\nFixed plugin.yml version numbering\nFixed some hover and click events not working on spigot\nFix possible error or crash when not linked\nFix ping sound not working on Forge",
+    "type": "beta"
+  },
+  {
     "version": "2.0.5",
     "changelog": "New Features:\nCommand log can be filtered to exclude commands\n\nBug Fixes:\nFix advancements not working in spigot\nFix default advancement message in config\n\n\n\nNote: This is an alpha version which may contain multiple bugs",
     "type": "alpha"

@@ -42,6 +42,9 @@ public class Discord extends Thread {
      * Cache file for players which ignore discord chat
      */
     private static final File IGNORED_PLAYERS = new File(Variables.discordDataDir, ".PlayerIgnores");
+    /**
+     * Dummy UUID for unknown players or server messages
+     */
     public static final UUID dummyUUID = new UUID(0L, 0L);
     public final ServerInterface srv;
     /**
@@ -79,19 +82,39 @@ public class Discord extends Thread {
         start();
     }
 
+    /**
+     * Registers an event handler
+     *
+     * @param handler Event handler to register
+     */
     public void registerEvent(final DiscordEventHandler handler) {
         if (!eventHandlers.contains(handler))
             eventHandlers.add(handler);
     }
 
+    /**
+     * Unregisters an event handler
+     *
+     * @param handler Event handler to unregister
+     */
     public void unregisterEvent(final DiscordEventHandler handler) {
         eventHandlers.remove(handler);
     }
 
+    /**
+     * Unregisters ALL events handlers from this {@link Discord} instance
+     */
     private void unregisterAllEvents() {
         eventHandlers.clear();
     }
 
+
+    /**
+     * Saves an new Message into the recent messages list
+     *
+     * @param msgID Message ID
+     * @param uuid  Sender UUID
+     */
     public void addRecentMessage(String msgID, UUID uuid) {
         if (recentMessages.size() + 1 >= 150) {
             do {
@@ -101,6 +124,12 @@ public class Discord extends Thread {
         recentMessages.put(msgID, uuid);
     }
 
+    /**
+     * Gets the sender's {@link UUID} from an recently sent message
+     *
+     * @param messageID Message ID to get the {@link UUID} from
+     * @return The sender's {@link UUID}, or {@linkplain Discord#dummyUUID}
+     */
     public UUID getSenderUUIDFromMessageID(String messageID) {
         return recentMessages.getOrDefault(messageID, dummyUUID);
     }
@@ -154,6 +183,12 @@ public class Discord extends Thread {
         }
     }
 
+    /**
+     * Returns the corresponding {@link WebhookClient} for the given Channel ID
+     *
+     * @param channel Channel ID
+     * @return Webhook Client for the Channel ID
+     */
     public WebhookClient getWebhookCli(String channel) {
         return webhookClis.computeIfAbsent(channel, (id) -> WebhookClient.withUrl(getWebhook(getChannel(id)).getUrl()));
     }
@@ -450,6 +485,10 @@ public class Discord extends Thread {
         }
     }
 
+    /**
+     * Gets a list of all personal settings and their descriptions
+     * @return HashMap with the setting keys as key and the setting descriptions as value
+     */
     public HashMap<String, String> getSettings() {
         final HashMap<String, String> out = new HashMap<>();
         final Field[] fields = PlayerSettings.class.getFields();
@@ -499,15 +538,20 @@ public class Discord extends Thread {
         sendMessage(playerName, msg, avatarURL, channel, !isServerMessage, uuid);
     }
 
-    public boolean togglePlayerIgnore(UUID sender) {
-        if (PlayerLinkController.isPlayerLinked(sender)) {
-            final PlayerSettings settings = PlayerLinkController.getSettings(null, sender);
+    /**
+     * Toggles an player's ignore status
+     * @param uuid Player's UUID
+     * @return new ignore status
+     */
+    public boolean togglePlayerIgnore(UUID uuid) {
+        if (PlayerLinkController.isPlayerLinked(uuid)) {
+            final PlayerSettings settings = PlayerLinkController.getSettings(null, uuid);
             settings.ignoreDiscordChatIngame = !settings.ignoreDiscordChatIngame;
-            PlayerLinkController.updatePlayerSettings(null, sender, settings);
+            PlayerLinkController.updatePlayerSettings(null, uuid, settings);
             return !settings.ignoreDiscordChatIngame;
         } else {
-            if (ignoringPlayers.contains(sender)) {
-                ignoringPlayers.remove(sender);
+            if (ignoringPlayers.contains(uuid)) {
+                ignoringPlayers.remove(uuid);
                 try {
                     saveIgnoreList();
                 } catch (IOException e) {
@@ -515,12 +559,17 @@ public class Discord extends Thread {
                 }
                 return true;
             } else {
-                ignoringPlayers.add(sender);
+                ignoringPlayers.add(uuid);
                 return false;
             }
         }
     }
 
+    /**
+     * Generates or gets an unique link number for an player
+     * @param uniqueID The player's {@link UUID} to generate the number for
+     * @return Link number for this player
+     */
     public int genLinkNumber(UUID uniqueID) {
         final AtomicInteger r = new AtomicInteger(-1);
         pendingLinks.forEach((k, v) -> {
@@ -535,6 +584,10 @@ public class Discord extends Thread {
         return r.get();
     }
 
+    /**
+     * Saves the ignore list for unlinked players
+     * @throws IOException
+     */
     private void saveIgnoreList() throws IOException {
         if (!IGNORED_PLAYERS.exists() && !ignoringPlayers.isEmpty()) IGNORED_PLAYERS.createNewFile();
         if (!IGNORED_PLAYERS.exists() && ignoringPlayers.isEmpty()) {
@@ -550,6 +603,11 @@ public class Discord extends Thread {
         w.close();
     }
 
+    /**
+     * Checks if the list of {@link Role}s contains an admin role
+     * @param roles List to check for admin roles
+     * @return true, if the given {@link Role} list has an admin role
+     */
     public boolean hasAdminRole(List<Role> roles) {
         final AtomicBoolean ret = new AtomicBoolean(false);
         roles.forEach((r) -> {
@@ -560,13 +618,21 @@ public class Discord extends Thread {
         return ret.get();
     }
 
+    /**
+     * Calls an event and returns true, if one of the handler returned true
+     * @param func function to run on every event handler
+     * @return if an handler returned true
+     */
     public boolean callEvent(Function<DiscordEventHandler, Boolean> func) {
         for (DiscordEventHandler h : eventHandlers) {
             if (func.apply(h)) return true;
         }
         return false;
     }
-
+    /**
+     * Calls an event and does not return any value
+     * @param consumer function to run on every event handler
+     */
     public void callEventC(Consumer<DiscordEventHandler> consumer) {
         for (DiscordEventHandler h : eventHandlers) {
             consumer.accept(h);

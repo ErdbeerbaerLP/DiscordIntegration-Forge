@@ -1,6 +1,7 @@
 package de.erdbeerbaerlp.dcintegration.common.storage;
 
 import com.google.gson.*;
+import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -17,7 +18,13 @@ public class PlayerLinkController {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private static final JsonParser parser = new JsonParser();
 
-    public static boolean isPlayerLinked(UUID player) throws IllegalStateException {
+
+    /**
+     * Checks if an player has linked their minecraft account with discord
+     * @param player {@link UUID} of the player to check
+     * @return The player's link status
+     */
+    public static boolean isPlayerLinked(UUID player) {
         if (!discord_instance.srv.isOnlineMode()) return false;
         try {
             for (JsonElement e : getJson()) {
@@ -31,7 +38,11 @@ public class PlayerLinkController {
         }
         return false;
     }
-
+    /**
+     * Checks if an user has linked their discord account with minecraft
+     * @param discordID The discord ID to check
+     * @return The user's link status
+     */
     public static boolean isDiscordLinked(String discordID) {
         if (!discord_instance.srv.isOnlineMode()) return false;
         try {
@@ -47,6 +58,11 @@ public class PlayerLinkController {
         return false;
     }
 
+    /**
+     * Gets the linked {@link UUID} of an discord id
+     * @param discordID The Discord ID to get the player {@link UUID}  from
+     * @return Linked player {@link UUID}, or null if the discord user is not linked
+     */
     @Nullable
     public static UUID getPlayerFromDiscord(String discordID) {
         if (!discord_instance.srv.isOnlineMode()) return null;
@@ -63,6 +79,11 @@ public class PlayerLinkController {
         return null;
     }
 
+    /**
+     * Gets the linked discord id of an player {@link UUID}
+     * @param player The player's {@link UUID} to get the discord ID from
+     * @return Linked discord ID, or null if the player is not linked
+     */
     @Nullable
     public static String getDiscordFromPlayer(UUID player) {
         if (!discord_instance.srv.isOnlineMode()) return null;
@@ -79,12 +100,19 @@ public class PlayerLinkController {
         return null;
     }
 
-    public static PlayerSettings getSettings(String discordID, UUID player) {
+    /**
+     * Gets the
+     * @param discordID The discord id to get the settings from, or null if {@code player} is set
+     * @param player The player's {@link UUID} to get the settings from, or null if {@code discordID} is set
+     * @return The {@link PlayerSettings} of the player/discord user, or an default instance of {@link PlayerSettings}, if the user/player is not linked
+     * @throws IllegalArgumentException if both arguments were null or the player
+     */
+    public static PlayerSettings getSettings(@Nullable String discordID, @Nullable UUID player) {
         if (!discord_instance.srv.isOnlineMode()) return new PlayerSettings();
         if (player == null && discordID == null) throw new IllegalArgumentException();
         else if (discordID == null) discordID = getDiscordFromPlayer(player);
         else if (player == null) player = getPlayerFromDiscord(discordID);
-        if (player == null || discordID == null) throw new IllegalArgumentException();
+        if (player == null || discordID == null) return new PlayerSettings();
         try {
             for (JsonElement e : getJson()) {
                 final PlayerLink o = gson.fromJson(e, PlayerLink.class);
@@ -100,7 +128,8 @@ public class PlayerLinkController {
 
     /**
      * Only to be used for migration<br>
-     * Does not add role and nothing, only saves link into json
+     * Does not add role and nothing, only saves link into json<br><br>
+     * Use {@linkplain PlayerLinkController#linkPlayer(String, UUID)} for linking instead
      */
     public static void migrateLinkPlayer(String discordID, UUID player) {
         try {
@@ -115,12 +144,19 @@ public class PlayerLinkController {
         }
     }
 
+    /**
+     * Links an discord user ID with an player's {@link UUID}
+     * @param discordID Discord ID to link
+     * @param player {@link UUID} to link
+     * @return true, if linking was successful
+     * @throws IllegalArgumentException if one side is already linked
+     */
     public static boolean linkPlayer(String discordID, UUID player) throws IllegalArgumentException {
         if (!discord_instance.srv.isOnlineMode()) return false;
         if (isDiscordLinked(discordID) || isPlayerLinked(player))
             throw new IllegalArgumentException("One link side already exists");
         try {
-            if (PlayerLinkController.getNameFromUUID(player) == null) return false;
+            if (MessageUtils.getNameFromUUID(player) == null) return false;
             final JsonArray a = getJson();
             final PlayerLink link = new PlayerLink();
             link.discordID = discordID;
@@ -143,7 +179,15 @@ public class PlayerLinkController {
         return false;
     }
 
-    public static boolean updatePlayerSettings(String discordID, UUID player, PlayerSettings s) {
+    /**
+     * Updates and saves personal settings
+     * @param discordID The discord id to set the settings for, or null if {@code player} is set
+     * @param player The player's {@link UUID} to set the settings for, or null if {@code discordID} is set
+     * @param settings The {@link PlayerSettings} instance to save
+     * @return true, if saving was successful
+     * @throws NullPointerException if player/user is not linked
+     */
+    public static boolean updatePlayerSettings(@Nullable String discordID, @Nullable UUID player, PlayerSettings settings) {
         if (!discord_instance.srv.isOnlineMode()) return false;
         if (player == null && discordID == null) throw new NullPointerException();
         else if (discordID == null) discordID = getDiscordFromPlayer(player);
@@ -161,7 +205,7 @@ public class PlayerLinkController {
                     }
                 }
                 if (link == null) return false;
-                link.settings = s;
+                link.settings = settings;
                 a.add(gson.toJsonTree(link));
                 saveJSON(a);
                 return true;
@@ -171,12 +215,23 @@ public class PlayerLinkController {
         return false;
     }
 
+    /**
+     * Writes player links and settings into the json file
+     * @param a Json to save
+     * @throws IOException
+     */
     private static void saveJSON(JsonArray a) throws IOException {
         try (Writer writer = new FileWriter(playerLinkedFile)) {
             gson.toJson(a, writer);
         }
     }
 
+    /**
+     * Unlinks an player and discord id
+     * @param discordID The discord ID to unlink
+     * @param player The player's {@link UUID} to unlink
+     * @return true, if unlinking was successful
+     */
     public static boolean unlinkPlayer(String discordID, UUID player) {
         if (!discord_instance.srv.isOnlineMode()) return false;
         if (!isDiscordLinked(discordID) && !isPlayerLinked(player)) return false;
@@ -203,6 +258,13 @@ public class PlayerLinkController {
         return false;
     }
 
+    /**
+     * Gets the {@link PlayerLink} instance of the link
+     * @param discordID The discord ID of the link
+     * @param player The player {@link UUID} of the link
+     * @return The {@link PlayerLink} instance
+     * @throws IOException
+     */
     private static PlayerLink getUser(String discordID, UUID player) throws IOException {
         if (!discord_instance.srv.isOnlineMode()) return null;
         final JsonArray a = getJson();
@@ -214,6 +276,12 @@ public class PlayerLinkController {
         return null;
     }
 
+    /**
+     * Loads links and settings from json into an {@link JsonArray}
+     * @return {@link JsonArray} containing links and settings
+     * @throws IOException
+     * @throws IllegalStateException
+     */
     private static JsonArray getJson() throws IOException, IllegalStateException {
         if (!playerLinkedFile.exists()) {
             playerLinkedFile.createNewFile();
@@ -240,12 +308,6 @@ public class PlayerLinkController {
             e.printStackTrace();
         }
         return new PlayerLink[0];
-    }
-
-    @Nullable
-    public static String getNameFromUUID(UUID uuid) {
-        final String name = discord_instance.srv.getNameFromUUID(uuid);
-        return name.isEmpty() ? null : name;
     }
 
 }

@@ -9,9 +9,9 @@ import java.util.concurrent.CompletableFuture;
 public class Variables {
 
     /**
-     * Mod version
+     * Mod/Plugin version
      */
-    public static final String VERSION = "2.0.5";
+    public static final String VERSION = "2.0.6";
     /**
      * Discord Integration data directory
      */

@@ -19,6 +19,10 @@ public class UpdateChecker {
     public static final String updateCheckerURL = "https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.16/update_checker.json";
     private static final JsonParser p = new JsonParser();
 
+
+    /**
+     * Checks for updates and prints the
+     */
     public static void runUpdateCheck() {
         if (!Configuration.instance().general.enableUpdateChecker) return;
         final StringBuilder changelog = new StringBuilder();

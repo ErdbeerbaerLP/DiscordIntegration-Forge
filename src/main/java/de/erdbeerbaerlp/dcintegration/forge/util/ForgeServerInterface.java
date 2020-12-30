@@ -3,7 +3,6 @@ package de.erdbeerbaerlp.dcintegration.forge.util;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.vdurmont.emoji.EmojiParser;
 import de.erdbeerbaerlp.dcintegration.common.DiscordEventListener;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
@@ -12,7 +11,6 @@ import de.erdbeerbaerlp.dcintegration.common.util.ServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer;
-import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageReaction;
@@ -22,16 +20,16 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.command.arguments.ComponentArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.play.server.SPlaySoundPacket;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
 
@@ -58,8 +56,9 @@ public class ForgeServerInterface extends ServerInterface {
                     final ITextComponent comp = ComponentArgument.component().parse(new StringReader(jsonComp));
                     p.sendMessage(comp, Util.DUMMY_UUID);
                     if (ping.getKey()) {
-                        if (PlayerLinkController.getSettings(null, p.getUniqueID()).pingSound)
-                            p.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1, 1);
+                        if (PlayerLinkController.getSettings(null, p.getUniqueID()).pingSound) {
+                            p.connection.sendPacket(new SPlaySoundPacket(SoundEvents.BLOCK_NOTE_BLOCK_PLING.getRegistryName(), SoundCategory.MASTER, new Vector3d(p.getPosX(), p.getPosY(), p.getPosZ()), 1, 1));
+                        }
                     }
                 }
             }
@@ -76,14 +75,14 @@ public class ForgeServerInterface extends ServerInterface {
     public void sendMCReaction(Member member, RestAction<Message> retrieveMessage, UUID targetUUID, MessageReaction.ReactionEmote reactionEmote) {
         final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         for (final ServerPlayerEntity p : l) {
-            if (p.getUniqueID().equals(targetUUID) && !Variables.discord_instance.ignoringPlayers.contains(p.getUniqueID()) && !(PlayerLinkController.isPlayerLinked(p.getUniqueID()) && PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame)) {
+            if (p.getUniqueID().equals(targetUUID) && !Variables.discord_instance.ignoringPlayers.contains(p.getUniqueID()) && !PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame && !PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreReactions) {
 
-                final String emote = reactionEmote.isEmote() ? ":" + reactionEmote.getEmote().getName() + ":" : reactionEmote.getEmoji();
+                final String emote = reactionEmote.isEmote() ? ":" + reactionEmote.getEmote().getName() + ":" : MessageUtils.formatEmoteMessage(new ArrayList<>(), reactionEmote.getEmoji());
                 String outMsg = Configuration.instance().localization.reactionMessage.replace("%name%", member.getEffectiveName()).replace("%name2%", member.getUser().getAsTag()).replace("%emote%", emote);
                 if (Configuration.instance().localization.reactionMessage.contains("%msg%"))
                     retrieveMessage.submit().thenAccept((m) -> {
                         String outMsg2 = outMsg.replace("%msg%", m.getContentDisplay());
-                        sendReactionMCMessage(p, formatEmoteMessage(m.getEmotes(), outMsg2));
+                        sendReactionMCMessage(p, ForgeMessageUtils.formatEmoteMessage(m.getEmotes(), outMsg2));
                     });
                 else sendReactionMCMessage(p, outMsg);
             }
@@ -134,16 +133,6 @@ public class ForgeServerInterface extends ServerInterface {
             e.printStackTrace();
         }
     }
-
-    @Override
-    public String formatEmoteMessage(List<Emote> emotes, String msg) {
-        msg = EmojiParser.parseToAliases(msg);
-        for (final Emote e : emotes) {
-            msg = msg.replace(e.toString(), ":" + e.getName() + ":");
-        }
-        return msg;
-    }
-
     @Override
     public String getNameFromUUID(UUID uuid) {
         return ServerLifecycleHooks.getCurrentServer().getMinecraftSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();

@@ -40,11 +40,11 @@ public class McCommandDiscord {
         })).then(Commands.literal("link").executes((ctx) -> {
             if (Configuration.instance().linking.enableLinking && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode() && !Configuration.instance().linking.whitelistMode) {
                 if (PlayerLinkController.isPlayerLinked(ctx.getSource().asPlayer().getUniqueID())) {
-                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + "You are already linked with " + Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getDiscordFromPlayer(ctx.getSource().asPlayer().getUniqueID()))), false);
+                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getDiscordFromPlayer(ctx.getSource().asPlayer().getUniqueID()))), false);
                     return 0;
                 }
                 final int r = Variables.discord_instance.genLinkNumber(ctx.getSource().asPlayer().getUniqueID());
-                ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent("Send this number as an direct message to the bot to link your account: " + r + "\nThis number will expire after 10 minutes"), Style.EMPTY.setFormatting(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, r + "")).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Click to copy number to clipboard")))), false);
+                ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", Configuration.instance().commands.prefix)), Style.EMPTY.setFormatting(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, Configuration.instance().commands.prefix + "link " + r)).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))), false);
             } else {
                 ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Configuration.instance().localization.commands.subcommandDisabled), false);
             }

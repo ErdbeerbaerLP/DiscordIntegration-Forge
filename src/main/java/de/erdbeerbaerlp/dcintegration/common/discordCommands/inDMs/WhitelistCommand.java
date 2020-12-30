@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.common.discordCommands.inDMs;
 
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
+import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
@@ -48,7 +49,7 @@ public class WhitelistCommand extends DMCommand {
             return;
         }
         if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
-            ev.getChannel().sendMessage(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
+            ev.getChannel().sendMessage(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", MessageUtils.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
             return;
         }
         if (args.length > 1) {
@@ -69,7 +70,7 @@ public class WhitelistCommand extends DMCommand {
             u = UUID.fromString(s);
             final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), u);
             if (linked)
-                ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%name%", PlayerLinkController.getNameFromUUID(u))).queue();
+                ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%name%", MessageUtils.getNameFromUUID(u))).queue();
             else
                 ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkFailed).queue();
         } catch (IllegalArgumentException e) {

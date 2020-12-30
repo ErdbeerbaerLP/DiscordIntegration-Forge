@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.common.discordCommands.inDMs;
 
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
+import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
@@ -59,13 +60,13 @@ public class LinkCommand extends DMCommand {
             try {
                 int num = Integer.parseInt(args[0]);
                 if (PlayerLinkController.isDiscordLinked(ev.getAuthor().getId())) {
-                    ev.getChannel().sendMessage(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
+                    ev.getChannel().sendMessage(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", MessageUtils.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
                     return;
                 }
                 if (discord_instance.pendingLinks.containsKey(num)) {
                     final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), discord_instance.pendingLinks.get(num).getValue());
                     if (linked) {
-                        ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%prefix%", Configuration.instance().commands.prefix).replace("%player%", PlayerLinkController.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
+                        ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%prefix%", Configuration.instance().commands.prefix).replace("%player%", MessageUtils.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
                         discord_instance.srv.sendMCMessage(Configuration.instance().localization.linking.linkSuccessfulIngame.replace("%name%", ev.getAuthor().getName()).replace("%name#tag%", ev.getAuthor().getAsTag()), discord_instance.pendingLinks.get(num).getValue());
 
                     } else

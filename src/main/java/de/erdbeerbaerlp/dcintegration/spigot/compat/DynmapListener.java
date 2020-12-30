@@ -8,6 +8,7 @@ import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.dynmap.DynmapCommonAPI;
 import org.dynmap.DynmapWebChatEvent;
@@ -16,12 +17,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 public class DynmapListener extends DiscordEventHandler implements Listener {
-    @EventHandler
-    public void onDynmapChat(DynmapWebChatEvent event) {
 
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDynmapChat(DynmapWebChatEvent event) {
         Variables.discord_instance.sendMessage(Variables.discord_instance.getChannel(Configuration.instance().dynmap.dynmapChannelID), Configuration.instance().dynmap.dcMessage.replace("%msg%", event.getMessage()).replace("%sender%", event.getName().isEmpty() ? Configuration.instance().dynmap.unnamed : event.getName()), Configuration.instance().dynmap.avatarURL, Configuration.instance().dynmap.name);
     }
-
 
     @Override
     public boolean onDiscordPrivateMessage(MessageReceivedEvent event) {

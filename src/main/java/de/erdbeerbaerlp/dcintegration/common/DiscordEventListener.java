@@ -127,7 +127,7 @@ public class DiscordEventListener implements EventListener {
                     } else if (ev.getChannel().getId().equals(Configuration.instance().advanced.chatInputChannelID.equals("default") ? dc.getChannel().getId() : Configuration.instance().advanced.chatInputChannelID)) {
                         final List<MessageEmbed> embeds = ev.getMessage().getEmbeds();
                         String msg = ev.getMessage().getContentDisplay();
-                        msg = dc.srv.formatEmoteMessage(ev.getMessage().getEmotes(), msg);
+                        msg = MessageUtils.formatEmoteMessage(ev.getMessage().getEmotes(), msg);
                         Component attachmentComponent = Component.newline();
                         if (!ev.getMessage().getAttachments().isEmpty())
                             attachmentComponent.append(Component.text("Attachments:").decorate(TextDecoration.UNDERLINED));
@@ -162,7 +162,7 @@ public class DiscordEventListener implements EventListener {
                         final Component test = Component.text((ev.getMember() != null ? ev.getMember().getEffectiveName() : ev.getAuthor().getName()))
                                 .style(Style.style(TextColor.color(memberColor))
                                         .clickEvent(ClickEvent.suggestCommand("<@" + ev.getAuthor().getId() + ">"))
-                                        .hoverEvent(HoverEvent.showText(Component.text("Sent by Discord user @\0" + ev.getAuthor().getAsTag()))));
+                                        .hoverEvent(HoverEvent.showText(Component.text(Configuration.instance().localization.discordMessageHover.replace("%user#tag%", ev.getAuthor().getAsTag()).replace("%user%",ev.getMember()==null?ev.getAuthor().getName():ev.getMember().getEffectiveName()).replace("%id%",ev.getAuthor().getId())))));
                         final TextReplacementConfig userReplacer = MessageUtils.replaceLiteral("%user%", test);
                         out = out.replaceText(userReplacer).replaceText(idReplacer).replaceText(msgReplacer);
                         out.append(attachmentComponent);

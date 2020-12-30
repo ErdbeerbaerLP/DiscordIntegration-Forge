@@ -156,6 +156,10 @@ public class DiscordIntegration extends JavaPlugin {
         final PluginCommand cmd = getServer().getPluginCommand("discord");
         cmd.setExecutor(new McDiscordCommand());
         cmd.setTabCompleter(new McDiscordCommand.TabCompleter());
+
+
+        bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
+        bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
     }
 
     @Override

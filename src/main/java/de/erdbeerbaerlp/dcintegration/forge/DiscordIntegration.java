@@ -14,10 +14,9 @@ import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.mixin.MixinNetHandlerPlayServer;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.ITextComponent;
@@ -254,16 +253,25 @@ public class DiscordIntegration {
     }
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
+        final ITextComponent msg = ev.getComponent();
         if (discord_instance.callEvent((e) -> {
-            if (e instanceof ForgeDiscordEventHandler)
+            if (e instanceof ForgeDiscordEventHandler) {
                 return ((ForgeDiscordEventHandler) e).onMcChatMessage(ev);
+            }
             return false;
         })) return;
+
         String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
-        final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(ev.getComponent());
+        final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
         if (discord_instance != null) {
-            discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUniqueID().toString(), new DiscordMessage(embed, text, true), Configuration.instance().advanced.chatOutputChannelID.equals("default") ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
+            TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
+            discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUniqueID().toString(), new DiscordMessage(embed, text, true), channel);
+            final String json = ITextComponent.Serializer.toJson(msg);
+            Component comp = GsonComponentSerializer.gson().deserialize(json);
+            final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp,channel.getGuild()));
+            ev.setComponent(ITextComponent.Serializer.getComponentFromJson(editedJson));
         }
+
     }
 
     @SubscribeEvent

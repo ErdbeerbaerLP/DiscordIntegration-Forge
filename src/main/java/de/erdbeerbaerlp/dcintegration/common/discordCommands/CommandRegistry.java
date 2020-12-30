@@ -23,6 +23,9 @@ public class CommandRegistry {
      */
     private static List<DiscordCommand> commands = new ArrayList<>();
 
+    /**
+     * Registers all default commands and custom commands from config
+     */
     public static void registerDefaultCommandsFromConfig() {
         if (Configuration.instance().commands.helpCmdEnabled)
             registerCommand(new CommandHelp());
@@ -42,6 +45,9 @@ public class CommandRegistry {
         registerConfigCommands();
     }
 
+    /**
+     * Registers all custom commands from config
+     */
     public static void registerConfigCommands() {
         final JsonObject commandJson = new JsonParser().parse(Configuration.instance().commands.customCommandJSON).getAsJsonObject();
         System.out.println("Detected to load " + commandJson.size() + " commands to load from config");
@@ -99,6 +105,9 @@ public class CommandRegistry {
         }
     }
 
+    /**
+     * Attempts to reload all commands
+     */
     public static void reRegisterAllCommands() {
         final List<DiscordCommand> cmds = commands;
         System.out.println("Reloading " + cmds.size() + " commands");

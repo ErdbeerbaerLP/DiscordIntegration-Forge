@@ -265,6 +265,9 @@ public class Configuration {
         @TomlComment({"This is what will be displayed ingame when someone types into the bot's channel", "PLACEHOLDERS:", "%user% - The username", "%id% - The user ID", "%msg% - The Message"})
         public String ingame_discordMessage = "\u00a76[\u00a75DISCORD\u00a76]\u00a7r <%user%> %msg%";
 
+        @TomlComment({"Message shown when hovering over the username of an discord message","PLACEHOLDERS:", "%user% - The username/nickname (Someone123)","%user% - The username with tag (someone#0001)", "%id% - The user ID","","NOTE: using an @ here can cause ping sounds ingame"})
+        public String discordMessageHover = "\u00a73Sent by Discord user %user#tag%\n\u00a7aClick to mention";
+
         @TomlComment("This message will edited in / sent when the server finished starting")
         public String serverStarted = "Server Started!";
 

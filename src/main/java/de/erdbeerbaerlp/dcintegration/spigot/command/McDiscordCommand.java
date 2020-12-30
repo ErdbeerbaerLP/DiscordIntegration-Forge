@@ -4,8 +4,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.TextColors;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
-import de.erdbeerbaerlp.dcintegration.spigot.DiscordIntegration;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import de.erdbeerbaerlp.dcintegration.spigot.util.SpigotMessageUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -29,48 +28,47 @@ public class McDiscordCommand implements CommandExecutor {
             return true;
         }
         final Player p = (Player) sender;
-        final BukkitAudiences bukkitAudiences = BukkitAudiences.create(DiscordIntegration.INSTANCE);
         if (args.length == 0) {
-            bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().ingameCommand.message).style(Style.empty().clickEvent(ClickEvent.openUrl(Configuration.instance().ingameCommand.inviteURL)).hoverEvent(HoverEvent.showText(Component.text(Configuration.instance().ingameCommand.hoverMessage)))));
+            p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().ingameCommand.message).style(Style.empty().clickEvent(ClickEvent.openUrl(Configuration.instance().ingameCommand.inviteURL)).hoverEvent(HoverEvent.showText(Component.text(Configuration.instance().ingameCommand.hoverMessage))))));
         } else if (args.length == 1) {
             switch (args[0].toLowerCase()) {
                 case "link":
                     if (Configuration.instance().linking.enableLinking && Variables.discord_instance.srv.isOnlineMode() && !Configuration.instance().linking.whitelistMode) {
                         if (PlayerLinkController.isPlayerLinked(p.getUniqueId())) {
-                            bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getDiscordFromPlayer(p.getUniqueId()))).style(Style.style(TextColors.of(Color.RED))));
+                            p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getDiscordFromPlayer(p.getUniqueId()))).style(Style.style(TextColors.of(Color.RED)))));
                             break;
                         }
                         final int r = Variables.discord_instance.genLinkNumber(p.getUniqueId());
-                        bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", Configuration.instance().commands.prefix)).style(Style.style(TextColors.of(Color.ORANGE)).clickEvent(ClickEvent.copyToClipboard(Configuration.instance().commands.prefix + "link " + r)).hoverEvent(HoverEvent.showText(Component.text(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))));
+                        p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", Configuration.instance().commands.prefix)).style(Style.style(TextColors.of(Color.ORANGE)).clickEvent(ClickEvent.copyToClipboard(Configuration.instance().commands.prefix + "link " + r)).hoverEvent(HoverEvent.showText(Component.text(Configuration.instance().localization.linking.hoverMsg_copyClipboard))))));
                     } else {
-                        bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().localization.commands.subcommandDisabled).style(Style.style(TextColors.of(Color.RED))));
+                        p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.commands.subcommandDisabled).style(Style.style(TextColors.of(Color.RED)))));
                     }
                     break;
                 case "ignore":
-                    bukkitAudiences.player(p).sendMessage(Component.text(Variables.discord_instance.togglePlayerIgnore(p.getUniqueId()) ? Configuration.instance().localization.commands.commandIgnore_unignore : Configuration.instance().localization.commands.commandIgnore_ignore));
+                    p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Variables.discord_instance.togglePlayerIgnore(p.getUniqueId()) ? Configuration.instance().localization.commands.commandIgnore_unignore : Configuration.instance().localization.commands.commandIgnore_ignore)));
                     break;
                 case "restart":
                     if (p.hasPermission("dcintegration.admin"))
                         new Thread(() -> {
                             if (Variables.discord_instance.restart())
-                                bukkitAudiences.player(p).sendMessage(Component.text("Discord Bot restarted"));
+                                p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text("Discord Bot restarted")));
                             else
-                                bukkitAudiences.player(p).sendMessage(Component.text("Failed to properly restart the discord bot!").style(Style.style(TextColors.of(Color.RED))));
+                                p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text("Failed to properly restart the discord bot!").style(Style.style(TextColors.of(Color.RED)))));
                         }).start();
                     else
-                        bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().localization.commands.noPermission).style(Style.style(TextColors.of(Color.RED))));
+                        p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.commands.noPermission).style(Style.style(TextColors.of(Color.RED)))));
                     break;
                 case "reload":
                     if (p.hasPermission("dcintegration.admin")) {
                         Configuration.instance().loadConfig();
-                        bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().localization.commands.configReloaded));
+                        p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.commands.configReloaded)));
                     } else {
-                        bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().localization.commands.noPermission).style(Style.style(TextColors.of(Color.RED))));
+                        p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.commands.noPermission).style(Style.style(TextColors.of(Color.RED)))));
                     }
                     break;
             }
         } else {
-            bukkitAudiences.player(p).sendMessage(Component.text(Configuration.instance().localization.commands.tooManyArguments).style(Style.style(TextColors.of(Color.RED))));
+            p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.commands.tooManyArguments).style(Style.style(TextColors.of(Color.RED)))));
         }
         return true;
     }
