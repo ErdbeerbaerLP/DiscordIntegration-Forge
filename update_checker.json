@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.0.7",
+    "changelog": "Bug Fixes:\nFix command log channel in DiscordSRV migration",
+    "type": "beta"
+  },
+  {
     "version": "2.0.6",
     "changelog": "New Features:\nID mentions (<@userid>) from ingame are now visible as name mentions (@SomeUser) after sending\nMoved another hardcoded String into config file\n\nBug Fixes:\nFixed plugin.yml version numbering\nFixed some hover and click events not working on spigot\nFix possible error or crash when not linked\nFix ping sound not working on Forge",
     "type": "beta"

@@ -74,6 +74,7 @@ public class DiscordIntegration extends JavaPlugin {
                 conf.general.botChannel = channels.get("global") == null ? conf.advanced.deathsChannelID : channels.getString("global");
                 conf.advanced.deathsChannelID = channels.get("deaths") == null ? conf.advanced.deathsChannelID : channels.getString("deaths");
                 conf.commandLog.channelID = cfg.getString("DiscordConsoleChannelId", conf.commandLog.channelID);
+                if(conf.commandLog.channelID.equals("000000000000000000")) conf.commandLog.channelID = "0";
                 conf.webhook.enable = cfg.getBoolean("Experiment_WebhookChatMessageDelivery", conf.webhook.enable);
                 if (!cfg.getStringList("DiscordGameStatus").isEmpty())
                     conf.general.botStatusName = cfg.getStringList("DiscordGameStatus").get(0);
@@ -159,7 +160,7 @@ public class DiscordIntegration extends JavaPlugin {
 
 
         bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
-        bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
+        bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
     }
 
     @Override
