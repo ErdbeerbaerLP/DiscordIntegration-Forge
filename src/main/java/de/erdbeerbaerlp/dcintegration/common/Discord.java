@@ -87,7 +87,7 @@ public class Discord extends Thread {
      *
      * @param handler Event handler to register
      */
-    public void registerEvent(final DiscordEventHandler handler) {
+    public void registerEventHandler(final DiscordEventHandler handler) {
         if (!eventHandlers.contains(handler))
             eventHandlers.add(handler);
     }
@@ -97,14 +97,14 @@ public class Discord extends Thread {
      *
      * @param handler Event handler to unregister
      */
-    public void unregisterEvent(final DiscordEventHandler handler) {
+    public void unregisterEventHandler(final DiscordEventHandler handler) {
         eventHandlers.remove(handler);
     }
 
     /**
      * Unregisters ALL events handlers from this {@link Discord} instance
      */
-    private void unregisterAllEvents() {
+    private void unregisterAllEventHandlers() {
         eventHandlers.clear();
     }
 
@@ -200,7 +200,7 @@ public class Discord extends Thread {
         if (jda != null) {
             jda.removeEventListener(listener);
             stopThreads();
-            unregisterAllEvents();
+            unregisterAllEventHandlers();
             webhookClis.forEach((i, w) -> w.close());
             if (instant) jda.shutdownNow();
             else jda.shutdown();

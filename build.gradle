@@ -37,7 +37,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.0.7"
+version = "2.0.8"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration"
 
@@ -215,6 +215,9 @@ dependencies {
     //SLF4J Simple Binding
     embed group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
 
+    //Dynmap
+    compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
+
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.16.4-35.0.3'
@@ -227,10 +230,11 @@ dependencies {
         transitive = false
     }
 
-    //Dynmap
+    //Dynmap-Bukkit for workaround
     compileOnly('com.github.webbukkit.dynmap:dynmap-api:3.1-beta-5'){
         transitive = false
     }
+
 }
 
 

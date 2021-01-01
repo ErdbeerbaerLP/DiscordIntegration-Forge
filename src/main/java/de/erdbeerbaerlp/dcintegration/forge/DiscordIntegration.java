@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.forge;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
+import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
@@ -31,6 +32,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.InterModComms;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
@@ -42,6 +44,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dynmap.DynmapCommonAPIListener;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -179,6 +182,9 @@ public class DiscordIntegration {
             discord_instance.startThreads();
         }
         UpdateChecker.runUpdateCheck();
+        if(ModList.get().getModContainerById("dynmap").isPresent()){
+            DynmapCommonAPIListener.register(new DynmapListener());
+        }
     }
 
     @SubscribeEvent

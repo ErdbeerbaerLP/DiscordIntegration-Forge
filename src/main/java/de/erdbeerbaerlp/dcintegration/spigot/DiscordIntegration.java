@@ -4,13 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
+import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
 import de.erdbeerbaerlp.dcintegration.spigot.bstats.Metrics;
 import de.erdbeerbaerlp.dcintegration.spigot.command.McDiscordCommand;
-import de.erdbeerbaerlp.dcintegration.spigot.compat.DynmapListener;
+import de.erdbeerbaerlp.dcintegration.spigot.compat.DynmapWorkaroundListener;
 import de.erdbeerbaerlp.dcintegration.spigot.compat.VotifierEventListener;
 import de.erdbeerbaerlp.dcintegration.spigot.util.SpigotServerInterface;
 import org.bukkit.command.PluginCommand;
@@ -19,6 +20,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.dynmap.DynmapCommonAPIListener;
 
 import java.io.File;
 import java.io.FileReader;
@@ -40,6 +42,7 @@ public class DiscordIntegration extends JavaPlugin {
      * Used to detect plugin reloads in onEnable
      */
     private boolean active = false;
+    public DynmapListener dynmapListener;
 
     @Override
     public void onLoad() {
@@ -134,25 +137,14 @@ public class DiscordIntegration extends JavaPlugin {
     @Override
     public void onEnable() {
         if (!active && discord_instance == null) loadDiscordInstance(); //In case of /reload or similar
-        System.out.println("Started");
-        started = new Date().getTime();
-        if (discord_instance != null)
-            if (startingMsg != null) {
-                startingMsg.thenAccept((a) -> a.editMessage(Configuration.instance().localization.serverStarted).queue());
-            } else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
-        if (discord_instance != null) {
-            discord_instance.startThreads();
-        }
-        UpdateChecker.runUpdateCheck();
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new SpigotEventListener(), this);
         if (pm.getPlugin("Votifier") != null) {
             pm.registerEvents(new VotifierEventListener(), this);
         }
         if (pm.getPlugin("dynmap") != null) {
-            final DynmapListener l = new DynmapListener();
-            pm.registerEvents(l, this);
-            discord_instance.registerEvent(l);
+            DynmapCommonAPIListener.register(dynmapListener = new DynmapListener(true));
+            pm.registerEvents(new DynmapWorkaroundListener(),this);
         }
         final PluginCommand cmd = getServer().getPluginCommand("discord");
         cmd.setExecutor(new McDiscordCommand());
@@ -161,6 +153,20 @@ public class DiscordIntegration extends JavaPlugin {
 
         bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
         bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
+
+        //Run only after server is started
+        getServer().getScheduler().scheduleSyncDelayedTask(this,()->{
+            System.out.println("Started");
+            started = new Date().getTime();
+            if (discord_instance != null)
+                if (startingMsg != null) {
+                    startingMsg.thenAccept((a) -> a.editMessage(Configuration.instance().localization.serverStarted).queue());
+                } else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
+            if (discord_instance != null) {
+                discord_instance.startThreads();
+            }
+            UpdateChecker.runUpdateCheck();
+        },80);
     }
 
     @Override
@@ -174,6 +180,9 @@ public class DiscordIntegration extends JavaPlugin {
         if (discord_instance != null) {
             discord_instance.sendMessage(Configuration.instance().localization.serverStopped);
             discord_instance.kill(false);
+            if (getServer().getPluginManager().getPlugin("dynmap") != null && dynmapListener != null) {
+                DynmapCommonAPIListener.unregister(dynmapListener);
+            }
         }
         HandlerList.unregisterAll(this);
     }
