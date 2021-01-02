@@ -44,7 +44,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.dynmap.DynmapCommonAPIListener;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -183,7 +182,7 @@ public class DiscordIntegration {
         }
         UpdateChecker.runUpdateCheck();
         if(ModList.get().getModContainerById("dynmap").isPresent()){
-            DynmapCommonAPIListener.register(new DynmapListener());
+            new DynmapListener().register();
         }
     }
 
