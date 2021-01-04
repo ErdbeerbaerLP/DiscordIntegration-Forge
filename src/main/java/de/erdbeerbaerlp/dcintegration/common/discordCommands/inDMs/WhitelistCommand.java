@@ -70,7 +70,7 @@ public class WhitelistCommand extends DMCommand {
             u = UUID.fromString(s);
             final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), u);
             if (linked)
-                ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%name%", MessageUtils.getNameFromUUID(u))).queue();
+                ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%prefix%", Configuration.instance().commands.prefix).replace("%player%", MessageUtils.getNameFromUUID(u))).queue();
             else
                 ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkFailed).queue();
         } catch (IllegalArgumentException e) {
