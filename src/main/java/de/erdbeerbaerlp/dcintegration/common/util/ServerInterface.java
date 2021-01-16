@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.kyori.adventure.text.Component;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -25,7 +27,7 @@ public abstract class ServerInterface {
      * Sends an {@link Component} as ingame message to all players who are not ignoring messages
      * @param msg Message to send
      */
-    public abstract void sendMCMessage(Component msg);
+    public abstract void sendMCMessage(@Nonnull Component msg);
 
     /**
      * Sends an message for reactions from discord
@@ -34,18 +36,19 @@ public abstract class ServerInterface {
      * @param targetUUID Original sender's {@link UUID}
      * @param reactionEmote Emote that was added to the message
      */
-    public abstract void sendMCReaction(Member member, RestAction<Message> retrieveMessage, UUID targetUUID, MessageReaction.ReactionEmote reactionEmote);
+    public abstract void sendMCReaction(@Nonnull Member member, @Nonnull RestAction<Message> retrieveMessage, @Nonnull UUID targetUUID, @Nonnull MessageReaction.ReactionEmote reactionEmote);
 
     /**
      * Runs an command on the server
      * @param cmd Command to execute
      * @param msgEvent Message event
      */
-    public abstract void runMcCommand(String cmd, MessageReceivedEvent msgEvent);
+    public abstract void runMcCommand(@Nonnull String cmd, @Nonnull MessageReceivedEvent msgEvent);
 
     /**
      * @return all online players on this server in format <{@link UUID}, PlayerName>
      */
+    @Nonnull
     public abstract HashMap<UUID, String> getPlayers();
 
     /**
@@ -66,5 +69,6 @@ public abstract class ServerInterface {
      * @param uuid {@link UUID} to get the name from
      * @return The player's name, or null if the player was not found
      */
-    public abstract String getNameFromUUID(UUID uuid);
+    @Nullable
+    public abstract String getNameFromUUID(@Nonnull UUID uuid);
 }

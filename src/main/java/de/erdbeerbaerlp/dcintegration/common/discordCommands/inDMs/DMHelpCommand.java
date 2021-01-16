@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.common.discordCommands.inDMs;
 
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class DMHelpCommand extends DMCommand {
@@ -26,15 +27,13 @@ public class DMHelpCommand extends DMCommand {
         for (final DMCommand cmd : CommandRegistry.getDMCommandList()) {
             if (cmd.canUserExecuteCommand(cmdMsg.getAuthor()) && cmd.includeInHelp())
                 out.append(cmd.getCommandUsage()).append(" - ").append(cmd.getDescription()).append("\n");
-            else
-                out.append("[NO PERMS] ").append(cmd.getCommandUsage()).append(" - ").append(cmd.getDescription()).append("\n");
         }
         cmdMsg.getChannel().sendMessage(out + "\n```").queue();
 
     }
 
     @Override
-    public boolean requiresLink() {
-        return false;
+    public boolean canUserExecuteCommand(User user) {
+        return true;
     }
 }

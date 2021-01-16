@@ -40,10 +40,6 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Map.Entry<UUID, String> p, boolean chatFormat) {
-        final String discordName = getDiscordName(p.getKey());
-        if (discordName != null)
-            return discordName;
-        else
             return TextFormatting.getTextWithoutFormattingCodes(p.getValue());
     }
 

@@ -11,7 +11,7 @@ public class Variables {
     /**
      * Mod/Plugin version
      */
-    public static final String VERSION = "2.0.9";
+    public static final String VERSION = "2.1.0";
     /**
      * Discord Integration data directory
      */
@@ -28,5 +28,8 @@ public class Variables {
      * Message sent when the server is starting (in non-webhook mode!), stored for editing
      */
     public static CompletableFuture<Message> startingMsg;
+    /**
+     * The currently active {@link Discord} instance
+     */
     public static Discord discord_instance;
 }

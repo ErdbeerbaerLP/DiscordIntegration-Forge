@@ -9,6 +9,7 @@ import de.erdbeerbaerlp.dcintegration.common.discordCommands.inDMs.*;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +84,7 @@ public class CommandRegistry {
      * @param cmd command
      * @return if the registration was successful
      */
-    public static boolean registerCommand(DiscordCommand cmd) {
+    public static boolean registerCommand(@Nonnull DiscordCommand cmd) {
         if (cmd instanceof DMCommand) {
             final ArrayList<DMCommand> toRemove = new ArrayList<>();
             for (DMCommand c : dmCommands) {
@@ -133,6 +134,7 @@ public class CommandRegistry {
     /**
      * @return A list of all registered commands
      */
+    @Nonnull
     public static List<DiscordCommand> getCommandList() {
         return commands;
     }
@@ -140,6 +142,7 @@ public class CommandRegistry {
     /**
      * @return List of registered DM commands
      */
+    @Nonnull
     public static List<DMCommand> getDMCommandList() {
         return dmCommands;
     }

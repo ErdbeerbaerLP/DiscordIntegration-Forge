@@ -2,3 +2,5 @@
 This mod links your server chat with a channel on your discord server.
 
 Quick setup guide: https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/wiki/Quick-Setup
+
+Addon Development: https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/wiki/For-Developers

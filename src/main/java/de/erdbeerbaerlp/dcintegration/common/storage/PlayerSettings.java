@@ -5,6 +5,7 @@ public class PlayerSettings {
     public boolean ignoreDiscordChatIngame = false;
     public boolean ignoreReactions = Configuration.instance().linking.personalSettingsDefaults.default_ignoreReactions;
     public boolean pingSound = Configuration.instance().linking.personalSettingsDefaults.default_pingSound;
+    public boolean hideFromDiscord = false;
 
     /**
      * Class used for key descriptions using reflection
@@ -15,5 +16,6 @@ public class PlayerSettings {
         private final String ignoreDiscordChatIngame = Configuration.instance().localization.personalSettings.descriptons.ignoreDiscordChatIngame;
         private final String ignoreReactions = Configuration.instance().localization.personalSettings.descriptons.ignoreReactions;
         private final String pingSound = Configuration.instance().localization.personalSettings.descriptons.pingSound;
+        private final String hideFromDiscord = Configuration.instance().localization.personalSettings.descriptons.hideFromDiscord;
     }
 }

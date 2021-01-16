@@ -14,13 +14,10 @@ public abstract class DMCommand extends DiscordCommand {
         return false;
     }
 
-    public boolean requiresLink() {
-        return true;
-    }
 
     @Override
     public boolean canUserExecuteCommand(User user) {
         if (user == null) return false;
-        return !this.requiresLink() || PlayerLinkController.isDiscordLinked(user.getId());
+        return PlayerLinkController.isDiscordLinked(user.getId());
     }
 }

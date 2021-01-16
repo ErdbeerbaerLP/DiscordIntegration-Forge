@@ -123,6 +123,7 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
+        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
         if (discord_instance != null) {
             discord_instance.sendMessage(Configuration.instance().localization.playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
 
@@ -133,8 +134,8 @@ public class DiscordIntegration {
                 if (!PlayerLinkController.isPlayerLinked(uuid)) return;
                 final Guild guild = discord_instance.getChannel().getGuild();
                 final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
-                final Member member = guild.getMember(discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromPlayer(uuid)));
                 if (PlayerLinkController.isPlayerLinked(uuid)) {
+                final Member member = guild.getMemberById(PlayerLinkController.getDiscordFromPlayer(uuid));
                     if (!member.getRoles().contains(linkedRole))
                         guild.addRoleToMember(member, linkedRole).queue();
                 }
@@ -146,6 +147,7 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
+        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
         if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
             discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
                     TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getPlayer())))
@@ -208,7 +210,7 @@ public class DiscordIntegration {
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
                 }
                 try {
-                    discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), new DiscordMessage(null, msg, !raw), Configuration.instance().advanced.chatOutputChannelID.equals("default") ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
+                    discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
                 } catch (CommandSyntaxException e) {
                     if (msg.startsWith(Configuration.instance().messages.sayCommandIgnoredPrefix)) return;
                     discord_instance.sendMessage(msg);
@@ -228,8 +230,8 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void serverStopped(FMLServerStoppedEvent ev) {
-        if (discord_instance != null && discord_instance.getJDA() != null) {
-            if (!stopped) ev.getServer().runImmediately(() -> {
+        if (discord_instance != null) {
+            if (!stopped && discord_instance.getJDA() != null) ev.getServer().runImmediately(() -> {
                 discord_instance.stopThreads();
                 try {
                     discord_instance.sendMessageReturns(Configuration.instance().localization.serverCrash).get();
@@ -258,6 +260,7 @@ public class DiscordIntegration {
     }
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
+        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
         final ITextComponent msg = ev.getComponent();
         if (discord_instance.callEvent((e) -> {
             if (e instanceof ForgeDiscordEventHandler) {
@@ -270,6 +273,7 @@ public class DiscordIntegration {
         final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
         if (discord_instance != null) {
             TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
+            if(channel == null ) return;
             discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUniqueID().toString(), new DiscordMessage(embed, text, true), channel);
             final String json = ITextComponent.Serializer.toJson(msg);
             Component comp = GsonComponentSerializer.gson().deserialize(json);
@@ -281,11 +285,12 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
+        if(PlayerLinkController.getSettings(null,ev.getEntity().getUniqueID()).hideFromDiscord)return;
         if (ev.getEntity() instanceof PlayerEntity || (ev.getEntity() instanceof TameableEntity && ((TameableEntity) ev.getEntity()).getOwner() instanceof PlayerEntity && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
             if (discord_instance != null) {
                 final ITextComponent deathMessage = ev.getSource().getDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
-                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", ""))), Configuration.instance().advanced.deathsChannelID.equals("default") ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
+                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", ""))), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
         }
     }
@@ -293,6 +298,7 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (stopped) return; //Try to fix player leave messages after stop!
+        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueID()))
             discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
         else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueID())) {

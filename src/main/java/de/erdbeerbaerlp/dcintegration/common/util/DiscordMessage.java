@@ -8,6 +8,8 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
+import javax.annotation.Nonnull;
+
 public final class DiscordMessage {
     private final boolean isNotRaw;
     private MessageEmbed embed;
@@ -17,21 +19,21 @@ public final class DiscordMessage {
     /**
      * @param isNotRaw set to true to enable markdown escaping and mc color conversion (default: false)
      */
-    public DiscordMessage(final MessageEmbed embed, final String message, boolean isNotRaw) {
+    public DiscordMessage(final MessageEmbed embed, @Nonnull final String message, boolean isNotRaw) {
         this.embed = embed;
         this.message = message;
         this.isNotRaw = isNotRaw;
     }
 
-    public DiscordMessage(final MessageEmbed embed, final String message) {
+    public DiscordMessage(final MessageEmbed embed, @Nonnull final String message) {
         this(embed, message, false);
     }
 
-    public DiscordMessage(final String message) {
+    public DiscordMessage(@Nonnull final String message) {
         this(null, message, false);
     }
 
-    public DiscordMessage(final MessageEmbed embed) {
+    public DiscordMessage(@Nonnull final MessageEmbed embed) {
         this(embed, "", false);
     }
 
@@ -39,7 +41,7 @@ public final class DiscordMessage {
         return message;
     }
 
-    public void setMessage(final String message) {
+    public void setMessage(@Nonnull final String message) {
         this.message = message;
     }
 
@@ -47,10 +49,10 @@ public final class DiscordMessage {
         return embed;
     }
 
-    public void setEmbed(final MessageEmbed embed) {
+    public void setEmbed(@Nonnull final MessageEmbed embed) {
         this.embed = embed;
     }
-
+    @Nonnull
     public Message buildMessage() {
         final MessageBuilder out = new MessageBuilder();
         if (!message.isEmpty()) {
@@ -67,7 +69,7 @@ public final class DiscordMessage {
             out.setEmbed(embed);
         return out.build();
     }
-
+    @Nonnull
     public WebhookMessageBuilder buildWebhookMessage() {
         final WebhookMessageBuilder out = new WebhookMessageBuilder();
         if (!message.isEmpty()) {

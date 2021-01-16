@@ -37,7 +37,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.0.9"
+version = "2.1.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration"
 
@@ -62,6 +62,8 @@ repositories {
     maven { url 'https://jitpack.io' }
     maven { url "https://nexus.vankka.dev/repository/maven-public/" }
     maven { url "https://repository.dev.gotan.io/repository/gotan.os/" }
+    maven { url "https://repo.opencollab.dev/maven-snapshots" }
+    maven { url "https://repo.opencollab.dev/maven-releases" }
     maven {
         name = 'sonatype-oss'
         url = 'https://oss.sonatype.org/content/repositories/snapshots/'
@@ -129,7 +131,7 @@ bukkit {
             setDefault('OP')
         }
     }
-    softDepend = ["Votifier", "dynmap"]
+    softDepend = ["Votifier", "dynmap", "floodgate-bukkit"]
 }
 
 //ShadowJar
@@ -147,8 +149,8 @@ shadowJar {
     relocate 'com.iwebpp', 'dcshadow.com.iwebpp'
     relocate 'com.neovisionaries', 'dcshadow.com.neovisionaries'
     relocate 'gnu', 'dcshadow.gnu'
-    relocate 'org.apache.commons.collections4', 'dcshadow.apache-collections4'
-    relocate('org.apache.commons.lang3', 'dcshadow.apache-lang3'){
+    relocate 'org.apache.commons.collections4', 'dcshadow.org.apache.commons.collections4'
+    relocate('org.apache.commons.lang3', 'dcshadow.org.apache.commons.lang3'){
         exclude 'org.apache.commons.lang3.tuple.Pair' //Fix bug with forge
     }
     relocate 'org.json', 'dcshadow.org.json'
@@ -166,7 +168,6 @@ shadowJar {
     relocate "net.sf", "dcshadow.net.sf"
     relocate "org.hamcrest", "dcshadow.org.hamcrest"
     relocate "org.objenesis", "dcshadow.org.objenesis"
-    relocate "com.vdurmont", "dcshadow.com.vdurmont"
     relocate "kotlin", "dcshadow.kotlin"
     exclude 'org/apache/commons/lang3/tuple/Pair.class' //Fix conflict with forge
 }
@@ -235,6 +236,9 @@ dependencies {
         transitive = false
     }
 
+    //Floodgate
+    compileOnly('org.geysermc:floodgate-bukkit:1.0-SNAPSHOT')
+
 }
 
 
@@ -270,10 +274,11 @@ curseforge {
         project {
             id = '324952'
             changelog = project.changelog
-            releaseType = 'beta'
+            releaseType = 'release'
             addGameVersion '1.16.4'
+            addGameVersion '1.16.5'
             mainArtifact(jar) {
-                displayName = "DiscordIntegration-$version (MC 1.16.4)"
+                displayName = "DiscordIntegration-$version (MC 1.16.4+)"
             }
             //relations {
             //}

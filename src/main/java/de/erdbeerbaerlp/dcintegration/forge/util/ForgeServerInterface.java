@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import de.erdbeerbaerlp.dcintegration.common.DiscordEventListener;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
+import de.erdbeerbaerlp.dcintegration.common.util.ComponentUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.ServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
@@ -51,7 +52,7 @@ public class ForgeServerInterface extends ServerInterface {
         try {
             for (final ServerPlayerEntity p : l) {
                 if (!Variables.discord_instance.ignoringPlayers.contains(p.getUniqueID()) && !(PlayerLinkController.isPlayerLinked(p.getUniqueID()) && PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame)) {
-                    final Map.Entry<Boolean, Component> ping = MessageUtils.parsePing(msg, p.getUniqueID(), p.getName().getUnformattedComponentText());
+                    final Map.Entry<Boolean, Component> ping = ComponentUtils.parsePing(msg, p.getUniqueID(), p.getName().getUnformattedComponentText());
                     final String jsonComp = GsonComponentSerializer.gson().serialize(ping.getValue()).replace("\\\\n", "\n");
                     final ITextComponent comp = ComponentArgument.component().parse(new StringReader(jsonComp));
                     p.sendMessage(comp, Util.DUMMY_UUID);
@@ -120,7 +121,7 @@ public class ForgeServerInterface extends ServerInterface {
 
     @Override
     public boolean isOnlineMode() {
-        return ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode();
+        return Configuration.instance().bungee.isBehindBungee || ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode();
     }
 
     private void sendReactionMCMessage(ServerPlayerEntity target, String msg) {

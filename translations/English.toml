@@ -3,16 +3,24 @@
 # PLACEHOLDERS:
 # %user% - The username
 # %id% - The user ID
-# %msg% - The Message
+# %msg% - The message
 ingame_discordMessage = "§6[§5DISCORD§6]§r <%user%> %msg%"
+# This is what will be displayed ingame when someone sends an reply into the bot's channel
+# PLACEHOLDERS:
+# %user% - The username
+# %id% - The user ID
+# %msg% - The reply message
+# %ruser% - The username of the message that got the reply
+# %rmsg% - The replied message
+ingame_discordReplyMessage = "§6[§5DISCORD§6]§r §a%user%§r in reply to §3%ruser%§r: %msg%"
 # Message shown when hovering over the username of an discord message
 # PLACEHOLDERS:
 # %user% - The username/nickname (Someone123)
-# %user% - The username with tag (someone#0001)
+# %user#tag% - The username with tag (someone#0001)
 # %id% - The user ID
 #
 # NOTE: using an @ here can cause ping sounds ingame
-discordMessageHover = "§3Sent by Discord user %user#tag%\n§aClick to mention"
+discordUserHover = "§3Discord User %user#tag%\n§aClick to mention"
 # This message will edited in / sent when the server finished starting
 serverStarted = "Server Started!"
 # Message to show while the server is starting
@@ -67,6 +75,7 @@ reactionMessage = "§6[§5DISCORD§6]§r§7 %name% reacted to your message \"§9
 
 # Strings about the discord commands
 [localization.commands]
+# Shown in console when trying to use the discord command
 ingameOnly = "This command can only be executed ingame"
 # Shown when successfully reloading the config file
 configReloaded = "Config reloaded!"
@@ -195,3 +204,4 @@ ignoreDiscordChatIngame = "Configure if you want to ignore discord chat ingame"
 useDiscordNameInChannel = "Should the bot send messages using your discord name and avatar instead of your in-game name and skin?"
 ignoreReactions = "Configure if you want to ignore discord reactions ingame"
 pingSound = "Toggle the ingame ping sound"
+hideFromDiscord = "Setting this to true will hide all of your minecraft messages from discord"

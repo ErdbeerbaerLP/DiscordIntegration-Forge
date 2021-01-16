@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.forge.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import de.erdbeerbaerlp.dcintegration.common.addon.AddonLoader;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
@@ -40,7 +41,7 @@ public class McCommandDiscord {
         })).then(Commands.literal("link").executes((ctx) -> {
             if (Configuration.instance().linking.enableLinking && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode() && !Configuration.instance().linking.whitelistMode) {
                 if (PlayerLinkController.isPlayerLinked(ctx.getSource().asPlayer().getUniqueID())) {
-                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getDiscordFromPlayer(ctx.getSource().asPlayer().getUniqueID()))), false);
+                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Configuration.instance().localization.linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromBedrockPlayer(ctx.getSource().asPlayer().getUniqueID())).getAsTag())), false);
                     return 0;
                 }
                 final int r = Variables.discord_instance.genLinkNumber(ctx.getSource().asPlayer().getUniqueID());
@@ -55,6 +56,7 @@ public class McCommandDiscord {
             return 0;
         })).then(Commands.literal("reload").requires((p) -> p.hasPermissionLevel(4)).executes((ctx) -> {
             Configuration.instance().loadConfig();
+            AddonLoader.reloadAll();
             ctx.getSource().sendFeedback(new StringTextComponent(Configuration.instance().localization.commands.configReloaded), true);
             return 0;
         }));

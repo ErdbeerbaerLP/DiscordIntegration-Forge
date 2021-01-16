@@ -46,6 +46,7 @@ public class SpigotEventListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent ev) {
         if (discord_instance != null) {
+            if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueId()).hideFromDiscord) return;
             discord_instance.sendMessage(Configuration.instance().localization.playerJoin.replace("%player%", SpigotMessageUtils.formatPlayerName(ev.getPlayer())));
 
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
@@ -55,7 +56,7 @@ public class SpigotEventListener implements Listener {
                 if (!PlayerLinkController.isPlayerLinked(uuid)) return;
                 final Guild guild = discord_instance.getChannel().getGuild();
                 final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
-                final Member member = guild.getMember(discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromPlayer(uuid)));
+                final Member member = guild.getMemberById(PlayerLinkController.getDiscordFromPlayer(uuid));
                 if (PlayerLinkController.isPlayerLinked(uuid)) {
                     if (!member.getRoles().contains(linkedRole))
                         guild.addRoleToMember(member, linkedRole).queue();
@@ -69,8 +70,9 @@ public class SpigotEventListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onAdvancement(PlayerAdvancementDoneEvent ev) {
         if (discord_instance != null) {
+            if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueId()).hideFromDiscord) return;
             try {
-                final Object adv = ((Object) ev.getAdvancement());
+                final Object adv = ev.getAdvancement();
                 final Class<?> test = adv.getClass();
                 final Field h = test.getDeclaredField("handle");
                 h.setAccessible(true);
@@ -84,7 +86,7 @@ public class SpigotEventListener implements Listener {
 
                 final Field shouldAnnounceToChat = displayClass.getDeclaredField("g");
                 shouldAnnounceToChat.setAccessible(true);
-                final boolean isVisible = (boolean) shouldAnnounceToChat.get(display);
+                if (!(boolean) shouldAnnounceToChat.get(display)) return;
 
                 final Field titleTxt = displayClass.getDeclaredField("a");
                 titleTxt.setAccessible(true);
@@ -130,6 +132,7 @@ public class SpigotEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerLeave(PlayerQuitEvent ev) {
+        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueId()).hideFromDiscord) return;
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueId()))
             discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", SpigotMessageUtils.formatPlayerName(ev.getPlayer())));
         else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueId())) {
@@ -140,6 +143,7 @@ public class SpigotEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onCommand(PlayerCommandPreprocessEvent ev) {
+        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueId()).hideFromDiscord) return;
         String command = ev.getMessage().replaceFirst(Pattern.quote("/"), "");
         if (!Configuration.instance().commandLog.channelID.equals("0")) {
             if (!ArrayUtils.contains(Configuration.instance().commandLog.ignoredCommands, command.split(" ")[0]))
@@ -159,7 +163,7 @@ public class SpigotEventListener implements Listener {
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replace("me", "").trim()) + "*";
                 }
                 if (!msg.trim().isEmpty())
-                    discord_instance.sendMessage(ev.getPlayer().getName(), ev.getPlayer().getUniqueId().toString(), new DiscordMessage(null, msg.trim(), !raw), Configuration.instance().advanced.chatOutputChannelID.equals("default") ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
+                    discord_instance.sendMessage(ev.getPlayer().getName(), ev.getPlayer().getUniqueId().toString(), new DiscordMessage(null, msg.trim(), !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
             }
         }
     }
@@ -167,25 +171,28 @@ public class SpigotEventListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntityDeath(PlayerDeathEvent ev) {
         if (discord_instance != null) {
+            if (PlayerLinkController.getSettings(null, ev.getEntity().getUniqueId()).hideFromDiscord) return;
             final String deathMessage = ev.getDeathMessage();
-            discord_instance.sendMessage(new DiscordMessage(Configuration.instance().localization.playerDeath.replace("%player%", SpigotMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", MessageUtils.removeFormatting(deathMessage).replace(ev.getEntity().getName() + " ", ""))), Configuration.instance().advanced.deathsChannelID.equals("default") ? discord_instance.getChannel() : discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
+            discord_instance.sendMessage(new DiscordMessage(Configuration.instance().localization.playerDeath.replace("%player%", SpigotMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", MessageUtils.removeFormatting(deathMessage).replace(ev.getEntity().getName() + " ", ""))), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncPlayerChatEvent ev) {
-        if (discord_instance.callEvent((e) -> {
-            if (e instanceof SpigotDiscordEventHandler)
-                return ((SpigotDiscordEventHandler) e).onMcChatMessage(ev);
-            return false;
-        })) return;
-        String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
-        final TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
+        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueId()).hideFromDiscord) return;
         if (discord_instance != null) {
-            discord_instance.sendMessage(SpigotMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUniqueId().toString(), new DiscordMessage(null, text, true), channel);
-        }
+            if (discord_instance.callEvent((e) -> {
+                if (e instanceof SpigotDiscordEventHandler)
+                    return ((SpigotDiscordEventHandler) e).onMcChatMessage(ev);
+                return false;
+            })) return;
 
-        //Set chat message to a more readable format
-        ev.setMessage(MessageUtils.mentionsToNames(ev.getMessage(),channel.getGuild()));
+            String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
+            final TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
+            discord_instance.sendMessage(SpigotMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUniqueId().toString(), new DiscordMessage(null, text, true), channel);
+
+            //Set chat message to a more readable format
+            if (channel != null) ev.setMessage(MessageUtils.mentionsToNames(ev.getMessage(), channel.getGuild()));
+        }
     }
 }

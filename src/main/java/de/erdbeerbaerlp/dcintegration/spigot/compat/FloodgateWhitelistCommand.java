@@ -1,9 +1,7 @@
-package de.erdbeerbaerlp.dcintegration.common.discordCommands.inDMs;
+package de.erdbeerbaerlp.dcintegration.spigot.compat;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
+import de.erdbeerbaerlp.dcintegration.common.discordCommands.inDMs.DMCommand;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
@@ -12,6 +10,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -20,11 +19,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
 
-
-public class WhitelistCommand extends DMCommand {
+public class FloodgateWhitelistCommand extends DMCommand {
     @Override
     public String getName() {
-        return "whitelist";
+        return "bwhitelist";
     }
 
     @Override
@@ -34,10 +32,8 @@ public class WhitelistCommand extends DMCommand {
 
     @Override
     public String getDescription() {
-        return Configuration.instance().localization.commands.descriptions.whitelist;
+        return "Whitelists your bedrock account";
     }
-
-    private final String uuidRegex = "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)";
 
     @Override
     public void execute(String[] args, MessageReceivedEvent ev) {
@@ -59,7 +55,7 @@ public class WhitelistCommand extends DMCommand {
             ev.getChannel().sendMessage(Configuration.instance().localization.linking.link_notMember).queue();
             return;
         }
-        if (PlayerLinkController.isDiscordLinkedJava(ev.getAuthor().getId())) {
+        if (PlayerLinkController.isDiscordLinkedBedrock(ev.getAuthor().getId())) {
             ev.getChannel().sendMessage(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", MessageUtils.getNameFromUUID(PlayerLinkController.getPlayerFromDiscord(ev.getAuthor().getId())))).queue();
             return;
         }
@@ -72,42 +68,35 @@ public class WhitelistCommand extends DMCommand {
             return;
         }
         UUID u;
-        String s = args[0];
+        String name = args[0];
         try {
-            final String oldS = s;
             try {
-                if (!s.contains("-"))
-                    s = s.replaceFirst(
-                            uuidRegex, "$1-$2-$3-$4-$5"
-                    );
-                u = UUID.fromString(s);
-            } catch (Exception e) {
-                try {
-                    final URL url = new URL("https://api.mojang.com/users/profiles/minecraft/"+oldS);
-                    final HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-                    if(con.getResponseCode() == 204) throw new IOException(); //Just skip to the catch block
-                    final JsonReader r = new JsonReader(new InputStreamReader(con.getInputStream()));
-                    final JsonParser p = new JsonParser();
-                    final JsonElement json = p.parse(r);
-                    u = UUID.fromString(json.getAsJsonObject().get("id").getAsString().replaceFirst(uuidRegex, "$1-$2-$3-$4-$5"));
-                } catch (IOException ex) {
+                final URL url = new URL("https://floodgate-uuid.heathmitchell1.repl.co/uuid?gamertag=" + name);
+                final HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+                final BufferedReader r = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String sr = r.readLine();
+                if (sr.startsWith("The UUID of")) {
+                    sr = sr.replace("The UUID of "+name+" is ", "");
+                    u = UUID.fromString(sr);
+                } else
                     u = Discord.dummyUUID;
-                    ex.printStackTrace();
-                }
+            } catch (IOException ex) {
+                u = Discord.dummyUUID;
+                ex.printStackTrace();
             }
-            final boolean linked = PlayerLinkController.linkPlayer(ev.getAuthor().getId(), u);
+            final boolean linked = PlayerLinkController.linkBedrockPlayer(ev.getAuthor().getId(), u);
             if (linked)
-                ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%prefix%", Configuration.instance().commands.prefix).replace("%player%", MessageUtils.getNameFromUUID(u))).queue();
+                ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkSuccessful.replace("%prefix%", Configuration.instance().commands.prefix).replace("%player%", name)).queue();
             else
                 ev.getChannel().sendMessage(Configuration.instance().localization.linking.linkFailed).queue();
         } catch (IllegalArgumentException e) {
-            ev.getChannel().sendMessage(Configuration.instance().localization.linking.link_argumentNotUUID.replace("%prefix%", Configuration.instance().commands.prefix).replace("%arg%", s)).queue();
+            ev.getChannel().sendMessage(Configuration.instance().localization.linking.link_argumentNotUUID.replace("%prefix%", Configuration.instance().commands.prefix).replace("%arg%", name)).queue();
         }
     }
 
     @Override
     public boolean canUserExecuteCommand(User user) {
         if(user == null) return false;
-        return !PlayerLinkController.isDiscordLinkedJava(user.getId());
+        return !PlayerLinkController.isDiscordLinkedBedrock(user.getId());
     }
 }

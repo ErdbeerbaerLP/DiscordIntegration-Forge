@@ -7,8 +7,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
-import java.util.Arrays;
-
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
 
 
@@ -35,8 +33,6 @@ public class SettingsCommand extends DMCommand {
             ev.getChannel().sendMessage(Configuration.instance().localization.linking.notLinked.replace("%method%", Configuration.instance().linking.whitelistMode ? (Configuration.instance().localization.linking.linkMethodWhitelist.replace("%prefix%", Configuration.instance().commands.prefix)) : Configuration.instance().localization.linking.linkMethodIngame)).queue();
             return;
         }
-        System.out.println(args.length);
-        System.out.println(Arrays.toString(args));
         if (args.length == 2 && args[0].equals("get")) {
             if (discord_instance.getSettings().containsKey(args[1])) {
                 final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
@@ -46,17 +42,17 @@ public class SettingsCommand extends DMCommand {
                     e.printStackTrace();
                 }
             } else
-                ev.getChannel().sendMessage(Configuration.instance().localization.personalSettings.invalidPersonalSettingKey.replace("%key%", args[2])).queue();
+                ev.getChannel().sendMessage(Configuration.instance().localization.personalSettings.invalidPersonalSettingKey.replace("%key%", args[1])).queue();
         } else if (args.length == 3 && args[0].equals("set")) {
             if (discord_instance.getSettings().containsKey(args[1])) {
                 final PlayerSettings settings = PlayerLinkController.getSettings(ev.getAuthor().getId(), null);
-                int newval;
+                boolean newval;
                 try {
-                    newval = Integer.parseInt(args[2]);
+                    newval = Boolean.parseBoolean(args[2]);
                 } catch (NumberFormatException e) {
-                    newval = -1;
+                    newval = false;
                 }
-                final boolean newValue = newval == -1 ? Boolean.parseBoolean(args[1]) : newval >= 1;
+                final boolean newValue = newval;
                 try {
                     settings.getClass().getDeclaredField(args[1]).set(settings, newValue);
                     PlayerLinkController.updatePlayerSettings(ev.getAuthor().getId(), null, settings);

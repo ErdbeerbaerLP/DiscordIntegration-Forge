@@ -67,6 +67,7 @@ reactionMessage = "§6[§5DISCORD§6]§r§7 %name% hat auf deine Nachricht \"§9
 
 # Strings about the discord commands
 [localization.commands]
+# Shown in console when trying to use the discord command
 ingameOnly = "Dieser Befehl kann nur in-game ausgeführt werden"
 # Shown when successfully reloading the config file
 configReloaded = "Konfiguration neugeladen!"
@@ -195,3 +196,4 @@ ignoreDiscordChatIngame = "Aktivieren, um Discord-Nachrichten in-game komplett a
 useDiscordNameInChannel = "Soll der Bot deinen Discord Namen anstelle deines Minecraft Namens in Discord verwenden?"
 ignoreReactions = "Aktivieren, um Reaktionen von Nachrichten in Discord zu ignorieren"
 pingSound = "(De-)Aktiviere den ingame Ping-Sound"
+hideFromDiscord = "Aktivieren, um keine Discord-Nachrichten zu senden"

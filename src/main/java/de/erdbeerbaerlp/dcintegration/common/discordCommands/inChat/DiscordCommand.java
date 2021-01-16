@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.apache.commons.lang3.ArrayUtils;
 
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
@@ -25,11 +26,11 @@ public abstract class DiscordCommand {
     private final String[] channelIDs;
     boolean isConfigCmd = false;
 
-    protected DiscordCommand(String[] channelIDs) {
+    protected DiscordCommand(@Nonnull String[] channelIDs) {
         this.channelIDs = channelIDs;
     }
 
-    protected DiscordCommand(String channelID) {
+    protected DiscordCommand(@Nonnull String channelID) {
         this.channelIDs = new String[]{channelID};
     }
 
@@ -39,6 +40,7 @@ public abstract class DiscordCommand {
      * @param channel TextChannel to check for
      */
     public final boolean worksInChannel(final TextChannel channel) {
+        if(channel == null) return false;
         return worksInChannel(channel.getId());
     }
 
@@ -47,7 +49,7 @@ public abstract class DiscordCommand {
      *
      * @param channelID Channel ID of the current channel
      */
-    public boolean worksInChannel(String channelID) {
+    public boolean worksInChannel(@Nonnull String channelID) {
         if (Arrays.equals(channelIDs, EVERYWHERE)) return true;
         if (Arrays.equals(channelIDs, ONLY_IN_BOT_CHANNEL))
             return channelID.equals(Configuration.instance().general.botChannel);
@@ -57,16 +59,19 @@ public abstract class DiscordCommand {
     /**
      * Sets the name of the command
      */
+    @Nonnull
     public abstract String getName();
 
     /**
      * Sets the aliases of the command
      */
+    @Nonnull
     public abstract String[] getAliases();
 
     /**
      * Sets the description for the help command
      */
+    @Nonnull
     public abstract String getDescription();
 
     /**
@@ -83,7 +88,7 @@ public abstract class DiscordCommand {
      * @param args   arguments passed by the player
      * @param cmdMsg the {@link MessageReceivedEvent} of the message
      */
-    public abstract void execute(String[] args, final MessageReceivedEvent cmdMsg);
+    public abstract void execute(@Nonnull String[] args, @Nonnull final MessageReceivedEvent cmdMsg);
 
     /**
      * Wether or not this command should be visible in help
@@ -99,7 +104,7 @@ public abstract class DiscordCommand {
      * @param user The user being handled
      * @return wether or not the user can execute this command
      */
-    public boolean canUserExecuteCommand(User user) {
+    public boolean canUserExecuteCommand(@Nonnull User user) {
         Member m = null;
         for (final Member me : discord_instance.getChannel().getMembers()) {
             if (me.getUser().equals(user)) {

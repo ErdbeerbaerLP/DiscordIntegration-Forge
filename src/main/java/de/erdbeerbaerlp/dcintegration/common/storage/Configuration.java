@@ -99,6 +99,12 @@ public class Configuration {
     @TomlComment("Configure Dynmap integration here")
     public Dynmap dynmap = new Dynmap();
 
+    @TomlComment({"Configure some plugin-specific BStats settings here", "Everything can be seen here: https://bstats.org/plugin/bukkit/DiscordIntegration/9765", "", "Only applies to spigot as there is no BStats for Forge"})
+    public BStats bstats = new BStats();
+
+    @TomlComment({"Settings for servers running as Bungeecord-suberver"})
+    public Bungee bungee = new Bungee();
+
     public static Configuration instance() {
         return INSTANCE;
     }
@@ -140,8 +146,11 @@ public class Configuration {
         @TomlComment({"The bot's status message", "", "PLACEHOLDERS:", "%online% - Online Players", "%max% - Maximum Player Amount"})
         public String botStatusName = "%online% players Online";
 
-        @TomlComment({"Type of the bot's status", "Allowed Values: DISABLED,PLAYING,WATCHING,LISTENING"})
+        @TomlComment({"Type of the bot's status", "Allowed Values: DISABLED,PLAYING,WATCHING,LISTENING,STREAMING"})
         public GameType botStatusType = GameType.PLAYING;
+
+        @TomlComment({"URL of the bot's stream when using the status type 'STREAMING'", "Has to start with https://twitch.tv/ or https://www.youtube.com/watch?v="})
+        public String streamingURL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
         @TomlComment({"Enable checking for updates?", "Notification will be shown after every server start in log when update is available"})
         public boolean enableUpdateChecker = true;
@@ -262,11 +271,14 @@ public class Configuration {
     }
 
     public static class Localization {
-        @TomlComment({"This is what will be displayed ingame when someone types into the bot's channel", "PLACEHOLDERS:", "%user% - The username", "%id% - The user ID", "%msg% - The Message"})
+        @TomlComment({"This is what will be displayed ingame when someone types into the bot's channel", "PLACEHOLDERS:", "%user% - The username", "%id% - The user ID", "%msg% - The message"})
         public String ingame_discordMessage = "\u00a76[\u00a75DISCORD\u00a76]\u00a7r <%user%> %msg%";
 
-        @TomlComment({"Message shown when hovering over the username of an discord message","PLACEHOLDERS:", "%user% - The username/nickname (Someone123)","%user% - The username with tag (someone#0001)", "%id% - The user ID","","NOTE: using an @ here can cause ping sounds ingame"})
-        public String discordMessageHover = "\u00a73Sent by Discord user %user#tag%\n\u00a7aClick to mention";
+        @TomlComment({"This is what will be displayed ingame when someone sends an reply into the bot's channel", "PLACEHOLDERS:", "%user% - The username", "%id% - The user ID", "%msg% - The reply message", "%ruser% - The username of the message that got the reply", "%rmsg% - The replied message"})
+        public String ingame_discordReplyMessage = "\u00a76[\u00a75DISCORD\u00a76]\u00a7r \u00a7a%user%\u00a7r in reply to \u00a73%ruser%\u00a7r: %msg%";
+
+        @TomlComment({"Message shown when hovering over the username of an discord message", "PLACEHOLDERS:", "%user% - The username/nickname (Someone123)", "%user#tag% - The username with tag (someone#0001)", "%id% - The user ID", "", "NOTE: using an @ here can cause ping sounds ingame"})
+        public String discordUserHover = "\u00a73Discord User %user#tag%\n\u00a7aClick to mention";
 
         @TomlComment("This message will edited in / sent when the server finished starting")
         public String serverStarted = "Server Started!";
@@ -303,6 +315,7 @@ public class Configuration {
         public String reactionMessage = "\u00a76[\u00a75DISCORD\u00a76]\u00a7r\u00a77 %name% reacted to your message \"\u00a79%msg%\u00a77\" with '%emote%'";
 
 
+
         @TomlComment("Strings about the discord commands")
         public Commands commands = new Commands();
 
@@ -327,13 +340,13 @@ public class Configuration {
             public String notLinked = "Your account is not linked! Link it first using %method%";
 
             @TomlComment({"Message of the link method in whitelist mode", "Used by %method% placeholder"})
-            public String linkMethodWhitelist = "`%prefix%whitelist <uuid>` here";
+            public String linkMethodWhitelist = "`%prefix%whitelist <Name-Or-UUID>` here";
 
             @TomlComment({"Message of the link method in normal mode", "Used by %method% placeholder"})
             public String linkMethodIngame = "`/discord link` ingame";
 
             @TomlComment({"Sent when attempting to whitelist-link with an non uuid string", "PLACEHOLDERS:", "%arg% - The provided argument", "%prefix% - Command prefix"})
-            public String link_argumentNotUUID = "Argument \"%arg%\" is not an valid UUID. Use `%prefix%whitelist <uuid>`";
+            public String link_argumentNotUUID = "Argument \"%arg%\" is not an valid UUID or Name. Use `%prefix%whitelist <Name-or-UUID>`";
 
             @TomlComment("Sent when attempting to link with an unknown number")
             public String invalidLinkNumber = "Invalid link number! Use `/discord link` ingame to get your link number";
@@ -359,7 +372,7 @@ public class Configuration {
         }
 
         public static class Commands {
-
+            @TomlComment("Shown in console when trying to use the discord command")
             public String ingameOnly = "This command can only be executed ingame";
 
             @TomlComment("Shown when successfully reloading the config file")
@@ -447,6 +460,7 @@ public class Configuration {
                 public String useDiscordNameInChannel = "Should the bot send messages using your discord name and avatar instead of your in-game name and skin?";
                 public String ignoreReactions = "Configure if you want to ignore discord reactions ingame";
                 public String pingSound = "Toggle the ingame ping sound";
+                public String hideFromDiscord = "Setting this to true will hide all of your minecraft messages from discord";
             }
         }
     }
@@ -473,7 +487,7 @@ public class Configuration {
         @TomlComment({"Role ID of an role an player should get when he links his discord account", "Leave as 0 to disable"})
         public String linkedRoleID = "0";
 
-        @TomlComment({"Enable discord based whitelist?", "This will override the link config!", "To whitelist use !whitelist <uuid> in the bot DMs"})
+        @TomlComment({"Enable discord based whitelist?", "This will override the link config!", "To whitelist use the whitelist command in the bot DMs"})
         public boolean whitelistMode = false;
 
         @TomlComment("Adding Role IDs here will require the players to have at least ONE of these roles to link account")
@@ -534,5 +548,15 @@ public class Configuration {
         public String webName = "%name% (discord)";
         @TomlComment("Name shown in discord when no name was specified on the website")
         public String unnamed = "Unnamed";
+    }
+
+    public static class BStats {
+        @TomlComment("Allow sending of installed addon stats (Name and version of installed addons)")
+        public boolean sendAddonStats = true;
+    }
+
+    public static class Bungee {
+        @TomlComment({"Set this to true if the server is running as an subserver of an bungeecord network and therefore needs to be in offline mode", "Setting this will force account linking in offline mode", "Do NOT use for actual offline mode servers, as this will break the linking feature because of the UUIDs!", "", "Currently no support for floodgate running on bungee"})
+        public boolean isBehindBungee = false;
     }
 }

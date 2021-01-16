@@ -1,9 +1,11 @@
 package de.erdbeerbaerlp.dcintegration.spigot.command;
 
+import de.erdbeerbaerlp.dcintegration.common.addon.AddonLoader;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.TextColors;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
+import de.erdbeerbaerlp.dcintegration.spigot.compat.FloodgateLinkCommand;
 import de.erdbeerbaerlp.dcintegration.spigot.util.SpigotMessageUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -33,9 +35,12 @@ public class McDiscordCommand implements CommandExecutor {
         } else if (args.length == 1) {
             switch (args[0].toLowerCase()) {
                 case "link":
+                    if (sender.getServer().getPluginManager().getPlugin("floodgate-bukkit") != null) {
+                        if (FloodgateLinkCommand.link(p)) break;
+                    }
                     if (Configuration.instance().linking.enableLinking && Variables.discord_instance.srv.isOnlineMode() && !Configuration.instance().linking.whitelistMode) {
                         if (PlayerLinkController.isPlayerLinked(p.getUniqueId())) {
-                            p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", PlayerLinkController.getDiscordFromPlayer(p.getUniqueId()))).style(Style.style(TextColors.of(Color.RED)))));
+                            p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromBedrockPlayer(p.getUniqueId())).getAsTag())).style(Style.style(TextColors.of(Color.RED)))));
                             break;
                         }
                         final int r = Variables.discord_instance.genLinkNumber(p.getUniqueId());
@@ -61,6 +66,7 @@ public class McDiscordCommand implements CommandExecutor {
                 case "reload":
                     if (p.hasPermission("dcintegration.admin")) {
                         Configuration.instance().loadConfig();
+                        AddonLoader.reloadAll();
                         p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.commands.configReloaded)));
                     } else {
                         p.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Configuration.instance().localization.commands.noPermission).style(Style.style(TextColors.of(Color.RED)))));

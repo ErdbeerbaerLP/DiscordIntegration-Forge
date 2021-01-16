@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
+import de.erdbeerbaerlp.dcintegration.common.addon.AddonLoader;
+import de.erdbeerbaerlp.dcintegration.common.addon.DiscordAddonMeta;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
@@ -12,6 +14,7 @@ import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
 import de.erdbeerbaerlp.dcintegration.spigot.bstats.Metrics;
 import de.erdbeerbaerlp.dcintegration.spigot.command.McDiscordCommand;
 import de.erdbeerbaerlp.dcintegration.spigot.compat.DynmapWorkaroundListener;
+import de.erdbeerbaerlp.dcintegration.spigot.compat.FloodgateWhitelistCommand;
 import de.erdbeerbaerlp.dcintegration.spigot.compat.VotifierEventListener;
 import de.erdbeerbaerlp.dcintegration.spigot.util.SpigotServerInterface;
 import org.bukkit.command.PluginCommand;
@@ -27,6 +30,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.*;
@@ -37,7 +42,7 @@ public class DiscordIntegration extends JavaPlugin {
      * Plugin instance
      */
     public static DiscordIntegration INSTANCE;
-    Metrics bstats = new Metrics(this, 9765);
+    final Metrics bstats = new Metrics(this, 9765);
     /**
      * Used to detect plugin reloads in onEnable
      */
@@ -130,6 +135,9 @@ public class DiscordIntegration extends JavaPlugin {
                 if (discord_instance.getChannel() != null)
                     startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting);
             }
+
+            if (getServer().getPluginManager().getPlugin("floodgate-bukkit") != null && Configuration.instance().linking.whitelistMode)
+                CommandRegistry.registerCommand(new FloodgateWhitelistCommand());
         } catch (InterruptedException | NullPointerException ignored) {
         }
     }
@@ -150,23 +158,36 @@ public class DiscordIntegration extends JavaPlugin {
         cmd.setExecutor(new McDiscordCommand());
         cmd.setTabCompleter(new McDiscordCommand.TabCompleter());
 
-
         bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
         bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
 
+
         //Run only after server is started
-        getServer().getScheduler().scheduleSyncDelayedTask(this,()->{
+        getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
             System.out.println("Started");
             started = new Date().getTime();
             if (discord_instance != null)
                 if (startingMsg != null) {
                     startingMsg.thenAccept((a) -> a.editMessage(Configuration.instance().localization.serverStarted).queue());
                 } else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
+
+            //Add addon stats
+            bstats.addCustomChart(new Metrics.DrilldownPie("addons", () -> {
+                final Map<String, Map<String, Integer>> map = new HashMap<>();
+                if (Configuration.instance().bstats.sendAddonStats) {  //Only send if enabled, else send empty map
+                    for (DiscordAddonMeta m : AddonLoader.getAddonMetas()) {
+                        final Map<String, Integer> entry = new HashMap<>();
+                        entry.put(m.getVersion(), 1);
+                        map.put(m.getName(), entry);
+                    }
+                }
+                return map;
+            }));
             if (discord_instance != null) {
                 discord_instance.startThreads();
             }
             UpdateChecker.runUpdateCheck();
-        },80);
+        }, 30);
     }
 
     @Override

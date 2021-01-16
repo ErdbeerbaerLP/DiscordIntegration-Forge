@@ -3,6 +3,7 @@ package de.erdbeerbaerlp.dcintegration.common.storage;
 public class PlayerLink {
     public String discordID = "";
     public String mcPlayerUUID = "";
+    public String floodgateUUID = "";
     public PlayerSettings settings = new PlayerSettings();
 
     @Override

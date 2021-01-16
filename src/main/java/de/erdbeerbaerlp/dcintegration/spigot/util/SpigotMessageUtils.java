@@ -15,15 +15,11 @@ import java.util.UUID;
 public class SpigotMessageUtils extends MessageUtils {
 
     public static String formatPlayerName(Map.Entry<UUID, String> p) {
-        final String discordName = getDiscordName(p.getKey());
-        if (discordName != null)
-            return discordName;
-        else
             return ChatColor.stripColor(p.getValue());
     }
 
     public static String formatPlayerName(Player player) {
-        return formatPlayerName(new DefaultMapEntry<>(player.getUniqueId(), player.getDisplayName().isEmpty() ? player.getName() : player.getDisplayName()));
+        return formatPlayerName(new DefaultMapEntry<>(player.getUniqueId(), player.getName()));
     }
 
     public static BaseComponent[] adventureToSpigot(final Component comp){
