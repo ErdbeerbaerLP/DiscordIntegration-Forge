@@ -37,15 +37,15 @@ public class CommandList extends DiscordCommand {
             discord_instance.sendMessage(Configuration.instance().localization.commands.cmdList_empty, cmdMsg.getTextChannel());
             return;
         }
-        String out = (players.size() == 1 ? Configuration.instance().localization.commands.cmdList_one
-                : Configuration.instance().localization.commands.cmdList_header.replace("%amount%", "" + players.size())) + "\n```\n";
+        StringBuilder out = new StringBuilder((players.size() == 1 ? Configuration.instance().localization.commands.cmdList_one
+                : Configuration.instance().localization.commands.cmdList_header.replace("%amount%", "" + players.size())) + "\n```\n");
 
         for (Map.Entry<UUID, String> p : players.entrySet()) {
-            out += p + ",";
+            out.append(discord_instance.srv.getNameFromUUID(p.getKey())).append(",");
         }
 
 
-        out = out.substring(0, out.length() - 1);
+        out = new StringBuilder(out.substring(0, out.length() - 1));
         discord_instance.sendMessage(out + "\n```", cmdMsg.getTextChannel());
     }
 }
