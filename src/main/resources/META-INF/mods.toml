@@ -13,7 +13,7 @@ version = "${file.jarVersion}" #mandatory
 # A display name for the mod
 displayName = "Discord Integration" #mandatory
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL = "https://minecraft.curseforge.com/projects/dcintegration" #optional
+displayURL = "https://curseforge.com/projects/dcintegration" #optional
 # A text field displayed in the mod UI
 authors = "ErdbeerbaerLP" #optional
 # The description text for the mod (multi line!) (#mandatory)
