@@ -197,13 +197,13 @@ dependencies {
     embed('com.vdurmont:emoji-java:5.1.1')
 
     //Minecraft <==> Discord conversion
-    embed 'net.kyori:adventure-api:4.3.0'
-    embed('net.kyori:adventure-text-serializer-gson:4.3.0'){
+    embed 'net.kyori:adventure-api:4.4.0'
+    embed('net.kyori:adventure-text-serializer-gson:4.4.0'){
         exclude group:"com.google.code.gson", module: "gson"
     }
     embed "dev.vankka:MCDiscordReserializer:4.0.0"
-    embed "dev.vankka:SimpleAST:2.2.4-SNAPSHOT"
-    embed "net.kyori:adventure-text-serializer-legacy:4.3.0"
+    embed "dev.vankka:SimpleAST:2.2.5-SNAPSHOT"
+    embed "net.kyori:adventure-text-serializer-legacy:4.4.0"
 
     //Toml4j
     embed("com.github.ErdbeerbaerLP:toml4j:wip-SNAPSHOT"){
