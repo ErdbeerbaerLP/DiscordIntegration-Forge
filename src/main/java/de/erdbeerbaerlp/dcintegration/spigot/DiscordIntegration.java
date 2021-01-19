@@ -124,7 +124,7 @@ public class DiscordIntegration extends JavaPlugin {
         active = true;
 
         try {
-            //Wait a short time to allow JDA to get initiaized
+            //Wait a short time to allow JDA to get initialized
             System.out.println("Waiting for JDA to initialize to send starting message... (max 5 seconds before skipping)");
             for (int i = 0; i <= 5; i++) {
                 if (discord_instance.getJDA() == null) Thread.sleep(1000);
