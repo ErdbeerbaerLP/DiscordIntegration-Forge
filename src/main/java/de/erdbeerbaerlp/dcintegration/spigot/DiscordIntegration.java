@@ -131,7 +131,7 @@ public class DiscordIntegration extends JavaPlugin {
                 else break;
             }
             if (discord_instance.getJDA() != null && !Configuration.instance().localization.serverStarting.isEmpty()) {
-                Thread.sleep(2000); //Wait for it to cache the channels
+                Thread.sleep(5000); //Wait for it to cache the channels (hopefully this fixes channel retrieving issues)
                 if (discord_instance.getChannel() != null)
                     startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting);
             }
