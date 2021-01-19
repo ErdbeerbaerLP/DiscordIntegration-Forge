@@ -261,9 +261,10 @@ public class Discord extends Thread {
      */
     @Nullable
     public TextChannel getChannel(@Nonnull String id) {
+        if(jda == null) return null;
         TextChannel channel;
         if (id.equals("default")) id = Configuration.instance().general.botChannel;
-        channel = channelCache.computeIfAbsent(id,jda::getTextChannelById);
+        channel = channelCache.computeIfAbsent(id,(id2)->jda.getTextChannelById(id2));
         if(channel == null){
             System.err.println("Failed to get channel with ID '"+id+"', falling back to default channel");
             channel = channelCache.computeIfAbsent(Configuration.instance().general.botChannel,jda::getTextChannelById);
