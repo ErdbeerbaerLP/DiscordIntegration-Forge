@@ -257,13 +257,20 @@ public class Discord extends Thread {
     }
 
     /**
-     * @return the specified text channel (supports "default" to return the default server channel
+     * @return the specified text channel (supports "default" to return the default server channel)
      */
     @Nullable
     public TextChannel getChannel(@Nonnull String id) {
         if(jda == null) return null;
         TextChannel channel;
-        if (id.equals("default")) id = Configuration.instance().general.botChannel;
+        final boolean deflt = id.equals("default") || id.equals(Configuration.instance().general.botChannel);
+        if (deflt) id = Configuration.instance().general.botChannel;
+        if(id.isEmpty()){
+            System.err.println("Cannot get channel from empty ID! Check your config!");
+            if(deflt) return null;
+            System.out.println("Falling back to default channel!");
+            return getChannel();
+        }
         channel = channelCache.computeIfAbsent(id,(id2)->jda.getTextChannelById(id2));
         if(channel == null){
             System.err.println("Failed to get channel with ID '"+id+"', falling back to default channel");

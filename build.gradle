@@ -37,7 +37,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.1.0"
+version = "2.1.1"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration"
 
