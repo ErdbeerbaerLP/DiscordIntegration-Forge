@@ -190,7 +190,7 @@ dependencies {
     embed("net.dv8tion:JDA:4.2.0_227") {
         exclude group: 'okhttp3', module: "okhttp"
     }
-    embed "com.squareup.okhttp3:okhttp:4.9.0"
+    embed "com.squareup.okhttp3:okhttp:4.9.1"
     embed 'club.minnced:discord-webhooks:0.5.4'
 
     //Emoji-Java
