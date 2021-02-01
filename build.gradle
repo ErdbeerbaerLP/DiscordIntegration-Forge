@@ -202,7 +202,7 @@ dependencies {
         exclude group:"com.google.code.gson", module: "gson"
     }
     embed "dev.vankka:MCDiscordReserializer:4.0.0"
-    embed "dev.vankka:SimpleAST:2.2.5-SNAPSHOT"
+    embed "dev.vankka:SimpleAST:2.2.6-SNAPSHOT"
     embed "net.kyori:adventure-text-serializer-legacy:4.4.0"
 
     //Toml4j
