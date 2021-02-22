@@ -221,7 +221,7 @@ dependencies {
 
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.16.4-35.0.3'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.0.42'
 
     // ============= Spigot =============
     compileOnly 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
