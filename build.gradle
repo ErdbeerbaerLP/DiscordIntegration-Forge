@@ -197,7 +197,7 @@ dependencies {
     embed('com.vdurmont:emoji-java:5.1.1')
 
     //Minecraft <==> Discord conversion
-    embed 'net.kyori:adventure-api:4.4.0'
+    embed 'net.kyori:adventure-api:4.5.1'
     embed('net.kyori:adventure-text-serializer-gson:4.4.0'){
         exclude group:"com.google.code.gson", module: "gson"
     }
