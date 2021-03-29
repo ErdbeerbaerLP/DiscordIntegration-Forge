@@ -224,7 +224,7 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.16.5-36.1.2'
 
     // ============= Spigot =============
-    compileOnly 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
 
     //Votifier
     compileOnly('com.vexsoftware:votifier:1.9'){
