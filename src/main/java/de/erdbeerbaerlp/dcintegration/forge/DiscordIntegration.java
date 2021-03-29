@@ -1,6 +1,8 @@
 package de.erdbeerbaerlp.dcintegration.forge;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dcshadow.net.kyori.adventure.text.Component;
+import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
@@ -16,8 +18,6 @@ import de.erdbeerbaerlp.dcintegration.forge.mixin.MixinNetHandlerPlayServer;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
 import net.dv8tion.jda.api.entities.*;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.ITextComponent;

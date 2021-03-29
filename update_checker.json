@@ -5,11 +5,6 @@
     "type": "release"
   },
   {
-    "version": "2.1.0",
-    "changelog": "Bug Fixes:\nFix possible NPE in Discord#getChannel\nAdded some error messages to getChannel\nIncrease start delay to give JDA more time to load (hopefully) all channels",
-    "type": "release"
-  },
-  {
     "version": "2.0.9",
     "changelog": "Bug Fixes:\nFix Crash with forge",
     "type": "beta"

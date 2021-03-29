@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dcshadow.org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -23,7 +24,6 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
-import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;

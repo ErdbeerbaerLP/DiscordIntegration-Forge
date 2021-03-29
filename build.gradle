@@ -26,11 +26,9 @@ plugins {
     id "com.matthewprenger.cursegradle" version "1.4.0"
     id "com.wynprice.cursemaven" version "2.1.5"
     id 'java'
-    id 'net.minecrell.plugin-yml.bukkit' version '0.3.0'
 }
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'net.minecraftforge.gradle'
-// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'org.spongepowered.mixin'
@@ -39,7 +37,7 @@ apply plugin: 'org.spongepowered.mixin'
 //Build variables
 version = "2.1.1"
 group = "de.erdbeerbaerlp.dcintegration"
-archivesBaseName = "dcintegration"
+archivesBaseName = "dcintegration-forge"
 
 sourceCompatibility = targetCompatibility = '1.8'
 compileJava {
@@ -50,6 +48,7 @@ compileJava {
 //Gradle Repositories
 repositories {
     jcenter()
+    maven { url 'https://jitpack.io' }
     maven {
         name = 'sponge'
         url = 'https://repo.spongepowered.org/maven'
@@ -59,7 +58,6 @@ repositories {
         url = "https://minecraft.curseforge.com/api/maven/"
     }// Maybe needed for other mods in the future
     //maven { url "https://maven.latmod.com/" } //FTB
-    maven { url 'https://jitpack.io' }
     maven { url "https://nexus.vankka.dev/repository/maven-public/" }
     maven { url "https://repository.dev.gotan.io/repository/gotan.os/" }
     maven { url "https://repo.opencollab.dev/maven-snapshots" }
@@ -68,36 +66,22 @@ repositories {
         name = 'sonatype-oss'
         url = 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
-
-    maven {
-        name = 'spigotmc-repo'
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-    }
-    maven {
-        name = 'sonatype'
-        url = 'https://oss.sonatype.org/content/groups/public/'
-    }
     maven{
         name = 'howaner'
         url = "http://repo.howaner.de/"
     }
-
 }
 
 //Forge
 minecraft {
-    mappings channel: 'snapshot', version: '20201028-1.16.3'
-    // accessTransformer = file('build/resources/main/META-INF/accesstransformer.cfg')
+    mappings channel: 'snapshot', version: '20210309-1.16.5'
     runs {
         server {
             workingDirectory project.file('run')
-
             // Recommended logging data for a userdev environment
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-
             mods {
                 dcintegration {
                     source sourceSets.main
@@ -107,32 +91,6 @@ minecraft {
     }
 }
 
-//Generates plugin.yml
-bukkit {
-    name = "DiscordIntegration"
-    main = "de.erdbeerbaerlp.dcintegration.spigot.DiscordIntegration"
-    author = "ErdbeerbaerLP"
-    apiVersion = "1.16"
-    version = project.version
-    website = "https://www.curseforge.com/minecraft/mc-mods/dcintegration"
-    commands {
-        discord {
-            aliases = ["dc"]
-            permission = "dcintegration.discord"
-        }
-    }
-    permissions {
-        'dcintegration.discord' {
-            description = "Gives access to the basic Discord Integration commands"
-            setDefault('TRUE')
-        }
-        'dcintegration.admin' {
-            description = "Gives access to the Discord Integration admin subcommands (like reload)"
-            setDefault('OP')
-        }
-    }
-    softDepend = ["Votifier", "dynmap", "floodgate-bukkit"]
-}
 
 //ShadowJar
 configurations {
@@ -142,34 +100,6 @@ configurations {
 shadowJar {
     classifier = '1.16'
     configurations = [project.configurations.embed]
-    relocate 'okhttp3', 'dcshadow.okhttp'
-    relocate 'okio', 'dcshadow.okio'
-    relocate 'club.minnced', 'dcshadow.club.minnced'
-    relocate 'com.sun', 'dcshadow.com.sun'
-    relocate 'com.iwebpp', 'dcshadow.com.iwebpp'
-    relocate 'com.neovisionaries', 'dcshadow.com.neovisionaries'
-    relocate 'gnu', 'dcshadow.gnu'
-    relocate 'org.apache.commons.collections4', 'dcshadow.org.apache.commons.collections4'
-    relocate('org.apache.commons.lang3', 'dcshadow.org.apache.commons.lang3'){
-        exclude 'org.apache.commons.lang3.tuple.Pair' //Fix bug with forge
-    }
-    relocate 'org.json', 'dcshadow.org.json'
-    relocate 'org.intellij', 'dcshadow.org.intellij'
-    relocate 'org.jetbrains', 'dcshadow.org.jetbrains'
-    relocate 'tomp2p', 'dcshadow.tomp2p'
-    relocate 'com.fasterxml', 'dcshadow.com.fasterxml'
-    relocate 'dev.vankka', 'dcshadow.dev.vankka'
-    relocate 'net.kyori', 'dcshadow.net.kyori'
-    relocate 'org.checkerframework', 'dcshadow.org.checkerframework'
-    relocate "com.moandjiezana", "dcshadow.com.moandjiezana"
-    relocate "ch.lambdaj", "dcshadow.ch.lambdaj"
-    relocate "emoji4j", "dcshadow.emoji4j"
-    relocate "javax.annotation", "dcshadow.javax.annotation"
-    relocate "net.sf", "dcshadow.net.sf"
-    relocate "org.hamcrest", "dcshadow.org.hamcrest"
-    relocate "org.objenesis", "dcshadow.org.objenesis"
-    relocate "kotlin", "dcshadow.kotlin"
-    exclude 'org/apache/commons/lang3/tuple/Pair.class' //Fix conflict with forge
 }
 reobf {
     shadowJar {
@@ -185,60 +115,14 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-
-    //Discord libraries
-    embed("net.dv8tion:JDA:4.2.0_227") {
-        exclude group: 'okhttp3', module: "okhttp"
-    }
-    embed "com.squareup.okhttp3:okhttp:4.9.0"
-    embed 'club.minnced:discord-webhooks:0.5.4'
-
-    //Emoji-Java
-    embed('com.vdurmont:emoji-java:5.1.1')
-
-    //Minecraft <==> Discord conversion
-    embed 'net.kyori:adventure-api:4.4.0'
-    embed('net.kyori:adventure-text-serializer-gson:4.4.0'){
-        exclude group:"com.google.code.gson", module: "gson"
-    }
-    embed "dev.vankka:MCDiscordReserializer:4.0.0"
-    embed "dev.vankka:SimpleAST:2.2.5-SNAPSHOT"
-    embed "net.kyori:adventure-text-serializer-legacy:4.4.0"
-
-    //Toml4j
-    embed("com.github.ErdbeerbaerLP:toml4j:wip-SNAPSHOT"){
-        exclude group:"com.google.code.gson", module: "gson"
-    }
-
-    //Apache commons lang3
-    embed group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
-
-    //SLF4J Simple Binding
-    embed group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
-
-    //Dynmap
-    compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
-
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:564b32d2'
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.16.5-36.1.2'
 
-    // ============= Spigot =============
-    compileOnly 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
 
-    //Votifier
-    compileOnly('com.vexsoftware:votifier:1.9'){
-        transitive = false
-    }
-
-    //Dynmap-Bukkit for workaround
-    compileOnly('com.github.webbukkit.dynmap:dynmap-api:3.1-beta-5'){
-        transitive = false
-    }
-
-    //Floodgate
-    compileOnly('org.geysermc:floodgate-bukkit:1.0-SNAPSHOT')
-
+    //Dynmap-API
+    compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
 }
 
 
@@ -275,10 +159,9 @@ curseforge {
             id = '324952'
             changelog = project.changelog
             releaseType = 'release'
-            addGameVersion '1.16.4'
             addGameVersion '1.16.5'
             mainArtifact(jar) {
-                displayName = "DiscordIntegration-$version (MC 1.16.4+)"
+                displayName = "DiscordIntegration-Forge $version (MC 1.16.5)"
             }
             //relations {
             //}
