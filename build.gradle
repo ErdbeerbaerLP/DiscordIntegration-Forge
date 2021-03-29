@@ -191,7 +191,7 @@ dependencies {
         exclude group: 'okhttp3', module: "okhttp"
     }
     embed "com.squareup.okhttp3:okhttp:4.9.0"
-    embed 'club.minnced:discord-webhooks:0.5.4'
+    embed 'club.minnced:discord-webhooks:0.5.6'
 
     //Emoji-Java
     embed('com.vdurmont:emoji-java:5.1.1')
@@ -221,7 +221,7 @@ dependencies {
 
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.16.4-35.0.3'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.1.2'
 
     // ============= Spigot =============
     compileOnly 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
