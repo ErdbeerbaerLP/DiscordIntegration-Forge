@@ -115,7 +115,7 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:564b32d2'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:23c9dd1'
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.16.5-36.1.2'
