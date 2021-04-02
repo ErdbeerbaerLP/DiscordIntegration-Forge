@@ -4,27 +4,25 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.minecraft.command.arguments.ComponentArgument;
+import net.minecraft.command.arguments.NBTCompoundTagArgument;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.StringNBT;
+import net.minecraft.nbt.*;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.*;
+import net.minecraft.util.text.TextComponent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -52,6 +50,8 @@ public class ForgeMessageUtils extends MessageUtils {
     public static MessageEmbed genItemStackEmbedIfAvailable(final ITextComponent component) {
         if (!Configuration.instance().forgeSpecific.sendItemInfo) return null;
         final JsonObject json = p.parse(ITextComponent.Serializer.toJson(component)).getAsJsonObject();
+        System.out.println("Generating embed...");
+        System.out.println("JSON: " + json);
         if (json.has("with")) {
             final JsonArray args = json.getAsJsonArray("with");
             for (JsonElement el : args) {
@@ -59,14 +59,13 @@ public class ForgeMessageUtils extends MessageUtils {
                     JsonObject arg1 = (JsonObject) el;
                     if (arg1.has("hoverEvent")) {
                         final JsonObject hoverEvent = arg1.getAsJsonObject("hoverEvent");
-                        if (hoverEvent.has("action") && hoverEvent.get("action").getAsString().equals("show_item") && hoverEvent.has("value")) {
-                            if (hoverEvent.getAsJsonObject("value").has("text")) {
-                                final String it = hoverEvent.getAsJsonObject("value").get("text").getAsString();
-                                final JsonObject item = p.parse(it).getAsJsonObject();
+                        if (hoverEvent.has("action") && hoverEvent.get("action").getAsString().equals("show_item") && hoverEvent.has("contents")) {
+                            if (hoverEvent.getAsJsonObject("contents").has("tag")) {
+                                final JsonObject item = hoverEvent.getAsJsonObject("contents").getAsJsonObject();
                                 try {
                                     final ItemStack is = new ItemStack(itemreg.getValue(new ResourceLocation(item.get("id").getAsString())));
                                     if (item.has("tag")) {
-                                        final CompoundNBT tag = JsonToNBT.getTagFromJson(item.get("tag").getAsJsonObject().toString());
+                                        final CompoundNBT tag = NBTCompoundTagArgument.nbt().parse(new StringReader(item.get("tag").getAsString()));
                                         is.setTag(tag);
                                     }
                                     final CompoundNBT itemTag = is.getOrCreateTag();
@@ -98,33 +97,21 @@ public class ForgeMessageUtils extends MessageUtils {
                                                     tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(level).getString())).append("\n");
                                                 }
                                             });
-                                        }/* Broken Code
+                                        }/*
                                         EnchantmentHelper.getEnchantments(is).forEach((ench, lvl) -> {
-                                        tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(lvl).getFormattedText())).append("\n");
+                                            tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(lvl).getUnformattedComponentText())).append("\n");
                                         });*/
                                     }
                                     //Add Lores
                                     final ListNBT list = itemTag.getCompound("display").getList("Lore", 8);
                                     list.forEach((nbt) -> {
-                                        if (nbt instanceof StringNBT) {
-                                            final String txt = TextFormatting.getTextWithoutFormattingCodes(nbt.getString());
-                                            tooltip.append("_").append(txt, 1, txt.length() - 1).append("_\n");
-                                        } else if (nbt instanceof CompoundNBT) {
-                                            final CompoundNBT comp = (CompoundNBT) nbt;
-                                            final String txt = TextFormatting.getTextWithoutFormattingCodes(comp.getString("text"));
-                                            String formattingSymbols = "";
-                                            if (comp.getBoolean("bold")) formattingSymbols = formattingSymbols + "**";
-                                            if (comp.getBoolean("underline"))
-                                                formattingSymbols = formattingSymbols + "__";
-                                            if (comp.getBoolean("italic")) {
-                                                if (formattingSymbols.endsWith("_"))
-                                                    formattingSymbols = formattingSymbols + "*";
-                                                else
-                                                    formattingSymbols = formattingSymbols + "_";
+                                        try {
+                                            if (nbt instanceof StringNBT) {
+                                                final TextComponent comp = (TextComponent) ComponentArgument.component().parse(new StringReader(nbt.getString()));
+                                                tooltip.append("_").append(comp.getUnformattedComponentText()).append("_\n");
                                             }
-                                            if (comp.getBoolean("strikethrough"))
-                                                formattingSymbols = formattingSymbols + "~~";
-                                            tooltip.append(formattingSymbols).append(txt, 1, txt.length() - 1).append(StringUtils.reverse(formattingSymbols)).append("\n");
+                                        } catch (CommandSyntaxException e) {
+                                            e.printStackTrace();
                                         }
                                     });
                                     //Add 'Unbreakable' Tag
