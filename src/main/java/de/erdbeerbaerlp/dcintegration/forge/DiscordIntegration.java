@@ -22,6 +22,7 @@ import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -41,6 +42,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -72,7 +74,7 @@ public class DiscordIntegration {
 
         Configuration.instance().loadConfig();
 
-        if(!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set
+        if(!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE") && FMLEnvironment.dist != Dist.CLIENT) { //Prevent events when token not set or on client
             FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
             MinecraftForge.EVENT_BUS.register(this);
             ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
