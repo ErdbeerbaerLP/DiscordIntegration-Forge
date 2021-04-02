@@ -119,7 +119,7 @@ public class DiscordIntegration {
             if (discord_instance.getJDA() != null && !Configuration.instance().localization.serverStarting.isEmpty()) {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 if (discord_instance.getChannel() != null)
-                    Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting);
+                    Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
             }
         } catch (InterruptedException | NullPointerException ignored) {
         }
@@ -238,7 +238,7 @@ public class DiscordIntegration {
             if (!stopped && discord_instance.getJDA() != null) ev.getServer().runImmediately(() -> {
                 discord_instance.stopThreads();
                 try {
-                    discord_instance.sendMessageReturns(Configuration.instance().localization.serverCrash).get();
+                    discord_instance.sendMessageReturns(Configuration.instance().localization.serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
                 } catch (InterruptedException | ExecutionException ignored) {
                 }
             });
