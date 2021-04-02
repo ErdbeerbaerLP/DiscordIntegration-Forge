@@ -176,11 +176,11 @@ import com.modrinth.minotaur.TaskModrinthUpload
 task publishModrinth (type: TaskModrinthUpload){
 
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
-        token = 'secret' // Use an environment property!
+        token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
         versionNumber = version
         versionName = "DiscordIntegration-Forge $version (MC 1.16.5)"
-        uploadFile = jar
+        uploadFile = shadowJar
         changelog = project.changelog
         addGameVersion('1.16.5')
         addLoader('forge')
@@ -188,4 +188,4 @@ task publishModrinth (type: TaskModrinthUpload){
     }
 }
 
-tasks.release.dependsOn(build, curseforge,publishModrinth)
+tasks.release.dependsOn(tasks.build, tasks.curseforge,tasks.publishModrinth)
