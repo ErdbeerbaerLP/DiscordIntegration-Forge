@@ -69,15 +69,17 @@ public class DiscordIntegration {
     private boolean stopped = false;
 
     public DiscordIntegration() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
 
         Configuration.instance().loadConfig();
 
-
-        MinecraftForge.EVENT_BUS.register(this);
-        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
-                () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-
+        if(!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set
+            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
+            MinecraftForge.EVENT_BUS.register(this);
+            ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
+                    () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+        }else{
+            System.err.println("Please check the config file and set an bot token");
+        }
 
         //  ==  Migrate some files from 1.x.x to 2.x.x  ==
 
