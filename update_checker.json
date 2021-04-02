@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.1.1",
+    "changelog": "Multiple bugfixes",
+    "type": "release"
+  },
+  {
     "version": "2.1.0",
     "changelog": "New Features:\nPlatform-Independent Addon Loader\nGeyser Floodgate support (standalone spigot only, not working with bungee!)\nStreaming status\n\nBug Fixes:\nFix Crash with forge\nFix wrong output in list command\nFix multiple possible crash-situations\nFix some placeholders not being replaced",
     "type": "release"
