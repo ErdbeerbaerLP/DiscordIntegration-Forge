@@ -17,7 +17,7 @@ buildscript {
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.+', changing: true
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
+        classpath "com.github.jengelman.gradle.plugins:shadow:6.1.0"
     }
 }
 
