@@ -36,7 +36,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.1.1"
+version = "2.2.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -119,11 +119,13 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:f8762f79a7'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:6e28498284'
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.16.5-36.1.16'
 
+    //Mixin
+    annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
 
     //Dynmap-API
     compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
@@ -184,7 +186,7 @@ task publishModrinth (type: TaskModrinthUpload){
         changelog = project.changelog
         addGameVersion('1.16.5')
         addLoader('forge')
-        releaseType = "release"
+        versionType = "RELEASE"
     }
 }
 

@@ -38,7 +38,7 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Map.Entry<UUID, String> p, boolean chatFormat) {
-            return TextFormatting.getTextWithoutFormattingCodes(p.getValue());
+        return TextFormatting.getTextWithoutFormattingCodes(p.getValue());
     }
 
     /**
@@ -70,8 +70,12 @@ public class ForgeMessageUtils extends MessageUtils {
                                     }
                                     final CompoundNBT itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    b.setTitle(is.hasDisplayName() ? is.getDisplayName().getUnformattedComponentText() : new TranslationTextComponent(is.getTranslationKey()).getUnformattedComponentText());
-                                    b.setFooter(is.getItem().getRegistryName().toString());
+                                    String title = is.hasDisplayName() ? is.getDisplayName().getUnformattedComponentText() : new TranslationTextComponent(is.getTranslationKey()).getUnformattedComponentText();
+                                    if (title.isEmpty())
+                                        title = is.getItem().getRegistryName().toString();
+                                    else
+                                        b.setFooter(is.getItem().getRegistryName().toString());
+                                    b.setTitle(title);
                                     final StringBuilder tooltip = new StringBuilder();
                                     boolean[] flags = new boolean[6]; // Enchantments, Modifiers, Unbreakable, CanDestroy, CanPlace, Other
                                     Arrays.fill(flags, false); // Set everything visible
