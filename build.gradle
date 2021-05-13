@@ -119,7 +119,7 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:7f9bc47284'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:c68715a546'
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.16.5-36.1.16'
@@ -163,7 +163,7 @@ curseforge {
         project {
             id = '324952'
             changelog = project.changelog
-            releaseType = 'release'
+            releaseType = 'beta'
             addGameVersion '1.16.5'
             mainArtifact(jar) {
                 displayName = "DiscordIntegration-Forge $version (MC 1.16.5)"
@@ -186,7 +186,7 @@ task publishModrinth (type: TaskModrinthUpload){
         changelog = project.changelog
         addGameVersion('1.16.5')
         addLoader('forge')
-        versionType = "RELEASE"
+        versionType = "BETA"
     }
 }
 
