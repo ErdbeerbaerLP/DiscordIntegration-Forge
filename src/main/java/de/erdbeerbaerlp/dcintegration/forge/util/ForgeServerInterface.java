@@ -1,8 +1,6 @@
 package de.erdbeerbaerlp.dcintegration.forge.util;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -19,16 +17,13 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.minecraft.command.arguments.ComponentArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.play.server.SPlaySoundPacket;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.SoundEvents;
+import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.util.*;
 
@@ -38,35 +33,35 @@ public class ForgeServerInterface extends ServerInterface {
 
     @Override
     public int getMaxPlayers() {
-        return ServerLifecycleHooks.getCurrentServer() == null ? -1 : ServerLifecycleHooks.getCurrentServer().getMaxPlayers();
+        return FMLCommonHandler.instance().getMinecraftServerInstance() == null ? -1 : FMLCommonHandler.instance().getMinecraftServerInstance().getMaxPlayers();
     }
 
     @Override
     public int getOnlinePlayers() {
-        return ServerLifecycleHooks.getCurrentServer() == null ? -1 : ServerLifecycleHooks.getCurrentServer().getOnlinePlayerNames().length;
+        return FMLCommonHandler.instance().getMinecraftServerInstance() == null ? -1 : FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerNames().length;
     }
 
     @Override
     public void sendMCMessage(Component msg) {
-        final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
+        final List<EntityPlayerMP> l = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
         try {
-            for (final ServerPlayerEntity p : l) {
+            for (final EntityPlayerMP p : l) {
                 if (!Variables.discord_instance.ignoringPlayers.contains(p.getUniqueID()) && !(PlayerLinkController.isPlayerLinked(p.getUniqueID()) && PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame)) {
-                    final Map.Entry<Boolean, Component> ping = ComponentUtils.parsePing(msg, p.getUniqueID(), p.getName().getUnformattedComponentText());
+                    final Map.Entry<Boolean, Component> ping = ComponentUtils.parsePing(msg, p.getUniqueID(), p.getName());
                     final String jsonComp = GsonComponentSerializer.gson().serialize(ping.getValue()).replace("\\\\n", "\n");
-                    final ITextComponent comp = ComponentArgument.component().parse(new StringReader(jsonComp));
-                    p.sendMessage(comp, Util.DUMMY_UUID);
+                    final ITextComponent comp =  ITextComponent.Serializer.jsonToComponent(jsonComp);
+                    p.sendMessage(comp);
                     if (ping.getKey()) {
                         if (PlayerLinkController.getSettings(null, p.getUniqueID()).pingSound) {
-                            p.connection.sendPacket(new SPlaySoundPacket(SoundEvents.BLOCK_NOTE_BLOCK_PLING.getRegistryName(), SoundCategory.MASTER, new Vector3d(p.getPosX(), p.getPosY(), p.getPosZ()), 1, 1));
+                            p.connection.sendPacket(new SPacketSoundEffect(SoundEvents.BLOCK_NOTE_PLING, SoundCategory.MASTER, p.posX, p.posY, p.posZ, 1, 1));
                         }
                     }
                 }
             }
             //Send to server console too
             final String jsonComp = GsonComponentSerializer.gson().serialize(msg).replace("\\\\n", "\n");
-            final ITextComponent comp = ComponentArgument.component().parse(new StringReader(jsonComp));
-            ServerLifecycleHooks.getCurrentServer().sendMessage(comp, Util.DUMMY_UUID);
+            final ITextComponent comp =  ITextComponent.Serializer.jsonToComponent(jsonComp);
+            FMLCommonHandler.instance().getMinecraftServerInstance().sendMessage(comp);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -74,8 +69,8 @@ public class ForgeServerInterface extends ServerInterface {
 
     @Override
     public void sendMCReaction(Member member, RestAction<Message> retrieveMessage, UUID targetUUID, MessageReaction.ReactionEmote reactionEmote) {
-        final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
-        for (final ServerPlayerEntity p : l) {
+        final List<EntityPlayerMP> l = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
+        for (final EntityPlayerMP p : l) {
             if (p.getUniqueID().equals(targetUUID) && !Variables.discord_instance.ignoringPlayers.contains(p.getUniqueID()) && !PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame && !PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreReactions) {
 
                 final String emote = reactionEmote.isEmote() ? ":" + reactionEmote.getEmote().getName() + ":" : MessageUtils.formatEmoteMessage(new ArrayList<>(), reactionEmote.getEmoji());
@@ -93,12 +88,9 @@ public class ForgeServerInterface extends ServerInterface {
     @Override
     public void runMcCommand(String cmd, MessageReceivedEvent cmdMsg) {
         final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), cmdMsg.getTextChannel().getId());
-        if (s.hasPermissionLevel(4)) {
-            try {
-                ServerLifecycleHooks.getCurrentServer().getCommandManager().getDispatcher().execute(cmd.trim(), s.getCommandSource());
-            } catch (CommandSyntaxException e) {
-                discord_instance.sendMessage(e.getMessage());
-            }
+        if (s.canUseCommand(4, "")) {
+            FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(s, cmd.trim());
+
         } else
             discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```", cmdMsg.getTextChannel());
 
@@ -107,35 +99,36 @@ public class ForgeServerInterface extends ServerInterface {
     @Override
     public HashMap<UUID, String> getPlayers() {
         final HashMap<UUID, String> players = new HashMap<>();
-        for (ServerPlayerEntity p : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
-            players.put(p.getUniqueID(), p.getDisplayName().getUnformattedComponentText().isEmpty() ? p.getName().getUnformattedComponentText() : p.getDisplayName().getUnformattedComponentText());
+        for (EntityPlayerMP p : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) {
+            players.put(p.getUniqueID(), p.getDisplayName().getUnformattedComponentText().isEmpty() ? p.getName() : p.getDisplayName().getUnformattedComponentText());
         }
         return players;
     }
 
     @Override
     public void sendMCMessage(String msg, UUID player) {
-        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(player).sendMessage(new StringTextComponent(msg), Util.DUMMY_UUID);
+        FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayerByUUID(player).sendMessage(new TextComponentString(msg));
 
     }
 
     @Override
     public boolean isOnlineMode() {
-        return Configuration.instance().bungee.isBehindBungee || ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode();
+        return Configuration.instance().bungee.isBehindBungee ||  FMLCommonHandler.instance().getMinecraftServerInstance().isServerInOnlineMode();
     }
 
-    private void sendReactionMCMessage(ServerPlayerEntity target, String msg) {
+    private void sendReactionMCMessage(EntityPlayerMP target, String msg) {
         final Component msgComp = MinecraftSerializer.INSTANCE.serialize(msg.replace("\n", "\\n"), DiscordEventListener.mcSerializerOptions);
         final String jsonComp = GsonComponentSerializer.gson().serialize(msgComp).replace("\\\\n", "\n");
         try {
-            final ITextComponent comp = ComponentArgument.component().parse(new StringReader(jsonComp));
-            target.sendMessage(comp, Util.DUMMY_UUID);
+            final ITextComponent comp =  ITextComponent.Serializer.jsonToComponent(jsonComp);
+            target.sendMessage(comp);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     @Override
     public String getNameFromUUID(UUID uuid) {
-        return ServerLifecycleHooks.getCurrentServer().getMinecraftSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();
+        return FMLCommonHandler.instance().getMinecraftServerInstance().getMinecraftSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();
     }
 }

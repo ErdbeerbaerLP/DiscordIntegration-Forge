@@ -1,0 +1,17 @@
+[
+  {
+    "modid": "dcintegration",
+    "name": "Discord Integration",
+    "description": "This mod links your server chat with a channel on your discord server.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://curseforge.com/projects/dcintegration",
+    "authorList": ["ErdbeerbaerLP"],
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": [
+      "ftbutilities",
+      "votifier"
+    ]
+  }
+]

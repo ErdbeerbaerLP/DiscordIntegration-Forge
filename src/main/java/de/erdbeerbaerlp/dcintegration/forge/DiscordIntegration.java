@@ -1,8 +1,8 @@
 package de.erdbeerbaerlp.dcintegration.forge;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import dcshadow.net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
@@ -18,47 +18,38 @@ import de.erdbeerbaerlp.dcintegration.forge.mixin.MixinNetHandlerPlayServer;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
 import net.dv8tion.jda.api.entities.*;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.passive.EntityTameable;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.CommandEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ExtensionPoint;
-import net.minecraftforge.fml.InterModComms;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.network.FMLNetworkConstants;
+import net.minecraftforge.fml.common.event.*;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
+import java.util.concurrent.Executors;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discordDataDir;
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
 
-@Mod(DiscordIntegration.MODID)
+@Mod(modid = DiscordIntegration.MODID, version = "2.2.0", name = "Discord Integration", serverSideOnly = true, acceptableRemoteVersions = "*")
+
 public class DiscordIntegration {
     /**
      * Modid
@@ -71,15 +62,14 @@ public class DiscordIntegration {
     private boolean stopped = false;
 
     public DiscordIntegration() {
+    }
 
+    @Mod.EventHandler
+    public void modConstruction(FMLConstructionEvent ev) {
         Configuration.instance().loadConfig();
-
-        if(!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE") && FMLEnvironment.dist != Dist.CLIENT) { //Prevent events when token not set or on client
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
+        if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set
             MinecraftForge.EVENT_BUS.register(this);
-            ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
-                    () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-        }else{
+        } else {
             System.err.println("Please check the config file and set an bot token");
         }
 
@@ -105,8 +95,10 @@ public class DiscordIntegration {
         }
     }
 
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent ev) {
 
-    public void serverSetup(FMLDedicatedServerSetupEvent ev) {
+
         CommandRegistry.registerDefaultCommandsFromConfig();
         Variables.discord_instance = new Discord(new ForgeServerInterface());
         try {
@@ -123,23 +115,48 @@ public class DiscordIntegration {
             }
         } catch (InterruptedException | NullPointerException ignored) {
         }
+        if (Loader.isModLoaded("votifier")) {
+            MinecraftForge.EVENT_BUS.register(new VotifierEventHandler());
+        }
+    }
+
+    @Mod.EventHandler
+    public void serverStarting(FMLServerStartingEvent ev) {
+        ev.registerServerCommand(new McCommandDiscord());
+    }
+
+
+    @Mod.EventHandler
+    public void imc(FMLInterModComms.IMCEvent ev) {
+        for (FMLInterModComms.IMCMessage e : ev.getMessages()) {
+            System.out.println("[IMC-Message] Sender: " + e.getSender() + "Key: " + e.key);
+            if (isModIDBlacklisted(e.getSender())) continue;
+            if (e.isStringMessage() && (e.key.equals("Discord-Message") || e.key.equals("sendMessage"))) {
+                discord_instance.sendMessage(e.getStringValue());
+            }
+            //Compat with imc from another discord integration mod
+            if (e.isNBTMessage() && e.key.equals("sendMessage")) {
+                final NBTTagCompound msg = e.getNBTValue();
+                discord_instance.sendMessage(msg.getString("message"));
+            }
+        }
     }
 
     @SubscribeEvent
-    public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
-        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
+    public void playerJoin(final net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent ev) {
+        if (PlayerLinkController.getSettings(null, ev.player.getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null) {
-            discord_instance.sendMessage(Configuration.instance().localization.playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
+            discord_instance.sendMessage(Configuration.instance().localization.playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
 
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
             final Thread fixLinkStatus = new Thread(() -> {
                 if (Configuration.instance().linking.linkedRoleID.equals("0")) return;
-                final UUID uuid = ev.getPlayer().getUniqueID();
+                final UUID uuid = ev.player.getUniqueID();
                 if (!PlayerLinkController.isPlayerLinked(uuid)) return;
                 final Guild guild = discord_instance.getChannel().getGuild();
                 final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
                 if (PlayerLinkController.isPlayerLinked(uuid)) {
-                final Member member = guild.getMemberById(PlayerLinkController.getDiscordFromPlayer(uuid));
+                    final Member member = guild.getMemberById(PlayerLinkController.getDiscordFromPlayer(uuid));
                     if (!member.getRoles().contains(linkedRole))
                         guild.addRoleToMember(member, linkedRole).queue();
                 }
@@ -151,31 +168,26 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
-        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
+        if (PlayerLinkController.getSettings(null, ev.getEntityPlayer().getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
             discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
-                    TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getPlayer())))
+                    TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getEntityPlayer())))
                     .replace("%name%",
                             TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
                                     .getDisplay()
                                     .getTitle()
-                                    .getString()))
+                                    .getUnformattedText()))
                     .replace("%desc%",
                             TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
                                     .getDisplay()
                                     .getDescription()
-                                    .getString()))
+                                    .getUnformattedText()))
                     .replace("\\n", "\n"));
 
 
     }
 
-    @SubscribeEvent
-    public void registerCommands(final RegisterCommandsEvent ev) {
-        new McCommandDiscord(ev.getDispatcher());
-    }
-
-    @SubscribeEvent
+    @Mod.EventHandler
     public void serverStarted(final FMLServerStartedEvent ev) {
         System.out.println("Started");
         Variables.started = new Date().getTime();
@@ -187,18 +199,21 @@ public class DiscordIntegration {
             discord_instance.startThreads();
         }
         UpdateChecker.runUpdateCheck();
-        if(ModList.get().getModContainerById("dynmap").isPresent()){
+        if (Loader.isModLoaded("dynmap")) {
             new DynmapListener().register();
         }
     }
 
     @SubscribeEvent
     public void command(CommandEvent ev) {
-        String command = ev.getParseResults().getReader().getString().replaceFirst(Pattern.quote("/"), "");
+        String command = ev.getCommand().getName() + " ";
+        for (String s : ev.getParameters()) {
+            command += s + " ";
+        }
         if (!Configuration.instance().commandLog.channelID.equals("0")) {
             if (!ArrayUtils.contains(Configuration.instance().commandLog.ignoredCommands, command.split(" ")[0]))
                 discord_instance.sendMessage(Configuration.instance().commandLog.message
-                        .replace("%sender%", ev.getParseResults().getContext().getLastChild().getSource().getName())
+                        .replace("%sender%", ev.getSender().getName())
                         .replace("%cmd%", command)
                         .replace("%cmd-no-args%", command.split(" ")[0]), discord_instance.getChannel(Configuration.instance().commandLog.channelID));
         }
@@ -213,17 +228,14 @@ public class DiscordIntegration {
                     raw = true;
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
                 }
-                try {
-                    discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getName(), ev.getParseResults().getContext().getSource().assertIsEntity().getUniqueID().toString(), new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
-                } catch (CommandSyntaxException e) {
-                    if (msg.startsWith(Configuration.instance().messages.sayCommandIgnoredPrefix)) return;
-                    discord_instance.sendMessage(msg);
-                }
+                if (ev.getSender() instanceof DedicatedServer) discord_instance.sendMessage(msg);
+                else if (ev.getSender() instanceof EntityPlayer || ev.getSender() instanceof FakePlayer)
+                    discord_instance.sendMessage(ev.getCommand().getName(), ev.getSender().getCommandSenderEntity().getUniqueID().toString(), new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
             }
         }
     }
 
-    @SubscribeEvent
+    @Mod.EventHandler
     public void serverStopping(FMLServerStoppingEvent ev) {
         if (discord_instance != null) {
             discord_instance.sendMessage(Configuration.instance().localization.serverStopped);
@@ -232,16 +244,20 @@ public class DiscordIntegration {
         this.stopped = true;
     }
 
-    @SubscribeEvent
+    @Mod.EventHandler
     public void serverStopped(FMLServerStoppedEvent ev) {
-        if (discord_instance != null) {
-            if (!stopped && discord_instance.getJDA() != null) ev.getServer().runImmediately(() -> {
-                discord_instance.stopThreads();
-                try {
+        FMLCommonHandler.instance().getMinecraftServerInstance().callFromMainThread(Executors.callable(this::stopDiscord)); //Attempt to force send the messages before server finally closes
+    }
+    public void stopDiscord(){
+        if (discord_instance != null && !stopped && discord_instance.getJDA() != null) {
+            discord_instance.stopThreads();
+            try {
+                if (Configuration.instance().webhook.enable)
                     discord_instance.sendMessageReturns(Configuration.instance().localization.serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
-                } catch (InterruptedException | ExecutionException ignored) {
-                }
-            });
+                else
+                    discord_instance.sendMessage(Configuration.instance().localization.serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
+            } catch (InterruptedException | ExecutionException ignored) {
+            }
             discord_instance.kill();
         }
     }
@@ -250,21 +266,9 @@ public class DiscordIntegration {
         return ArrayUtils.contains(Configuration.instance().forgeSpecific.IMC_modIdBlacklist, sender);
     }
 
-    //Still untested
-    @SubscribeEvent
-    public void imc(InterModProcessEvent ev) {
-        final Stream<InterModComms.IMCMessage> stream = ev.getIMCStream();
-        stream.forEach((msg) -> {
-            System.out.println("[IMC-Message] Sender: " + msg.getSenderModId() + " method: " + msg.getMethod());
-            if (isModIDBlacklisted(msg.getSenderModId())) return;
-            if ((msg.getMethod().equals("Discord-Message") || msg.getMethod().equals("sendMessage"))) {
-                discord_instance.sendMessage(msg.getMessageSupplier().get().toString());
-            }
-        });
-    }
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
-        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
+        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueID()).hideFromDiscord) return;
         final ITextComponent msg = ev.getComponent();
         if (discord_instance.callEvent((e) -> {
             if (e instanceof ForgeDiscordEventHandler) {
@@ -277,24 +281,24 @@ public class DiscordIntegration {
         final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
         if (discord_instance != null) {
             TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
-            if(channel == null ) return;
+            if (channel == null) return;
             discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUniqueID().toString(), new DiscordMessage(embed, text, true), channel);
-            final String json = ITextComponent.Serializer.toJson(msg);
-            Component comp = GsonComponentSerializer.gson().deserialize(json);
-            final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp,channel.getGuild()));
-            ev.setComponent(ITextComponent.Serializer.getComponentFromJson(editedJson));
+            final String componentText = msg.getUnformattedText();
+            Component comp = LegacyComponentSerializer.legacySection().deserialize(componentText);
+            final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
+            ev.setComponent(ITextComponent.Serializer.jsonToComponent(editedJson));
         }
 
     }
 
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
-        if(PlayerLinkController.getSettings(null,ev.getEntity().getUniqueID()).hideFromDiscord)return;
-        if (ev.getEntity() instanceof PlayerEntity || (ev.getEntity() instanceof TameableEntity && ((TameableEntity) ev.getEntity()).getOwner() instanceof PlayerEntity && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
+        if (PlayerLinkController.getSettings(null, ev.getEntity().getUniqueID()).hideFromDiscord) return;
+        if (ev.getEntity() instanceof EntityPlayer || (ev.getEntity() instanceof EntityTameable && ((EntityTameable) ev.getEntity()).getOwner() instanceof EntityPlayer && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
             if (discord_instance != null) {
                 final ITextComponent deathMessage = ev.getSource().getDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
-                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", ""))), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
+                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getUnformattedText()).replace(ev.getEntity().getName() + " ", ""))), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
         }
     }
@@ -302,12 +306,12 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (stopped) return; //Try to fix player leave messages after stop!
-        if(PlayerLinkController.getSettings(null,ev.getPlayer().getUniqueID()).hideFromDiscord)return;
-        if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueID()))
-            discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
-        else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueID())) {
-            discord_instance.sendMessage(Configuration.instance().localization.playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
-            timeouts.remove(ev.getPlayer().getUniqueID());
+        if (PlayerLinkController.getSettings(null, ev.player.getUniqueID()).hideFromDiscord) return;
+        if (discord_instance != null && !timeouts.contains(ev.player.getUniqueID()))
+            discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
+        else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
+            discord_instance.sendMessage(Configuration.instance().localization.playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
+            timeouts.remove(ev.player.getUniqueID());
         }
     }
 }
