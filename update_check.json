@@ -1,6 +1,7 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/dcintegration/files",
   "1.12.2": {
+    "2.2.0": "1.12 backport of 1.16 build",
     "1.1.19": "[IMPORTANT] Updated JDA to fix mod preventing server start",
     "1.1.18": "Fix possible crash when not configurated or discord connection fails",
     "1.1.17": "Hardcode new delay between channel description updates to 10 minutes to prevent rate limits :/",
