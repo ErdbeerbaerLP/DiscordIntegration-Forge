@@ -122,7 +122,7 @@ dependencies {
     embed 'de.erdbeerbaerlp:DiscordIntegration-Core:c68715a546'
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.16.5-36.1.16'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.1.31'
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
