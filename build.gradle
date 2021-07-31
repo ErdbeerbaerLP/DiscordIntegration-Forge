@@ -33,7 +33,7 @@ apply plugin: 'maven-publish'
 
 
 //Build variables
-version = "2.3.0"
+version = "2.3.1"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -104,7 +104,7 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:0f267e5122'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:844e196e08'
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
