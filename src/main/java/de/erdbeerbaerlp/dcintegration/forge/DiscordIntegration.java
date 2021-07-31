@@ -66,7 +66,6 @@ public class DiscordIntegration {
     private boolean stopped = false;
 
     public DiscordIntegration() {
-
         Configuration.instance().loadConfig();
 
         if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE") && FMLEnvironment.dist != Dist.CLIENT) { //Prevent events when token not set or on client
@@ -182,7 +181,7 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
-        UpdateChecker.runUpdateCheck();
+        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.17/update_checker.json");
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
