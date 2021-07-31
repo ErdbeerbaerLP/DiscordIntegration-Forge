@@ -1,4 +1,4 @@
-package de.erdbeerbaerlp.dcintegration.forge.mixin;
+/*package de.erdbeerbaerlp.dcintegration.forge.mixin;
 
 import com.mojang.authlib.GameProfile;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
@@ -30,3 +30,4 @@ public class MixinWhitelist {
         }
     }
 }
+*/

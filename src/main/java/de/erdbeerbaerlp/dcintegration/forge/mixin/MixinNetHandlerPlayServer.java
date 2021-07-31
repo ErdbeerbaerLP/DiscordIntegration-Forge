@@ -1,4 +1,4 @@
-package de.erdbeerbaerlp.dcintegration.forge.mixin;
+/*package de.erdbeerbaerlp.dcintegration.forge.mixin;
 
 import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegration;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Mixin used to detect player timeouts
- */
+ *//*
 @Mixin(value = ServerPlayNetHandler.class, priority = 1001)
 public class MixinNetHandlerPlayServer {
     @Shadow
@@ -24,4 +24,4 @@ public class MixinNetHandlerPlayServer {
         if (textComponent.equals(new TranslationTextComponent("disconnect.timeout")))
             DiscordIntegration.timeouts.add(this.player.getUniqueID());
     }
-}
+}*/

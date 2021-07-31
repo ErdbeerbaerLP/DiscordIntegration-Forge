@@ -11,17 +11,21 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.minecraft.command.arguments.ComponentArgument;
-import net.minecraft.command.arguments.NBTCompoundTagArgument;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.*;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.text.*;
-import net.minecraft.util.text.TextComponent;
-import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.arguments.ComponentArgument;
+import net.minecraft.commands.arguments.NbtTagArgument;
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fmllegacy.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.Arrays;
@@ -38,18 +42,18 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Map.Entry<UUID, String> p, boolean chatFormat) {
-        return TextFormatting.getTextWithoutFormattingCodes(p.getValue());
+        return ChatFormatting.stripFormatting(p.getValue());
     }
 
     /**
-     * Attempts to generate an {@link MessageEmbed} showing item info from an {@link ITextComponent} instance
+     * Attempts to generate an {@link MessageEmbed} showing item info from an {@link Component} instance
      *
      * @param component The TextComponent to scan for item info
      * @return an {@link MessageEmbed} when there was an Item info, or {@link null} if there was no item info OR the item info was disabled
      */
-    public static MessageEmbed genItemStackEmbedIfAvailable(final ITextComponent component) {
+    public static MessageEmbed genItemStackEmbedIfAvailable(final Component component) {
         if (!Configuration.instance().forgeSpecific.sendItemInfo) return null;
-        final JsonObject json = p.parse(ITextComponent.Serializer.toJson(component)).getAsJsonObject();
+        final JsonObject json = p.parse(Component.Serializer.toJson(component)).getAsJsonObject();
         System.out.println("Generating embed...");
         System.out.println("JSON: " + json);
         if (json.has("with")) {
@@ -65,12 +69,12 @@ public class ForgeMessageUtils extends MessageUtils {
                                 try {
                                     final ItemStack is = new ItemStack(itemreg.getValue(new ResourceLocation(item.get("id").getAsString())));
                                     if (item.has("tag")) {
-                                        final CompoundNBT tag = NBTCompoundTagArgument.nbt().parse(new StringReader(item.get("tag").getAsString()));
+                                        final CompoundTag tag = (CompoundTag) NbtTagArgument.nbtTag().parse(new StringReader(item.get("tag").getAsString()));
                                         is.setTag(tag);
                                     }
-                                    final CompoundNBT itemTag = is.getOrCreateTag();
+                                    final CompoundTag itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    String title = is.hasDisplayName() ? is.getDisplayName().getUnformattedComponentText() : new TranslationTextComponent(is.getTranslationKey()).getUnformattedComponentText();
+                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getContents() : new TranslatableComponent(is.getItem().getDescriptionId()).getContents();
                                     if (title.isEmpty())
                                         title = is.getItem().getRegistryName().toString();
                                     else
@@ -89,16 +93,16 @@ public class ForgeMessageUtils extends MessageUtils {
                                     //Add Enchantments
                                     if (!flags[0]) {
                                         //Implementing this code myself because the original is broken
-                                        for (int i = 0; i < is.getEnchantmentTagList().size(); ++i) {
-                                            final CompoundNBT compoundnbt = is.getEnchantmentTagList().getCompound(i);
-                                            Registry.ENCHANTMENT.getOptional(ResourceLocation.tryCreate(compoundnbt.getString("id"))).ifPresent((ench) -> {
+                                        for (int i = 0; i < is.getEnchantmentTags().size(); ++i) {
+                                            final CompoundTag compoundnbt = is.getEnchantmentTags().getCompound(i);
+                                            Registry.ENCHANTMENT.getOptional(ResourceLocation.tryParse(compoundnbt.getString("id"))).ifPresent((ench) -> {
                                                 if (compoundnbt.get("lvl") != null) {
                                                     final int level;
-                                                    if (compoundnbt.get("lvl") instanceof StringNBT) {
+                                                    if (compoundnbt.get("lvl") instanceof StringTag) {
                                                         level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
                                                     } else
                                                         level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
-                                                    tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(level).getString())).append("\n");
+                                                    tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
                                                 }
                                             });
                                         }/*
@@ -107,12 +111,12 @@ public class ForgeMessageUtils extends MessageUtils {
                                         });*/
                                     }
                                     //Add Lores
-                                    final ListNBT list = itemTag.getCompound("display").getList("Lore", 8);
+                                    final ListTag list = itemTag.getCompound("display").getList("Lore", 8);
                                     list.forEach((nbt) -> {
                                         try {
-                                            if (nbt instanceof StringNBT) {
-                                                final TextComponent comp = (TextComponent) ComponentArgument.component().parse(new StringReader(nbt.getString()));
-                                                tooltip.append("_").append(comp.getUnformattedComponentText()).append("_\n");
+                                            if (nbt instanceof StringTag) {
+                                                final TextComponent comp = (TextComponent) ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
+                                                tooltip.append("_").append(comp.getContents()).append("_\n");
                                             }
                                         } catch (CommandSyntaxException e) {
                                             e.printStackTrace();
@@ -137,7 +141,7 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Entity p) {
-        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUniqueID(), p.getDisplayName().getUnformattedComponentText().isEmpty() ? p.getName().getUnformattedComponentText() : p.getDisplayName().getUnformattedComponentText());
+        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUUID(), p.getDisplayName().getContents().isEmpty() ? p.getName().getContents() : p.getDisplayName().getContents());
         return formatPlayerName(e);
     }
 }

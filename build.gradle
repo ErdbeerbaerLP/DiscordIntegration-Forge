@@ -14,9 +14,8 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.+', changing: true
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
+        //classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
 
@@ -25,12 +24,12 @@ plugins {
     id "com.matthewprenger.cursegradle" version "1.4.0"
     id 'java'
     id "com.modrinth.minotaur" version "1.2.1"
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
-apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-apply plugin: 'org.spongepowered.mixin'
+//apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
@@ -38,11 +37,6 @@ version = "2.3.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
-
-sourceCompatibility = targetCompatibility = '1.8'
-compileJava {
-    sourceCompatibility = targetCompatibility = '1.8'
-}
 //Gradle Repositories
 repositories {
     maven { url 'https://jitpack.io' }
@@ -66,7 +60,7 @@ repositories {
 
 //Forge
 minecraft {
-    mappings channel: 'snapshot', version: '20210309-1.16.5'
+    mappings channel: 'official', version: '1.17.1'
     runs {
         server {
             workingDirectory project.file('run')
@@ -93,7 +87,7 @@ task release{
 
 }
 shadowJar {
-    classifier = '1.16'
+    classifier = '1.17'
     configurations = [project.configurations.embed]
 }
 reobf {
@@ -114,10 +108,10 @@ dependencies {
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.16.5-36.1.66'
+    minecraft 'net.minecraftforge:forge:1.17.1-37.0.17'
 
     //Mixin
-    annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
+    //annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
 
     //Dynmap-API
     compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
@@ -125,13 +119,13 @@ dependencies {
 
 
 //Mixin
-mixin {
-    add sourceSets.main, 'mixins.dcintegration.refmap.json'
-}
+//mixin {
+//    add sourceSets.main, 'mixins.dcintegration.refmap.json'
+//}
 
 //Manifest attributes
 jar {
-    classifier = "1.16"
+    classifier = "1.17"
     manifest {
         attributes([
                 'Maven-Artifact'          : "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -142,8 +136,8 @@ jar {
                 "Implementation-Title"    : project.name,
                 "Implementation-Version"  : "${version}",
                 "Implementation-Vendor"   : "dcintegration",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                'MixinConnector'          : 'de.erdbeerbaerlp.dcintegration.forge.DCMixinConnector'
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")//,
+                //'MixinConnector'          : 'de.erdbeerbaerlp.dcintegration.forge.DCMixinConnector'
         ])
     }
 }
@@ -156,9 +150,9 @@ curseforge {
             id = '324952'
             changelog = project.changelog
             releaseType = 'beta'
-            addGameVersion '1.16.5'
+            addGameVersion '1.17.1'
             mainArtifact(jar) {
-                displayName = "DiscordIntegration-Forge $version (MC 1.16.5)"
+                displayName = "DiscordIntegration-Forge $version (MC 1.17)"
             }
             //relations {
             //}
@@ -173,10 +167,10 @@ task publishModrinth (type: TaskModrinthUpload){
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
         versionNumber = version
-        versionName = "DiscordIntegration-Forge $version (MC 1.16.5)"
+        versionName = "DiscordIntegration-Forge $version (MC 1.17)"
         uploadFile = shadowJar
         changelog = project.changelog
-        addGameVersion('1.16.5')
+        addGameVersion('1.17.1')
         addLoader('forge')
         versionType = "BETA"
     }
