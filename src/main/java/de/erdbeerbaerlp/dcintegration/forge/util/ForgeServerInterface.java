@@ -14,10 +14,7 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.ServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageReaction;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.minecraft.command.arguments.ComponentArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -91,8 +88,8 @@ public class ForgeServerInterface extends ServerInterface {
     }
 
     @Override
-    public void runMcCommand(String cmd, MessageReceivedEvent cmdMsg) {
-        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), cmdMsg.getTextChannel().getId());
+    public void runMcCommand(String cmd, final MessageChannel channel, User sender) {
+        final DCCommandSender s = new DCCommandSender(sender, channel.getId());
         if (s.hasPermissionLevel(4)) {
             try {
                 ServerLifecycleHooks.getCurrentServer().getCommandManager().getDispatcher().execute(cmd.trim(), s.getCommandSource());
@@ -100,7 +97,7 @@ public class ForgeServerInterface extends ServerInterface {
                 discord_instance.sendMessage(e.getMessage());
             }
         } else
-            discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```", cmdMsg.getTextChannel());
+            discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```", channel);
 
     }
 

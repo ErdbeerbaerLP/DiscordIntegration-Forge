@@ -119,6 +119,18 @@ cmdUptime_message = "The server is running for %uptime%"
 # The format of the uptime command
 # For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html
 uptimeFormat = "dd 'days' HH 'hours' mm 'minutes'"
+# Shows when running slash commands as command response
+executing = "Executing..."
+# Command argument description for the linkcheck command's Discord user parameter
+cmdLinkcheck_userargDesc = "The discord user to check"
+# Command argument description for the linkcheck command's minecraft player parameter
+cmdLinkcheck_mcargDesc = "The minecraft player's UUID(!) to check"
+# Sent when checked user is not linked
+cmdLinkcheck_notlinked = "This account is not linked!"
+#
+cmdLinkcheck_discordAcc = "Discord-Account: "
+cmdLinkcheck_minecraftAcc = "Minecraft Account: "
+cmdLinkcheck_cannotGetPlayer = "Error getting player information! Maybe you used an invalid name / UUID"
 
 # Command descriptions
 [localization.commands.descriptions]
@@ -128,6 +140,7 @@ help = "Displays a list of all commands"
 list = "Lists all players currently online"
 link = "Links your Discord account with your Minecraft account"
 whitelist = "Whitelists you on the server by linking with Discord"
+linkcheck = "Shows info about an linked discord user or an ingame player"
 
 # Strings about the account linking feature
 [localization.linking]
@@ -197,6 +210,8 @@ invalidPersonalSettingKey = "`%key%` is not an valid setting!"
 settingsCommandUsage = "Usages:\n\n%prefix%settings - lists all available keys\n%prefix%settings get <key> - Gets the current settings value\n%prefix%settings set <key> <value> - Sets an Settings value"
 # Sent when setting an personal setting fails
 settingUpdateFailed = "Failed to set value :/"
+# Sent when attempting to change an blacklisted setting
+settingUpdateBlocked = "The server owner disabled changing of this setting"
 
 # Descriptions of the settings
 [localization.personalSettings.descriptons]

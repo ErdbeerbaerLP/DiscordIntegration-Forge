@@ -3,16 +3,24 @@
 # PLACEHOLDERS:
 # %user% - The username
 # %id% - The user ID
-# %msg% - The Message
+# %msg% - The message
 ingame_discordMessage = "§6[§5DISCORD§6]§r <%user%> %msg%"
+# This is what will be displayed ingame when someone sends an reply into the bot's channel
+# PLACEHOLDERS:
+# %user% - The username
+# %id% - The user ID
+# %msg% - The reply message
+# %ruser% - The username of the message that got the reply
+# %rmsg% - The replied message
+ingame_discordReplyMessage = "§6[§5DISCORD§6]§r §a%user%§r in antwort zu §3%ruser%§r: %msg%"
 # Message shown when hovering over the username of an discord message
 # PLACEHOLDERS:
 # %user% - The username/nickname (Someone123)
-# %user% - The username with tag (someone#0001)
+# %user#tag% - The username with tag (someone#0001)
 # %id% - The user ID
 #
 # NOTE: using an @ here can cause ping sounds ingame
-discordMessageHover = "§3Gesendet von Discord-Nutzer %user#tag%\n§aKlicken zum Erwähnen"
+discordUserHover = "§3Gesendet von Discord-Nutzer %user#tag%\n§aKlicken zum Erwähnen"
 # This message will edited in / sent when the server finished starting
 serverStarted = "Server gestartet!"
 # Message to show while the server is starting
@@ -107,10 +115,22 @@ commandIgnore_unignore = "Du ignorierst nun keine Discord-Nachrichten mehr!"
 #
 # PLACEHOLDERS:
 # %uptime% - Uptime in uptime format, see uptimeFormat
-cmdUptime_message = "Der Server löuft seit%uptime%"
+cmdUptime_message = "Der Server läuft seit%uptime%"
 # The format of the uptime command
 # For more help with the formatting visit https://commons.apache.org/proper/commons-lang/apidocs/org/apache/commons/lang3/time/DurationFormatUtils.html
 uptimeFormat = "dd 'Tagen' HH 'Stunden' mm 'Minuten'"
+# Shows when running slash commands as command response
+executing = "Wird Ausgeführt..."
+# Command argument description for the linkcheck command's Discord user parameter
+cmdLinkcheck_userargDesc = "Der zu überprüfende Discord-Nutzer"
+# Command argument description for the linkcheck command's minecraft player parameter
+cmdLinkcheck_mcargDesc = "Die UUID den Namen des zu überprüfenden Minecraft-Spielers"
+# Sent when checked user is not linked
+cmdLinkcheck_notlinked = "Dieser Account ist nicht verbunden!"
+#
+cmdLinkcheck_discordAcc = "Discord-Account: "
+cmdLinkcheck_minecraftAcc = "Minecraft Account: "
+cmdLinkcheck_cannotGetPlayer = "Fehler beim Abrufen von Spielerinformationen! Vielleicht hast du einen falschen Namen / eine falsche UUID angegeben"
 
 # Command descriptions
 [localization.commands.descriptions]
@@ -120,6 +140,7 @@ help = "Zeigt eine Liste aller Befehle"
 list = "Listet alle Spieler, die auf dem Server online sind"
 link = "Verbindet deinen Discord-Account mit deinem Minecraft Account"
 whitelist = "Fügt dich zur Discord-Basierten Whitelist des Servers hinzu"
+linkcheck = "Zeigt informationen über einen verbundenen Discord-Account oder Ingame-Spieler"
 
 # Strings about the account linking feature
 [localization.linking]
@@ -189,6 +210,8 @@ invalidPersonalSettingKey = "`%key%` ist keine valide Einstellung!"
 settingsCommandUsage = "Nutzung:\n\n%prefix%settings - Listet alle vorhandenen Einstellungen\n%prefix%settings get <einstellung> - Gibt den aktuellen Wert der Einstellung aus\n%prefix%settings set <einstellung> <wert> - Setzt den Wert der Einstellung"
 # Sent when setting an personal setting fails
 settingUpdateFailed = "Konnte Wert nicht setzen :/"
+# Sent when attempting to change an blacklisted setting
+settingUpdateBlocked = "Der Server-Owner hat das ändern dieser Einstellung deaktiviert"
 
 # Descriptions of the settings
 [localization.personalSettings.descriptons]

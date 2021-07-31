@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.3.0",
+    "changelog": "READ CURSEFORGE CHANGELOG BEFORE UPDATING!",
+    "type": "beta"
+  },
+  {
     "version": "2.1.1",
     "changelog": "Multiple bugfixes",
     "type": "release"

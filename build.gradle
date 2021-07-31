@@ -1,8 +1,7 @@
 buildscript {
     repositories {
-        jcenter()
         mavenCentral()
-        maven { url = "http://files.minecraftforge.net/maven" }
+        maven { url = "https://files.minecraftforge.net/maven" }
         maven {
             name = 'sponge'
             url = 'https://repo.spongepowered.org/maven'
@@ -15,7 +14,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.+', changing: true
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
         classpath "com.github.jengelman.gradle.plugins:shadow:4.0.4"
     }
@@ -24,7 +23,6 @@ buildscript {
 //Gradle Plugins
 plugins {
     id "com.matthewprenger.cursegradle" version "1.4.0"
-    id "com.wynprice.cursemaven" version "2.1.5"
     id 'java'
     id "com.modrinth.minotaur" version "1.2.1"
 }
@@ -36,29 +34,22 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.2.0"
+version = "2.3.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
+
 
 sourceCompatibility = targetCompatibility = '1.8'
 compileJava {
     sourceCompatibility = targetCompatibility = '1.8'
 }
-
-
 //Gradle Repositories
 repositories {
-    jcenter()
     maven { url 'https://jitpack.io' }
     maven {
         name = 'sponge'
         url = 'https://repo.spongepowered.org/maven'
     }
-    maven {
-        name = "CurseForge"
-        url = "https://minecraft.curseforge.com/api/maven/"
-    }// Maybe needed for other mods in the future
-    //maven { url "https://maven.latmod.com/" } //FTB
     maven { url "https://nexus.vankka.dev/repository/maven-public/" }
     maven { url "https://repository.dev.gotan.io/repository/gotan.os/" }
     maven { url "https://repo.opencollab.dev/maven-snapshots" }
@@ -69,7 +60,7 @@ repositories {
     }
     maven{
         name = 'howaner'
-        url = "http://repo.howaner.de/"
+        url = "https://repo.howaner.de/"
     }
 }
 
@@ -96,7 +87,7 @@ minecraft {
 //ShadowJar
 configurations {
     embed
-    compile.extendsFrom(embed)
+    compileOnly.extendsFrom(embed)
 }
 task release{
 
@@ -119,10 +110,11 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:c68715a546'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:0f267e5122'
+    //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.16.5-36.1.32'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.1.66'
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
