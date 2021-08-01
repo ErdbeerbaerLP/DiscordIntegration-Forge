@@ -108,7 +108,7 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:7bfd600e55'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:dd4cc9b5db'
     //embed 'dcintegration-core:dcintegration-core-2.3.2'
 
     // =========  Minecraft Forge =============
@@ -170,7 +170,7 @@ task publishModrinth (type: TaskModrinthUpload){
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
-        versionNumber = version+"1.17"
+        versionNumber = version+"-1.17"
         versionName = "DiscordIntegration-Forge $version (MC 1.17)"
         uploadFile = shadowJar
         changelog = project.changelog
