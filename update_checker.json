@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.3.2",
+    "changelog": "Fix crash on load\nRework config commands",
+    "type": "beta"
+  },
+  {
     "version": "2.3.1",
     "changelog": "READ CURSEFORGE CHANGELOG BEFORE UPDATING!",
     "type": "beta"

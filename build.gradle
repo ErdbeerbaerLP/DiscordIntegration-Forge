@@ -33,7 +33,7 @@ apply plugin: 'maven-publish'
 
 
 //Build variables
-version = "2.3.1"
+version = "2.3.2"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -55,6 +55,9 @@ repositories {
     maven{
         name = 'howaner'
         url = "https://repo.howaner.de/"
+    }
+    flatDir {
+        dirs 'libs'
     }
 }
 
@@ -89,6 +92,7 @@ task release{
 shadowJar {
     classifier = '1.17'
     configurations = [project.configurations.embed]
+    relocate 'org.slf4j', 'dcshadow.org.slf4j' //Required to get forge 1.17 running
 }
 reobf {
     shadowJar {
@@ -104,8 +108,8 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:d26a3d2ea4'
-    //embed 'dcintegration-core:dcintegration-core-2.3.0'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:7bfd600e55'
+    //embed 'dcintegration-core:dcintegration-core-2.3.2'
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.17.1-37.0.17'
@@ -166,7 +170,7 @@ task publishModrinth (type: TaskModrinthUpload){
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
-        versionNumber = version
+        versionNumber = version+"1.17"
         versionName = "DiscordIntegration-Forge $version (MC 1.17)"
         uploadFile = shadowJar
         changelog = project.changelog

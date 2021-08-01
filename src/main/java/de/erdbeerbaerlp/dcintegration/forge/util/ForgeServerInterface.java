@@ -14,7 +14,11 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.ServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageReaction;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.minecraft.Util;
 import net.minecraft.commands.arguments.ComponentArgument;
@@ -26,8 +30,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.fmllegacy.server.ServerLifecycleHooks;
 
 import java.util.*;
-
-import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
+import java.util.concurrent.CompletableFuture;
 
 public class ForgeServerInterface extends ServerInterface {
 
@@ -86,16 +89,16 @@ public class ForgeServerInterface extends ServerInterface {
     }
 
     @Override
-    public void runMcCommand(String cmd, final MessageChannel channel, User sender) {
-        final DCCommandSender s = new DCCommandSender(sender, channel.getId());
+    public void runMcCommand(String cmd, final CompletableFuture<InteractionHook> cmdMsg, User user) {
+        final DCCommandSender s = new DCCommandSender(cmdMsg, user);
         if (s.hasPermissions(4)) {
             try {
                 ServerLifecycleHooks.getCurrentServer().getCommands().getDispatcher().execute(cmd.trim(), s.createCommandSourceStack());
             } catch (CommandSyntaxException e) {
-                discord_instance.sendMessage(e.getMessage());
+                s.sendMessage(new TextComponent(e.getMessage()), Util.NIL_UUID);
             }
         } else
-            discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```", channel);
+            s.sendMessage(new TextComponent("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```"), Util.NIL_UUID);
 
     }
 
