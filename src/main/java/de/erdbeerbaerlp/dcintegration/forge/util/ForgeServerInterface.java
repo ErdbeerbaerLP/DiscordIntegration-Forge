@@ -14,7 +14,11 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.ServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageReaction;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.minecraft.command.arguments.ComponentArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -28,8 +32,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import java.util.*;
-
-import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
+import java.util.concurrent.CompletableFuture;
 
 public class ForgeServerInterface extends ServerInterface {
 
@@ -88,16 +91,16 @@ public class ForgeServerInterface extends ServerInterface {
     }
 
     @Override
-    public void runMcCommand(String cmd, final MessageChannel channel, User sender) {
-        final DCCommandSender s = new DCCommandSender(sender, channel.getId());
+    public void runMcCommand(String cmd, final CompletableFuture<InteractionHook> cmdMsg, User user) {
+        final DCCommandSender s = new DCCommandSender(cmdMsg, user);
         if (s.hasPermissionLevel(4)) {
             try {
                 ServerLifecycleHooks.getCurrentServer().getCommandManager().getDispatcher().execute(cmd.trim(), s.getCommandSource());
             } catch (CommandSyntaxException e) {
-                discord_instance.sendMessage(e.getMessage());
+                s.sendMessage(new StringTextComponent(e.getMessage()), Util.DUMMY_UUID);
             }
         } else
-            discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```", channel);
+            s.sendMessage(new StringTextComponent("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```"), Util.DUMMY_UUID);
 
     }
 
@@ -112,7 +115,9 @@ public class ForgeServerInterface extends ServerInterface {
 
     @Override
     public void sendMCMessage(String msg, UUID player) {
-        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(player).sendMessage(new StringTextComponent(msg), Util.DUMMY_UUID);
+        final ServerPlayerEntity p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByUUID(player);
+        if (p != null)
+            p.sendMessage(new StringTextComponent(msg), Util.DUMMY_UUID);
 
     }
 
@@ -131,6 +136,7 @@ public class ForgeServerInterface extends ServerInterface {
             e.printStackTrace();
         }
     }
+
     @Override
     public String getNameFromUUID(UUID uuid) {
         return ServerLifecycleHooks.getCurrentServer().getMinecraftSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();

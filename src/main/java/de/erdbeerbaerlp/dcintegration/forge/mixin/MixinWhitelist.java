@@ -22,7 +22,7 @@ public class MixinWhitelist {
         if (Configuration.instance().linking.whitelistMode && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) {
             try {
                 if (!PlayerLinkController.isPlayerLinked(profile.getId())) {
-                    cir.setReturnValue(new StringTextComponent(Configuration.instance().localization.linking.notWhitelisted));
+                    cir.setReturnValue(new StringTextComponent(Configuration.instance().localization.linking.notWhitelistedCode.replace("%code%",""+Variables.discord_instance.genLinkNumber(profile.getId()))));
                 }
             } catch (IllegalStateException e) {
                 cir.setReturnValue(new StringTextComponent("Please check " + Variables.discordDataDir + "LinkedPlayers.json\n\n" + e.toString()));

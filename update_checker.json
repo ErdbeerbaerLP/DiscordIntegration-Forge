@@ -1,6 +1,11 @@
 [
   {
     "version": "2.3.1",
+    "changelog": "Rework config commands\nUpdate whitelist mode to whitelist with code",
+    "type": "beta"
+  },
+  {
+    "version": "2.3.1",
     "changelog": "READ CURSEFORGE CHANGELOG BEFORE UPDATING!",
     "type": "beta"
   },
