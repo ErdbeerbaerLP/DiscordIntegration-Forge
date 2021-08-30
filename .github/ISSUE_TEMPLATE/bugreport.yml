@@ -1,0 +1,56 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell me how to reproduce it, if possible
+      placeholder: Tell me what happened!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: dropdown
+    id: gameversion
+    attributes:
+      label: Game Version
+      description: What supported game version are you using
+      options:
+        - 1.12
+        - 1.16
+        - 1.17
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What platform are you using?
+      multiple: true
+      options:
+        - Forge
+        - Spigot
+  - type: textarea
+    id: config
+    validations:
+      required: true
+    attributes:
+      label: Config File
+      description: Please copy and paste The contents of your config file here. Do not forget to censor/remove your bot token
+      render: shell
+  - type: textarea
+    id: logs
+    attributes:
+      label: Crash report / Error log (if applicable)
+      description: Please copy and paste any relevant log output. For better readability, use https://pastebin.com or https://gist.github.com and enter the URL
+      render: shell
+  - type: textarea
+    id: config
+    validations:
+      required: true
+    attributes:
+      label: Config File
+      description: Please copy and paste The contents of your config file here. Do not forget to censor/remove your bot token
+      render: shell
