@@ -47,10 +47,9 @@ body:
       description: Please copy and paste any relevant log output. For better readability, use https://pastebin.com or https://gist.github.com and enter the URL
       render: shell
   - type: textarea
-    id: config
+    id: additional
     validations:
       required: true
     attributes:
-      label: Config File
-      description: Please copy and paste The contents of your config file here. Do not forget to censor/remove your bot token
-      render: shell
+      label: Additional Information
+      description: If you have additional information, you can provide them here
