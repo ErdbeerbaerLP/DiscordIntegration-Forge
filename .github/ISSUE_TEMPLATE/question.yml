@@ -6,7 +6,7 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: 
+      label: Question
       description: Ask your Question here
       placeholder: How do I set up XYZ?
       value: "Can I ask you something?"
