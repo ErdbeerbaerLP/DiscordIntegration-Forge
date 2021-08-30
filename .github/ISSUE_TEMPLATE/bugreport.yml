@@ -32,6 +32,14 @@ body:
       options:
         - Forge
         - Spigot
+  - type: input
+    id: prevalence
+    attributes:
+      label: Platform version
+      description: "Version of your used platform"
+      placeholder: "0.0.0"
+    validations:
+      required: true
   - type: textarea
     id: config
     validations:
@@ -48,8 +56,6 @@ body:
       render: shell
   - type: textarea
     id: additional
-    validations:
-      required: true
     attributes:
       label: Additional Information
       description: If you have additional information, you can provide them here
