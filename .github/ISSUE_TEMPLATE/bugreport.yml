@@ -47,7 +47,7 @@ body:
     attributes:
       label: Config File
       description: Please copy and paste The contents of your config file here. Do not forget to censor/remove your bot token
-      render: shell
+      render: toml
   - type: textarea
     id: logs
     attributes:
