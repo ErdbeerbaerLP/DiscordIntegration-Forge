@@ -1,5 +1,5 @@
 # Discord-Integration
-[![forthebadge](https://forthebadge.com/images/badges/works-on-my-machine.svg)](https://forthebadge.com)[![](http://cf.way2muchnoise.eu/full_324952_downloads.svg)![](http://cf.way2muchnoise.eu/versions/For%20Minecraft_324952_all.svg)](https://www.curseforge.com/minecraft/mc-mods/dcintegration)[![](https://badgen.net/badge/Donate/with%20gridcoin/purple)](https://gist.githubusercontent.com/ErdbeerbaerLP/20755d37cf2981d5df83ce4db5b5184f/raw/GRC-Address)
+[![forthebadge](https://forthebadge.com/images/badges/works-on-my-machine.svg)](https://forthebadge.com)[![](http://cf.way2muchnoise.eu/full_324952_downloads.svg)![](http://cf.way2muchnoise.eu/versions/For%20Minecraft_324952_all.svg)](https://www.curseforge.com/minecraft/mc-mods/dcintegration)
 
 
 This mod links your server chat with a channel on your discord server.
