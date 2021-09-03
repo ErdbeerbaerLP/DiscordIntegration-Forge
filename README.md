@@ -8,4 +8,4 @@ Quick setup guide: https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/wik
 
 Addon Development: https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/wiki/For-Developers
 
-![Discord Server](https://discordapp.com/api/guilds/881880836377546824/widget.png?style=banner2)
+[![Discord Server](https://discordapp.com/api/guilds/881880836377546824/widget.png?style=banner2)](https://discord.gg/PGPWdRBQms)
