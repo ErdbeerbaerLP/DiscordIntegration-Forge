@@ -8,13 +8,12 @@ import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentUtils;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+
+import java.io.IOException;
 
 
 public class McCommandDiscord {
@@ -45,7 +44,7 @@ public class McCommandDiscord {
                     return 0;
                 }
                 final int r = Variables.discord_instance.genLinkNumber(ctx.getSource().asPlayer().getUniqueID());
-                ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", Configuration.instance().commands.dmPrefix)), Style.EMPTY.setFormatting(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, Configuration.instance().commands.dmPrefix + "link " + r)).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))), false);
+                ctx.getSource().sendFeedback(TextComponentUtils.func_240648_a_(new StringTextComponent(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", "/")), Style.EMPTY.setFormatting(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "" + r)).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))), false);
             } else {
                 ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Configuration.instance().localization.commands.subcommandDisabled), false);
             }
@@ -55,7 +54,12 @@ public class McCommandDiscord {
             ctx.getSource().sendFeedback(new StringTextComponent("DiscordIntegration was successfully stopped!"), false);
             return 0;
         })).then(Commands.literal("reload").requires((p) -> p.hasPermissionLevel(4)).executes((ctx) -> {
-            Configuration.instance().loadConfig();
+            try {
+                Configuration.instance().loadConfig();
+            } catch (IOException e) {
+                ctx.getSource().sendFeedback(new StringTextComponent(e.getMessage()).setStyle(Style.EMPTY.setFormatting(TextFormatting.RED)),true);
+                e.printStackTrace();
+            }
             AddonLoader.reloadAll();
             ctx.getSource().sendFeedback(new StringTextComponent(Configuration.instance().localization.commands.configReloaded), true);
             return 0;

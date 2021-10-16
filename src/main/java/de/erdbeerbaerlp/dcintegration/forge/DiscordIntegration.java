@@ -4,8 +4,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
+import de.erdbeerbaerlp.dcintegration.common.addon.AddonLoader;
+import de.erdbeerbaerlp.dcintegration.common.addon.DiscordAddonMeta;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
-import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
+import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
@@ -13,6 +15,7 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
+import de.erdbeerbaerlp.dcintegration.forge.bstats.Metrics;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.mixin.MixinNetHandlerPlayServer;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
@@ -20,6 +23,7 @@ import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
 import net.dv8tion.jda.api.entities.*;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
@@ -48,9 +52,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.UUID;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -71,17 +74,27 @@ public class DiscordIntegration {
     private boolean stopped = false;
 
     public DiscordIntegration() {
-
-        Configuration.instance().loadConfig();
-
-        if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE") && FMLEnvironment.dist != Dist.CLIENT) { //Prevent events when token not set or on client
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
-            MinecraftForge.EVENT_BUS.register(this);
-            ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
-                    () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-        } else {
-            System.err.println("Please check the config file and set an bot token");
+        try {
+            Configuration.instance().loadConfig();
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                System.err.println("This mod cannot be used clientside");
+            } else if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client
+                FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
+                MinecraftForge.EVENT_BUS.register(this);
+                ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
+                        () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+            } else {
+                System.err.println("Please check the config file and set an bot token");
+            }
+        } catch (IOException e) {
+            System.err.println("Config loading failed");
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            System.err.println("Failed to read config file! Please check your config file!\nError description: " + e.getMessage());
+            System.err.println("\nStacktrace: ");
+            e.printStackTrace();
         }
+
 
         //  ==  Migrate some files from 1.x.x to 2.x.x  ==
 
@@ -154,20 +167,21 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueID()).hideFromDiscord) return;
-        if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
-            discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
-                    TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getPlayer())))
-                    .replace("%name%",
-                            TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
-                                    .getDisplay()
-                                    .getTitle()
-                                    .getString()))
-                    .replace("%desc%",
-                            TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
-                                    .getDisplay()
-                                    .getDescription()
-                                    .getString()))
-                    .replace("\\n", "\n"));
+        if (ev.getPlayer().getServer().getPlayerList().getPlayerAdvancements((ServerPlayerEntity) ev.getPlayer()).getProgress(ev.getAdvancement()).isDone())
+            if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
+                discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
+                                TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getPlayer())))
+                        .replace("%name%",
+                                TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
+                                        .getDisplay()
+                                        .getTitle()
+                                        .getString()))
+                        .replace("%desc%",
+                                TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
+                                        .getDisplay()
+                                        .getDescription()
+                                        .getString()))
+                        .replace("\\n", "\n"));
 
 
     }
@@ -181,10 +195,11 @@ public class DiscordIntegration {
     public void serverStarted(final FMLServerStartedEvent ev) {
         System.out.println("Started");
         Variables.started = new Date().getTime();
-        if (discord_instance != null)
+        if (discord_instance != null) {
             if (Variables.startingMsg != null) {
                 Variables.startingMsg.thenAccept((a) -> a.editMessage(Configuration.instance().localization.serverStarted).queue());
             } else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
+        }
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
@@ -192,6 +207,20 @@ public class DiscordIntegration {
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
+        final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
+        bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
+        bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
+        bstats.addCustomChart(new Metrics.DrilldownPie("addons", () -> {
+            final Map<String, Map<String, Integer>> map = new HashMap<>();
+            if (Configuration.instance().bstats.sendAddonStats) {  //Only send if enabled, else send empty map
+                for (DiscordAddonMeta m : AddonLoader.getAddonMetas()) {
+                    final Map<String, Integer> entry = new HashMap<>();
+                    entry.put(m.getVersion(), 1);
+                    map.put(m.getName(), entry);
+                }
+            }
+            return map;
+        }));
     }
 
     @SubscribeEvent
@@ -297,7 +326,7 @@ public class DiscordIntegration {
             if (discord_instance != null) {
                 final ITextComponent deathMessage = ev.getSource().getDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
-                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", ""))), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
+                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", "")).replace("@everyone", "[at]everyone").replace("@here", "[at]here")), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
         }
     }

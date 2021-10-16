@@ -1,6 +1,11 @@
 [
   {
-    "version": "2.3.1",
+    "version": "2.3.4",
+    "changelog": "NOW REQUIRES JAVA 11 TO RUN!\nNote that this is still beta\n\nMoved DM commands to slash commands\n\nBug Fixes:\nFix advancement spam, mod now checks if advancement is complete\nFix several crashes if setup isn't done properly, showing error in log instead\nFix attachments and embeds",
+    "type": "beta"
+  },
+  {
+    "version": "2.3.2",
     "changelog": "Rework config commands\nUpdate whitelist mode to whitelist with code",
     "type": "beta"
   },
