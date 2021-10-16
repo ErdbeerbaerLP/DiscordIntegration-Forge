@@ -113,7 +113,9 @@ public class ForgeServerInterface extends ServerInterface {
 
     @Override
     public void sendMCMessage(String msg, UUID player) {
-        ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player).sendMessage(new TextComponent(msg), Util.NIL_UUID);
+        final ServerPlayerEntity p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
+        if (p != null)
+            p.sendMessage(new TextComponent(msg), Util.NIL_UUID);
 
     }
 
@@ -132,6 +134,7 @@ public class ForgeServerInterface extends ServerInterface {
             e.printStackTrace();
         }
     }
+
     @Override
     public String getNameFromUUID(UUID uuid) {
         return ServerLifecycleHooks.getCurrentServer().getSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();

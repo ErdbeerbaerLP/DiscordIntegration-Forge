@@ -12,6 +12,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.*;
 import net.minecraftforge.fmllegacy.server.ServerLifecycleHooks;
 
+import java.io.IOException;
+
 
 public class McCommandDiscord {
     public McCommandDiscord(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -41,7 +43,7 @@ public class McCommandDiscord {
                     return 0;
                 }
                 final int r = Variables.discord_instance.genLinkNumber(ctx.getSource().getPlayerOrException().getUUID());
-                ctx.getSource().sendSuccess(ComponentUtils.mergeStyles(new TextComponent(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", Configuration.instance().commands.dmPrefix)), Style.EMPTY.applyFormat(ChatFormatting.AQUA).withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, Configuration.instance().commands.dmPrefix + "link " + r)).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))), false);
+                ctx.getSource().sendSuccess(ComponentUtils.mergeStyles(new TextComponent(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", "/")), Style.EMPTY.applyFormat(ChatFormatting.AQUA).withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "" + r)).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))), false);
             } else {
                 ctx.getSource().sendSuccess(new TextComponent(ChatFormatting.RED + Configuration.instance().localization.commands.subcommandDisabled), false);
             }
@@ -51,7 +53,12 @@ public class McCommandDiscord {
             ctx.getSource().sendSuccess(new TextComponent("DiscordIntegration was successfully stopped!"), false);
             return 0;
         })).then(Commands.literal("reload").requires((p) -> p.hasPermission(4)).executes((ctx) -> {
-            Configuration.instance().loadConfig();
+            try {
+                Configuration.instance().loadConfig();
+            } catch (IOException e) {
+                ctx.getSource().sendFeedback(new StringTextComponent(e.getMessage()).setStyle(Style.EMPTY.setFormatting(TextFormatting.RED)),true);
+                e.printStackTrace();
+            }
             AddonLoader.reloadAll();
             ctx.getSource().sendSuccess(new TextComponent(Configuration.instance().localization.commands.configReloaded), true);
             return 0;

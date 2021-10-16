@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.3.4",
+    "changelog": "Note that this is still beta\n\nMoved DM commands to slash commands\n\nBug Fixes:\nFix advancement spam, mod now checks if advancement is complete\nFix several crashes if setup isn't done properly, showing error in log instead\nFix attachments and embeds",
+    "type": "beta"
+  },
+  {
     "version": "2.3.2",
     "changelog": "Fix crash on load\nRework config commands",
     "type": "beta"

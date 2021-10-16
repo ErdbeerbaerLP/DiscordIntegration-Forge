@@ -33,7 +33,7 @@ apply plugin: 'maven-publish'
 
 
 //Build variables
-version = "2.3.2"
+version = "2.3.4"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -108,8 +108,8 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:dd4cc9b5db'
-    //embed 'dcintegration-core:dcintegration-core-2.3.2'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:882716be'
+    //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.17.1-37.0.17'
@@ -153,7 +153,7 @@ curseforge {
         project {
             id = '324952'
             changelog = project.changelog
-            releaseType = 'beta'
+            releaseType = project.releaseType.toLowerCase()
             addGameVersion '1.17.1'
             mainArtifact(jar) {
                 displayName = "DiscordIntegration-Forge $version (MC 1.17)"
@@ -176,7 +176,7 @@ task publishModrinth (type: TaskModrinthUpload){
         changelog = project.changelog
         addGameVersion('1.17.1')
         addLoader('forge')
-        versionType = "BETA"
+        versionType = project.releaseType.toUpperCase()
     }
 }
 
