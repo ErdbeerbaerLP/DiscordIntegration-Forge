@@ -56,7 +56,7 @@ public class McCommandDiscord {
             try {
                 Configuration.instance().loadConfig();
             } catch (IOException e) {
-                ctx.getSource().sendFeedback(new StringTextComponent(e.getMessage()).setStyle(Style.EMPTY.setFormatting(TextFormatting.RED)),true);
+                ctx.getSource().sendSuccess(new TextComponent(e.getMessage()).setStyle(Style.EMPTY.applyFormat(ChatFormatting.RED)),true);
                 e.printStackTrace();
             }
             AddonLoader.reloadAll();

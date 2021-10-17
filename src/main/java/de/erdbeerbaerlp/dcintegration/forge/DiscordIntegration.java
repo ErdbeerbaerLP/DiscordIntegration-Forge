@@ -20,6 +20,7 @@ import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
 import net.dv8tion.jda.api.entities.*;
 import net.minecraft.ChatFormatting;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -40,10 +41,12 @@ import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fmllegacy.network.FMLNetworkConstants;
 import net.minecraftforge.fmlserverevents.FMLServerStartedEvent;
 import net.minecraftforge.fmlserverevents.FMLServerStoppedEvent;
 import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,6 +71,7 @@ public class DiscordIntegration {
     private boolean stopped = false;
 
     public DiscordIntegration() {
+        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
 try {
             Configuration.instance().loadConfig();
             if (FMLEnvironment.dist == Dist.CLIENT) {
@@ -75,7 +79,7 @@ try {
             } else if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client
                 FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
                 MinecraftForge.EVENT_BUS.register(this);
-                ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, ()->new IExtensionPoint.DisplayTest(()->"ANY", (remote, isServer)-> true));
+
         } else {
             System.err.println("Please check the config file and set an bot token");}
         } catch (IOException e) {
@@ -159,7 +163,7 @@ try {
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
-        if (ev.getPlayer().getServer().getPlayerList().getPlayerAdvancements((ServerPlayerEntity) ev.getPlayer()).getProgress(ev.getAdvancement()).isDone())
+        if (ev.getPlayer().getServer().getPlayerList().getPlayerAdvancements((ServerPlayer) ev.getPlayer()).getOrStartProgress(ev.getAdvancement()).isDone())
             if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceChat())
                 discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
                                 ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getPlayer())))

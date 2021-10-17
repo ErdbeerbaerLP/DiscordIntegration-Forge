@@ -113,7 +113,7 @@ public class ForgeServerInterface extends ServerInterface {
 
     @Override
     public void sendMCMessage(String msg, UUID player) {
-        final ServerPlayerEntity p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
+        final ServerPlayer p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
         if (p != null)
             p.sendMessage(new TextComponent(msg), Util.NIL_UUID);
 

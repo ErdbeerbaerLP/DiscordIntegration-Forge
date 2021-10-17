@@ -15,7 +15,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
-        //classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
 
@@ -29,13 +29,16 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-//apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
 version = "2.3.4"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
+
+// Mojang ships Java 16 to end users in 1.17+ instead of Java 8 in 1.16 or lower, so your mod should target Java 16.
+java.toolchain.languageVersion = JavaLanguageVersion.of(16)
 
 //Gradle Repositories
 repositories {
@@ -112,10 +115,10 @@ dependencies {
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.17.1-37.0.17'
+    minecraft 'net.minecraftforge:forge:1.17.1-37.0.95'
 
     //Mixin
-    //annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
+    annotationProcessor 'org.spongepowered:mixin:0.8.4:processor'
 
     //Dynmap-API
     compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
@@ -123,9 +126,9 @@ dependencies {
 
 
 //Mixin
-//mixin {
-//    add sourceSets.main, 'mixins.dcintegration.refmap.json'
-//}
+mixin {
+    add sourceSets.main, 'mixins.dcintegration.refmap.json'
+}
 
 //Manifest attributes
 jar {
