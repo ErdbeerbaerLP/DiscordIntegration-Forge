@@ -107,12 +107,11 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:882716be'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:f5547da5'
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.16.5-36.1.66'
-
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
 
@@ -155,7 +154,7 @@ curseforge {
             releaseType = project.releaseType.toLowerCase()
             addGameVersion '1.16.5'
             mainArtifact(jar) {
-                displayName = "DiscordIntegration-Forge $version (MC 1.16.5)"
+                displayName = "DiscordIntegration-Forge $version (MC 1.16.5) Java 8"
             }
             //relations {
             //}
@@ -170,7 +169,7 @@ task publishModrinth (type: TaskModrinthUpload){
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
         versionNumber = version+"-1.16"
-        versionName = "DiscordIntegration-Forge $version (MC 1.16.5)"
+        versionName = "DiscordIntegration-Forge $version (MC 1.16.5) Java 8"
         uploadFile = shadowJar
         changelog = project.changelog
         addGameVersion('1.16.5')
