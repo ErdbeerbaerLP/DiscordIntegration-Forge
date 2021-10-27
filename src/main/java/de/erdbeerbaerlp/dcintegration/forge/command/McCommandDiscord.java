@@ -84,7 +84,7 @@ public class McCommandDiscord implements ICommand
                            break;
                         }
                         final int r = Variables.discord_instance.genLinkNumber(sender.getCommandSenderEntity().getUniqueID());
-                        sender.sendMessage(new TextComponentString(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", Configuration.instance().commands.prefix)).setStyle(new Style().setColor(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, Configuration.instance().commands.prefix + "link " + r)).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))));
+                        sender.sendMessage(new TextComponentString(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "")).setStyle(new Style().setColor(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/link " + r)).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))));
                     } else {
                         sender.sendMessage(new TextComponentString(TextFormatting.RED + Configuration.instance().localization.commands.subcommandDisabled));
                     }

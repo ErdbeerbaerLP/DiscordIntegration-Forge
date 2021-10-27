@@ -36,7 +36,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.2.0"
+version = "2.3.5"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -124,7 +124,7 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:DiscordIntegration-Core:c68715a546')
+    embed('de.erdbeerbaerlp:DiscordIntegration-Core:11ef997b')
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2855'
@@ -185,7 +185,7 @@ curseforge {
         project {
             id = '324952'
             changelog = project.changelog
-            releaseType = 'beta'
+            releaseType = 'release'
             addGameVersion '1.12.2'
             mainArtifact(jar) {
                 displayName = "DiscordIntegration-Forge $version (MC 1.12.2)"
@@ -210,7 +210,7 @@ task publishModrinth(type: TaskModrinthUpload) {
         changelog = project.changelog
         addGameVersion('1.12.2')
         addLoader('forge')
-        versionType = "BETA"
+        versionType = "RELEASE"
     }
 }
 

@@ -15,7 +15,8 @@ import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageReaction;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
@@ -26,6 +27,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
 
@@ -86,14 +88,13 @@ public class ForgeServerInterface extends ServerInterface {
     }
 
     @Override
-    public void runMcCommand(String cmd, MessageReceivedEvent cmdMsg) {
-        final DCCommandSender s = new DCCommandSender(cmdMsg.getAuthor(), cmdMsg.getTextChannel().getId());
-        if (s.canUseCommand(4, "")) {
-            FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(s, cmd.trim());
+    public void runMcCommand(String cmd, CompletableFuture<InteractionHook> cmdMsg, User user) {
+            final DCCommandSender s = new DCCommandSender(user, cmdMsg);
+            if (s.canUseCommand(4, "")) {
+                FMLCommonHandler.instance().getMinecraftServerInstance().getCommandManager().executeCommand(s, cmd.trim());
 
-        } else
-            discord_instance.sendMessage("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```", cmdMsg.getTextChannel());
-
+            } else
+                s.sendMessage(new TextComponentString("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```"));
     }
 
     @Override

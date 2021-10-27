@@ -20,7 +20,7 @@ public class MixinWhitelist {
         if (Configuration.instance().linking.whitelistMode &&  FMLCommonHandler.instance().getMinecraftServerInstance().isServerInOnlineMode()) {
             try {
                 if (!PlayerLinkController.isPlayerLinked(profile.getId())) {
-                    cir.setReturnValue(Configuration.instance().localization.linking.notWhitelisted);
+                    cir.setReturnValue(Configuration.instance().localization.linking.notWhitelistedCode.replace("%code%",""+Variables.discord_instance.genLinkNumber(profile.getId())));
                 }
             } catch (IllegalStateException e) {
                 cir.setReturnValue("Please check " + Variables.discordDataDir + "LinkedPlayers.json\n\n" + e.toString());

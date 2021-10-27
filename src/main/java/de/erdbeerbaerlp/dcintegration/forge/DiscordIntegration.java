@@ -5,12 +5,11 @@ import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import dcshadow.net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
-import de.erdbeerbaerlp.dcintegration.common.discordCommands.CommandRegistry;
+import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
-import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
@@ -39,6 +38,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -66,11 +66,21 @@ public class DiscordIntegration {
 
     @Mod.EventHandler
     public void modConstruction(FMLConstructionEvent ev) {
-        Configuration.instance().loadConfig();
-        if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set
-            MinecraftForge.EVENT_BUS.register(this);
-        } else {
-            System.err.println("Please check the config file and set an bot token");
+        try {
+            Configuration.instance().loadConfig();
+            if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set
+                MinecraftForge.EVENT_BUS.register(this);
+            } else {
+                System.err.println("Please check the config file and set an bot token");
+            }
+        } catch (
+                IOException e) {
+            System.err.println("Config loading failed");
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            System.err.println("Failed to read config file! Please check your config file!\nError description: " + e.getMessage());
+            System.err.println("\nStacktrace: ");
+            e.printStackTrace();
         }
 
         //  ==  Migrate some files from 1.x.x to 2.x.x  ==
@@ -171,7 +181,7 @@ public class DiscordIntegration {
         if (PlayerLinkController.getSettings(null, ev.getEntityPlayer().getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
             discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
-                    TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getEntityPlayer())))
+                            TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getEntityPlayer())))
                     .replace("%name%",
                             TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
                                     .getDisplay()
@@ -198,7 +208,6 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
-        UpdateChecker.runUpdateCheck();
         if (Loader.isModLoaded("dynmap")) {
             new DynmapListener().register();
         }
@@ -248,7 +257,8 @@ public class DiscordIntegration {
     public void serverStopped(FMLServerStoppedEvent ev) {
         FMLCommonHandler.instance().getMinecraftServerInstance().callFromMainThread(Executors.callable(this::stopDiscord)); //Attempt to force send the messages before server finally closes
     }
-    public void stopDiscord(){
+
+    public void stopDiscord() {
         if (discord_instance != null && !stopped && discord_instance.getJDA() != null) {
             discord_instance.stopThreads();
             try {

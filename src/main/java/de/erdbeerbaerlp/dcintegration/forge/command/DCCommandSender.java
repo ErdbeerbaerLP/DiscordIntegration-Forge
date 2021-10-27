@@ -5,14 +5,15 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.authlib.GameProfile;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
-import de.erdbeerbaerlp.dcintegration.common.util.Variables;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -22,18 +23,16 @@ public class DCCommandSender extends FakePlayer {
 
     private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat(DCCommandSender.class.getSimpleName()).setDaemon(true).build());
     private static final UUID uuid = UUID.fromString(Configuration.instance().commands.senderUUID);
-    private String channelID;
+    private final CompletableFuture<InteractionHook> cmdMsg;
+    private CompletableFuture<Message> cmdMessage;
+    final StringBuilder message = new StringBuilder();
 
-    public DCCommandSender(User user, String channel) {
+    public DCCommandSender(User user, CompletableFuture<InteractionHook> cmdMsg) {
         super(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0], new GameProfile(uuid, "@" + user.getName() + "#" + user.getDiscriminator()));
-        this.channelID = channel;
+        this.cmdMsg = cmdMsg;
     }
 
-    @SuppressWarnings("unused")
-    public DCCommandSender(WorldServer world, String name, String channel) {
-        super(world, new GameProfile(uuid, "@" + name));
-        this.channelID = channel;
-    }
+
 
     private static String textComponentToDiscordMessage(ITextComponent component) {
         return MessageUtils.removeFormatting(component.getUnformattedText());
@@ -48,12 +47,28 @@ public class DCCommandSender extends FakePlayer {
     @Override
     public void sendMessage(ITextComponent component) {
         Preconditions.checkNotNull(component);
-        Variables.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component), channelID);
+        message.append(textComponentToDiscordMessage(component)).append("\n");
+        if (cmdMessage == null)
+            cmdMsg.thenAccept((msg) -> {
+                cmdMessage = msg.editOriginal(message.toString().trim()).submit();
+            });
+        else
+            cmdMessage.thenAccept((msg)->{
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
+            });
     }
 
     @Override
     public void sendStatusMessage(ITextComponent component, boolean actionBar) {
         Preconditions.checkNotNull(component);
-        Variables.discord_instance.sendMessageFuture(textComponentToDiscordMessage(component), channelID);
+        message.append(textComponentToDiscordMessage(component)).append("\n");
+        if (cmdMessage == null)
+            cmdMsg.thenAccept((msg) -> {
+                cmdMessage = msg.editOriginal(message.toString().trim()).submit();
+            });
+        else
+            cmdMessage.thenAccept((msg)->{
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
+            });
     }
 }
