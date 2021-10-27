@@ -7,15 +7,15 @@ import com.google.gson.JsonPrimitive;
 import dcshadow.com.moandjiezana.toml.Toml;
 import dcshadow.com.moandjiezana.toml.TomlComment;
 import dcshadow.com.moandjiezana.toml.TomlWriter;
-import net.minecraft.SharedConstants;
+import net.minecraft.util.SharedConstants;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.EventBus;
 import net.minecraftforge.eventbus.api.IEventListener;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fmllegacy.server.ServerLifecycleHooks;
-import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
@@ -201,7 +201,7 @@ public class Metrics {
         if (data == null) {
             throw new IllegalArgumentException("Data cannot be null!");
         }
-        if (ServerLifecycleHooks.getCurrentServer().isSameThread()) {
+        if (ServerLifecycleHooks.getCurrentServer().isOnExecutionThread()) {
             throw new IllegalAccessException("This method must not be called from the main thread!");
         }
         if (logSentData) {
@@ -290,7 +290,7 @@ public class Metrics {
             }
             // Nevertheless we want our code to run in the Bukkit main thread, so we have to use the Bukkit scheduler
             // Don't be afraid! The connection to the bStats server is still async, only the stats collection is sync ;)
-            ServerLifecycleHooks.getCurrentServer().executeBlocking(this::submitData);
+            ServerLifecycleHooks.getCurrentServer().runImmediately(this::submitData);
         };
 
         // Many servers tend to restart at a fixed time at xx:00 which causes an uneven distribution of requests on the
@@ -339,9 +339,9 @@ public class Metrics {
      */
     private JsonObject getServerData() {
         // Minecraft specific data
-        int playerAmount = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerCount();
-        int onlineMode = ServerLifecycleHooks.getCurrentServer().usesAuthentication() ? 1 : 0;
-        String bukkitVersion = SharedConstants.getCurrentVersion().getName();
+        int playerAmount = ServerLifecycleHooks.getCurrentServer().getPlayerList().getCurrentPlayerCount();
+        int onlineMode = ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode() ? 1 : 0;
+        String bukkitVersion = SharedConstants.getVersion().getName();
         String bukkitName = "Forge";
 
         // OS/Java specific data
