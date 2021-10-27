@@ -33,7 +33,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.3.4"
+version = "2.3.5"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -111,7 +111,7 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:882716be'
+    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:ce44c82e'
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
