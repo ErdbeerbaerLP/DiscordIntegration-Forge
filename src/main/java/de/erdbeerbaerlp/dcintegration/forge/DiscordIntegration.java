@@ -4,8 +4,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
-import de.erdbeerbaerlp.dcintegration.common.addon.AddonLoader;
-import de.erdbeerbaerlp.dcintegration.common.addon.DiscordAddonMeta;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
@@ -15,7 +13,6 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
-import de.erdbeerbaerlp.dcintegration.forge.bstats.Metrics;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.mixin.MixinNetHandlerPlayServer;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
@@ -53,7 +50,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -207,6 +206,7 @@ public class DiscordIntegration {
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
+        /*
         final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
         bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
         bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
@@ -220,7 +220,7 @@ public class DiscordIntegration {
                 }
             }
             return map;
-        }));
+        }));*/
     }
 
     @SubscribeEvent

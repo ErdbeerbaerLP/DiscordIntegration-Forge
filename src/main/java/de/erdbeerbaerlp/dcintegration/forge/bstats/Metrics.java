@@ -158,7 +158,7 @@ public class Metrics {
                         service.getClass().getField("B_STATS_VERSION"); // Our identifier :)
                         found = true; // We aren't the first
                         break;
-                    } catch (NoSuchFieldException ignored) {
+                    } catch (Exception ignored) {
                     }
                 }
 
