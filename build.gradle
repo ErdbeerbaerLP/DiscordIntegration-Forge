@@ -204,7 +204,7 @@ task publishModrinth(type: TaskModrinthUpload) {
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
-        versionNumber = version
+        versionNumber = version+"."
         versionName = "DiscordIntegration-Forge $version (MC 1.12.2)"
         uploadFile = shadowJar
         changelog = project.changelog

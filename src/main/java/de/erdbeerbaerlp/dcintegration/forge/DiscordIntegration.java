@@ -109,7 +109,6 @@ public class DiscordIntegration {
     public void preInit(FMLPreInitializationEvent ev) {
 
 
-        CommandRegistry.registerDefaultCommandsFromConfig();
         Variables.discord_instance = new Discord(new ForgeServerInterface());
         try {
             //Wait a short time to allow JDA to get initiaized
@@ -120,11 +119,13 @@ public class DiscordIntegration {
             }
             if (discord_instance.getJDA() != null && !Configuration.instance().localization.serverStarting.isEmpty()) {
                 Thread.sleep(2000); //Wait for it to cache the channels
-                if (discord_instance.getChannel() != null)
+                if (discord_instance.getChannel() != null) {
                     Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
+                }
             }
         } catch (InterruptedException | NullPointerException ignored) {
         }
+        CommandRegistry.registerDefaultCommandsFromConfig();
         if (Loader.isModLoaded("votifier")) {
             MinecraftForge.EVENT_BUS.register(new VotifierEventHandler());
         }
