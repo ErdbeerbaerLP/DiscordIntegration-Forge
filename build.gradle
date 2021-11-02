@@ -127,7 +127,7 @@ mixin {
 
 //Manifest attributes
 jar {
-    classifier = "1.17"
+    classifier = "1.16"
     manifest {
         attributes([
                 'Maven-Artifact'          : "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -168,7 +168,7 @@ task publishModrinth (type: TaskModrinthUpload){
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
-        versionNumber = version+"-1.16."
+        versionNumber = version+"-1.16.5"
         versionName = "DiscordIntegration-Forge $version (MC 1.16.5)"
         uploadFile = shadowJar
         changelog = project.changelog
