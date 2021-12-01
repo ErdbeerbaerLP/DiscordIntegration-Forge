@@ -25,7 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fmllegacy.common.registry.GameRegistry;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.Arrays;
@@ -35,7 +35,7 @@ import java.util.UUID;
 public class ForgeMessageUtils extends MessageUtils {
     private static final JsonParser p = new JsonParser();
 
-    private static final IForgeRegistry<Item> itemreg = GameRegistry.findRegistry(Item.class);
+    private static final IForgeRegistry<Item> itemreg = ForgeRegistries.ITEMS;
 
     public static String formatPlayerName(Map.Entry<UUID, String> p) {
         return formatPlayerName(p, true);

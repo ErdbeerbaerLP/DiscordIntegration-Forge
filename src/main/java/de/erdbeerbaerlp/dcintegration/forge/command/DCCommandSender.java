@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.fmllegacy.server.ServerLifecycleHooks;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;

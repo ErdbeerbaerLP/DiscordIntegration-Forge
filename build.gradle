@@ -37,8 +37,7 @@ version = "2.3.5"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
-// Mojang ships Java 16 to end users in 1.17+ instead of Java 8 in 1.16 or lower, so your mod should target Java 16.
-java.toolchain.languageVersion = JavaLanguageVersion.of(16)
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 //Gradle Repositories
 repositories {
@@ -66,7 +65,7 @@ repositories {
 
 //Forge
 minecraft {
-    mappings channel: 'official', version: '1.17.1'
+    mappings channel: 'official', version: '1.18'
     runs {
         server {
             workingDirectory project.file('run')
@@ -93,7 +92,7 @@ task release{
 
 }
 shadowJar {
-    classifier = '1.17'
+    classifier = '1.18'
     configurations = [project.configurations.embed]
     relocate 'org.slf4j', 'dcshadow.org.slf4j' //Required to get forge 1.17 running
 }
@@ -115,7 +114,7 @@ dependencies {
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.17.1-37.0.95'
+    minecraft 'net.minecraftforge:forge:1.18-38.0.1'
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.4:processor'
@@ -132,7 +131,7 @@ mixin {
 
 //Manifest attributes
 jar {
-    classifier = "1.17"
+    classifier = "1.18"
     manifest {
         attributes([
                 'Maven-Artifact'          : "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -157,9 +156,9 @@ curseforge {
             id = '324952'
             changelog = project.changelog
             releaseType = project.releaseType.toLowerCase()
-            addGameVersion '1.17.1'
+            addGameVersion '1.18'
             mainArtifact(jar) {
-                displayName = "DiscordIntegration-Forge $version (MC 1.17)"
+                displayName = "DiscordIntegration-Forge $version (MC 1.18)"
             }
             //relations {
             //}
@@ -173,11 +172,11 @@ task publishModrinth (type: TaskModrinthUpload){
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
-        versionNumber = version+"-1.17"
-        versionName = "DiscordIntegration-Forge $version (MC 1.17)"
+        versionNumber = version+"-1.18"
+        versionName = "DiscordIntegration-Forge $version (MC 1.18)"
         uploadFile = shadowJar
         changelog = project.changelog
-        addGameVersion('1.17.1')
+        addGameVersion('1.18')
         addLoader('forge')
         versionType = project.releaseType.toUpperCase()
     }

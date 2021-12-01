@@ -9,13 +9,13 @@ import dcshadow.com.moandjiezana.toml.TomlComment;
 import dcshadow.com.moandjiezana.toml.TomlWriter;
 import net.minecraft.SharedConstants;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.EventBus;
 import net.minecraftforge.eventbus.api.IEventListener;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fmllegacy.server.ServerLifecycleHooks;
-import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
@@ -758,7 +758,7 @@ public class Metrics {
 
     //Dummy event listener
     @SubscribeEvent
-    public void dummy(FMLServerStoppingEvent ev) {
+    public void dummy(ServerStoppingEvent ev) {
         //Just have some code here
         try {
             TimeUnit.NANOSECONDS.sleep(1);

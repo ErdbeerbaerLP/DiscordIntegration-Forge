@@ -31,6 +31,9 @@ import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.InterModComms;
@@ -41,12 +44,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fmllegacy.network.FMLNetworkConstants;
-import net.minecraftforge.fmlserverevents.FMLServerStartedEvent;
-import net.minecraftforge.fmlserverevents.FMLServerStoppedEvent;
-import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
+import net.minecraftforge.network.NetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +70,7 @@ public class DiscordIntegration {
     private boolean stopped = false;
 
     public DiscordIntegration() {
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
 try {
             Configuration.instance().loadConfig();
             if (FMLEnvironment.dist == Dist.CLIENT) {
@@ -188,7 +187,7 @@ try {
     }
 
     @SubscribeEvent
-    public void serverStarted(final FMLServerStartedEvent ev) {
+    public void serverStarted(final ServerStartedEvent ev) {
         System.out.println("Started");
         Variables.started = new Date().getTime();
         if (discord_instance != null) {
@@ -246,7 +245,7 @@ try {
     }
 
     @SubscribeEvent
-    public void serverStopping(FMLServerStoppingEvent ev) {
+    public void serverStopping(ServerStoppingEvent ev) {
         if (discord_instance != null) {
             discord_instance.sendMessage(Configuration.instance().localization.serverStopped);
             discord_instance.stopThreads();
@@ -255,7 +254,7 @@ try {
     }
 
     @SubscribeEvent
-    public void serverStopped(FMLServerStoppedEvent ev) {
+    public void serverStopped(ServerStoppedEvent ev) {
         if (discord_instance != null) {
             if (!stopped && discord_instance.getJDA() != null) ev.getServer().executeBlocking(() -> {
                 discord_instance.stopThreads();
