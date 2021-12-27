@@ -322,7 +322,12 @@ public class DiscordIntegration {
             discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
         else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
             discord_instance.sendMessage(Configuration.instance().localization.playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
-            timeouts.remove(ev.player.getUniqueID());
+            //Fix for buggy timeouts causing leftovers in the timeout list
+            timeouts.forEach(e -> {
+                if (e.equals(ev.player.getUniqueID())) {
+                    timeouts.remove(e);
+                }
+            });
         }
     }
 }
