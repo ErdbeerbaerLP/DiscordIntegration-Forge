@@ -24,7 +24,7 @@ plugins {
     id "com.matthewprenger.cursegradle" version "1.4.0"
     id 'java'
     id "com.modrinth.minotaur" version "1.2.1"
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
@@ -65,7 +65,7 @@ repositories {
 
 //Forge
 minecraft {
-    mappings channel: 'official', version: '1.18'
+    mappings channel: 'official', version: "${project.mcVersion}"
     runs {
         server {
             workingDirectory project.file('run')
@@ -92,7 +92,7 @@ task release{
 
 }
 shadowJar {
-    classifier = '1.18'
+    classifier = "${project.mcVersion}"
     configurations = [project.configurations.embed]
     relocate 'org.slf4j', 'dcshadow.org.slf4j' //Required to get forge 1.17 running
 }
@@ -114,7 +114,7 @@ dependencies {
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
-    minecraft 'net.minecraftforge:forge:1.18-38.0.1'
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-39.0.85"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.4:processor'
@@ -131,7 +131,7 @@ mixin {
 
 //Manifest attributes
 jar {
-    classifier = "1.18"
+    classifier = "${project.mcVersion}"
     manifest {
         attributes([
                 'Maven-Artifact'          : "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -142,8 +142,8 @@ jar {
                 "Implementation-Title"    : project.name,
                 "Implementation-Version"  : "${version}",
                 "Implementation-Vendor"   : "dcintegration",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")//,
-                //'MixinConnector'          : 'de.erdbeerbaerlp.dcintegration.forge.DCMixinConnector'
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'MixinConnector'          : 'de.erdbeerbaerlp.dcintegration.forge.DCMixinConnector'
         ])
     }
 }
@@ -156,9 +156,9 @@ curseforge {
             id = '324952'
             changelog = project.changelog
             releaseType = project.releaseType.toLowerCase()
-            addGameVersion '1.18'
+            addGameVersion "${project.mcVersion}"
             mainArtifact(jar) {
-                displayName = "DiscordIntegration-Forge $version (MC 1.18)"
+                displayName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"
             }
             //relations {
             //}
@@ -172,11 +172,11 @@ task publishModrinth (type: TaskModrinthUpload){
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
-        versionNumber = version+"-1.18"
-        versionName = "DiscordIntegration-Forge $version (MC 1.18)"
+        versionNumber = version+"-${project.mcVersion}"
+        versionName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"
         uploadFile = shadowJar
         changelog = project.changelog
-        addGameVersion('1.18')
+        addGameVersion("${project.mcVersion}")
         addLoader('forge')
         versionType = project.releaseType.toUpperCase()
     }
