@@ -8,6 +8,7 @@ import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.DiscordEventListener;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.ComponentUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
@@ -77,8 +78,8 @@ public class ForgeServerInterface extends ServerInterface {
             if (p.getUUID().equals(targetUUID) && !Variables.discord_instance.ignoringPlayers.contains(p.getUUID()) && !PlayerLinkController.getSettings(null, p.getUUID()).ignoreDiscordChatIngame && !PlayerLinkController.getSettings(null, p.getUUID()).ignoreReactions) {
 
                 final String emote = reactionEmote.isEmote() ? ":" + reactionEmote.getEmote().getName() + ":" : MessageUtils.formatEmoteMessage(new ArrayList<>(), reactionEmote.getEmoji());
-                String outMsg = Configuration.instance().localization.reactionMessage.replace("%name%", member.getEffectiveName()).replace("%name2%", member.getUser().getAsTag()).replace("%emote%", emote);
-                if (Configuration.instance().localization.reactionMessage.contains("%msg%"))
+                String outMsg = Localization.instance().reactionMessage.replace("%name%", member.getEffectiveName()).replace("%name2%", member.getUser().getAsTag()).replace("%emote%", emote);
+                if (Localization.instance().reactionMessage.contains("%msg%"))
                     retrieveMessage.submit().thenAccept((m) -> {
                         String outMsg2 = outMsg.replace("%msg%", m.getContentDisplay());
                         sendReactionMCMessage(p, ForgeMessageUtils.formatEmoteMessage(m.getEmotes(), outMsg2));

@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import de.erdbeerbaerlp.dcintegration.common.addon.AddonLoader;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import net.minecraft.ChatFormatting;
@@ -34,18 +35,18 @@ public class McCommandDiscord {
             return 0;
         })).then(Commands.literal("ignore").executes((ctx) -> {
             ctx.getSource().sendSuccess(
-                    new TextComponent(Variables.discord_instance.togglePlayerIgnore(ctx.getSource().getPlayerOrException().getUUID()) ? Configuration.instance().localization.commands.commandIgnore_unignore : Configuration.instance().localization.commands.commandIgnore_ignore), true);
+                    new TextComponent(Variables.discord_instance.togglePlayerIgnore(ctx.getSource().getPlayerOrException().getUUID()) ? Localization.instance().commands.commandIgnore_unignore : Localization.instance().commands.commandIgnore_ignore), true);
             return 0;
         })).then(Commands.literal("link").executes((ctx) -> {
             if (Configuration.instance().linking.enableLinking && ServerLifecycleHooks.getCurrentServer().usesAuthentication() && !Configuration.instance().linking.whitelistMode) {
                 if (PlayerLinkController.isPlayerLinked(ctx.getSource().getPlayerOrException().getUUID())) {
-                    ctx.getSource().sendSuccess(new TextComponent(ChatFormatting.RED + Configuration.instance().localization.linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromBedrockPlayer(ctx.getSource().getPlayerOrException().getUUID())).getAsTag())), false);
+                    ctx.getSource().sendSuccess(new TextComponent(ChatFormatting.RED + Localization.instance().linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromBedrockPlayer(ctx.getSource().getPlayerOrException().getUUID())).getAsTag())), false);
                     return 0;
                 }
                 final int r = Variables.discord_instance.genLinkNumber(ctx.getSource().getPlayerOrException().getUUID());
-                ctx.getSource().sendSuccess(ComponentUtils.mergeStyles(new TextComponent(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", "/")), Style.EMPTY.applyFormat(ChatFormatting.AQUA).withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "" + r)).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))), false);
+                ctx.getSource().sendSuccess(ComponentUtils.mergeStyles(new TextComponent(Localization.instance().linking.linkMsgIngame.replace("%num%", r + "").replace("%prefix%", "/")), Style.EMPTY.applyFormat(ChatFormatting.AQUA).withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "" + r)).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(Localization.instance().linking.hoverMsg_copyClipboard)))), false);
             } else {
-                ctx.getSource().sendSuccess(new TextComponent(ChatFormatting.RED + Configuration.instance().localization.commands.subcommandDisabled), false);
+                ctx.getSource().sendSuccess(new TextComponent(ChatFormatting.RED + Localization.instance().commands.subcommandDisabled), false);
             }
             return 0;
         })).then(Commands.literal("stop").requires((p) -> p.hasPermission(4)).executes((ctx) -> {
@@ -60,7 +61,7 @@ public class McCommandDiscord {
                 e.printStackTrace();
             }
             AddonLoader.reloadAll();
-            ctx.getSource().sendSuccess(new TextComponent(Configuration.instance().localization.commands.configReloaded), true);
+            ctx.getSource().sendSuccess(new TextComponent(Localization.instance().commands.configReloaded), true);
             return 0;
         }));
         dispatcher.register(l);
