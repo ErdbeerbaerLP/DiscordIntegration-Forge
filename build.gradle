@@ -14,7 +14,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
@@ -92,7 +92,7 @@ task release{
 
 }
 shadowJar {
-    classifier = "${project.mcVersion}"
+    archiveClassifier = "${project.mcVersion}"
     configurations = [project.configurations.embed]
     relocate 'org.slf4j', 'dcshadow.org.slf4j' //Required to get forge 1.17 running
 }
@@ -110,14 +110,14 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'com.github.CDAGaming:DiscordIntegration-Core:767670d3b3'
+    embed 'com.github.CDAGaming:DiscordIntegration-Core:bf1f5e79bd'
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============
     minecraft "net.minecraftforge:forge:${project.mcVersion}-39.0.85"
 
     //Mixin
-    annotationProcessor 'org.spongepowered:mixin:0.8.4:processor'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     //Dynmap-API
     compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
@@ -127,11 +127,12 @@ dependencies {
 //Mixin
 mixin {
     add sourceSets.main, 'mixins.dcintegration.refmap.json'
+    config 'mixins.dcintegration.json'
 }
 
 //Manifest attributes
 jar {
-    classifier = "${project.mcVersion}"
+    archiveClassifier = "${project.mcVersion}"
     manifest {
         attributes([
                 'Maven-Artifact'          : "${project.group}:${project.archivesBaseName}:${project.version}",
@@ -140,10 +141,9 @@ jar {
                 "Specification-Vendor"    : "dcintegration",
                 "Specification-Version"   : "1", // We are version 1 of ourselves
                 "Implementation-Title"    : project.name,
-                "Implementation-Version"  : "${version}",
+                "Implementation-Version"  : "${project.version}",
                 "Implementation-Vendor"   : "dcintegration",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                'MixinConnector'          : 'de.erdbeerbaerlp.dcintegration.forge.DCMixinConnector'
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }
