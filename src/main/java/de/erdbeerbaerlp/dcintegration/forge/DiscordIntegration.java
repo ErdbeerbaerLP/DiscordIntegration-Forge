@@ -115,7 +115,7 @@ try {
         }
     }
 
-
+    @SubscribeEvent
     public void serverSetup(FMLDedicatedServerSetupEvent ev) {
         Variables.discord_instance = new Discord(new ForgeServerInterface());
         try {
@@ -250,24 +250,17 @@ try {
     @SubscribeEvent
     public void serverStopping(ServerStoppingEvent ev) {
         if (discord_instance != null) {
-            discord_instance.sendMessage(Localization.instance().serverStopped);
-            discord_instance.stopThreads();
-        }
-        this.stopped = true;
-    }
-
-    @SubscribeEvent
-    public void serverStopped(ServerStoppedEvent ev) {
-        if (discord_instance != null) {
             if (!stopped && discord_instance.getJDA() != null) ev.getServer().executeBlocking(() -> {
                 discord_instance.stopThreads();
                 try {
-                    discord_instance.sendMessageReturns(Localization.instance().serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
+                    discord_instance.sendMessageReturns(Localization.instance().serverStopped, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
                 } catch (InterruptedException | ExecutionException ignored) {
                 }
             });
             discord_instance.kill();
         }
+        discord_instance = null;
+        this.stopped = true;
     }
 
     private boolean isModIDBlacklisted(String sender) {
