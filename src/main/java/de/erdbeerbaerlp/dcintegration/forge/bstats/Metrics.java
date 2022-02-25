@@ -410,7 +410,7 @@ public class Metrics {
         data.add("plugins", pluginData);
 
         // Create a new thread for the connection to the bStats server
-        new Thread(() -> {
+        final Thread t = new Thread(() -> {
             try {
                 // Send the data
                 sendData(plugin, data);
@@ -422,7 +422,9 @@ public class Metrics {
 
                 }
             }
-        }).start();
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     /**

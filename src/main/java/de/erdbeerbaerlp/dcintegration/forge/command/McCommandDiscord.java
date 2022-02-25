@@ -26,12 +26,14 @@ public class McCommandDiscord {
             return 0;
         });
         l.then(Commands.literal("restart").requires((p) -> p.hasPermission(3)).executes((ctx) -> {
-            new Thread(() -> {
+            final Thread t = new Thread(() -> {
                 if (Variables.discord_instance.restart()) {
                     ctx.getSource().sendSuccess(new TextComponent(ChatFormatting.GREEN + "Discord bot restarted!"), true);
                 } else
                     ctx.getSource().sendFailure(new TextComponent(ChatFormatting.RED + "Failed to properly restart the discord bot!"));
-            }).start();
+            });
+            t.setDaemon(true);
+            t.start();
             return 0;
         })).then(Commands.literal("ignore").executes((ctx) -> {
             ctx.getSource().sendSuccess(
