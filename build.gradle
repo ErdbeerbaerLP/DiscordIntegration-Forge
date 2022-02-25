@@ -110,7 +110,7 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'com.github.CDAGaming:DiscordIntegration-Core:40883df749'
+    embed 'com.github.CDAGaming:DiscordIntegration-Core:019316ca31'
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============

@@ -35,7 +35,6 @@ import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.InterModComms;
@@ -48,6 +47,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.network.NetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,6 +66,7 @@ public class DiscordIntegration {
      * Modid
      */
     public static final String MODID = "dcintegration";
+    public static final Logger LOGGER = LogManager.getLogger(MODID);
     /**
      * Contains timed-out player UUIDs, gets filled in MixinNetHandlerPlayServer
      */
@@ -76,42 +78,43 @@ public class DiscordIntegration {
         try {
             Configuration.instance().loadConfig();
             if (FMLEnvironment.dist == Dist.CLIENT) {
-                System.err.println("This mod cannot be used clientside");
-            } else if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client
-                FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
-                MinecraftForge.EVENT_BUS.register(this);
+                LOGGER.error("This mod cannot be used client-side");
             } else {
-                System.err.println("Please check the config file and set an bot token");
+                if (Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client
+                    LOGGER.error("Please check the config file and set an bot token");
+                } else {
+                    FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
+                    MinecraftForge.EVENT_BUS.register(this);
+
+                    //  ==  Migrate some files from 1.x.x to 2.x.x  ==
+
+                    //LinkedPlayers JSON file
+                    final File linkedOld = new File("./linkedPlayers.json");
+                    final File linkedNew = new File(discordDataDir, "LinkedPlayers.json");
+
+                    //Player Ignores
+                    final File ignoreOld = new File("./players_ignoring_discord_v2");
+                    final File ignoreNew = new File(discordDataDir, ".PlayerIgnores");
+
+                    //Create data directory if missing
+                    if (!discordDataDir.exists()) discordDataDir.mkdir();
+
+                    //Move Files
+                    if (linkedOld.exists() && !linkedNew.exists()) {
+                        linkedOld.renameTo(linkedNew);
+                    }
+                    if (ignoreOld.exists() && !ignoreNew.exists()) {
+                        ignoreOld.renameTo(ignoreNew);
+                    }
+                }
             }
         } catch (IOException e) {
-            System.err.println("Config loading failed");
+            LOGGER.error("Config loading failed");
             e.printStackTrace();
         } catch (IllegalStateException e) {
-            System.err.println("Failed to read config file! Please check your config file!\nError description: " + e.getMessage());
-            System.err.println("\nStacktrace: ");
+            LOGGER.error("Failed to read config file! Please check your config file!\nError description: " + e.getMessage());
+            LOGGER.error("\nStacktrace: ");
             e.printStackTrace();
-        }
-
-
-        //  ==  Migrate some files from 1.x.x to 2.x.x  ==
-
-        //LinkedPlayers JSON file
-        final File linkedOld = new File("./linkedPlayers.json");
-        final File linkedNew = new File(discordDataDir, "LinkedPlayers.json");
-
-        //Player Ignores
-        final File ignoreOld = new File("./players_ignoring_discord_v2");
-        final File ignoreNew = new File(discordDataDir, ".PlayerIgnores");
-
-        //Create data directory if missing
-        if (!discordDataDir.exists()) discordDataDir.mkdir();
-
-        //Move Files
-        if (linkedOld.exists() && !linkedNew.exists()) {
-            linkedOld.renameTo(linkedNew);
-        }
-        if (ignoreOld.exists() && !ignoreNew.exists()) {
-            ignoreOld.renameTo(ignoreNew);
         }
     }
 
@@ -120,7 +123,7 @@ public class DiscordIntegration {
         Variables.discord_instance = new Discord(new ForgeServerInterface());
         try {
             //Wait a short time to allow JDA to get initialized
-            System.out.println("Waiting for JDA to initialize to send starting message... (max 5 seconds before skipping)");
+            LOGGER.info("Waiting for JDA to initialize to send starting message... (max 5 seconds before skipping)");
             for (int i = 0; i <= 5; i++) {
                 if (discord_instance.getJDA() == null) Thread.sleep(1000);
                 else break;
@@ -190,7 +193,7 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void serverStarted(final ServerStartedEvent ev) {
-        System.out.println("Started");
+        LOGGER.info("Started");
         Variables.started = new Date().getTime();
         if (discord_instance != null) {
             if (Variables.startingMsg != null) {
@@ -264,6 +267,7 @@ public class DiscordIntegration {
         }
         discord_instance = null;
         this.stopped = true;
+        LOGGER.info("Shut-down successfully!");
     }
 
     private boolean isModIDBlacklisted(String sender) {
@@ -275,7 +279,7 @@ public class DiscordIntegration {
     public void imc(InterModProcessEvent ev) {
         final Stream<InterModComms.IMCMessage> stream = ev.getIMCStream();
         stream.forEach((msg) -> {
-            System.out.println("[IMC-Message] Sender: " + msg.getSenderModId() + " method: " + msg.getMethod());
+            LOGGER.info("[IMC-Message] Sender: " + msg.getSenderModId() + " method: " + msg.getMethod());
             if (isModIDBlacklisted(msg.getSenderModId())) return;
             if ((msg.getMethod().equals("Discord-Message") || msg.getMethod().equals("sendMessage"))) {
                 discord_instance.sendMessage(msg.getMessageSupplier().get().toString());
