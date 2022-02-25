@@ -73,16 +73,16 @@ public class DiscordIntegration {
 
     public DiscordIntegration() {
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-try {
+        try {
             Configuration.instance().loadConfig();
             if (FMLEnvironment.dist == Dist.CLIENT) {
                 System.err.println("This mod cannot be used clientside");
             } else if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client
                 FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
                 MinecraftForge.EVENT_BUS.register(this);
-
-        } else {
-            System.err.println("Please check the config file and set an bot token");}
+            } else {
+                System.err.println("Please check the config file and set an bot token");
+            }
         } catch (IOException e) {
             System.err.println("Config loading failed");
             e.printStackTrace();
@@ -119,7 +119,7 @@ try {
     public void serverSetup(FMLDedicatedServerSetupEvent ev) {
         Variables.discord_instance = new Discord(new ForgeServerInterface());
         try {
-            //Wait a short time to allow JDA to get initiaized
+            //Wait a short time to allow JDA to get initialized
             System.out.println("Waiting for JDA to initialize to send starting message... (max 5 seconds before skipping)");
             for (int i = 0; i <= 5; i++) {
                 if (discord_instance.getJDA() == null) Thread.sleep(1000);
@@ -248,12 +248,15 @@ try {
     }
 
     @SubscribeEvent
-    public void serverStopping(ServerStoppingEvent ev) {
+    public void serverStopping(ServerStoppedEvent ev) {
         if (discord_instance != null) {
-            if (!stopped && discord_instance.getJDA() != null) ev.getServer().executeBlocking(() -> {
+            ev.getServer().executeBlocking(() -> {
                 discord_instance.stopThreads();
                 try {
-                    discord_instance.sendMessageReturns(Localization.instance().serverStopped, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
+                    discord_instance.sendMessageReturns(
+                            ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
+                            discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)
+                    ).get();
                 } catch (InterruptedException | ExecutionException ignored) {
                 }
             });
