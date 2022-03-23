@@ -54,10 +54,6 @@ repositories {
         name = 'sonatype-oss'
         url = 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
-    maven{
-        name = 'howaner'
-        url = "https://repo.howaner.de/"
-    }
     flatDir {
         dirs 'libs'
     }
