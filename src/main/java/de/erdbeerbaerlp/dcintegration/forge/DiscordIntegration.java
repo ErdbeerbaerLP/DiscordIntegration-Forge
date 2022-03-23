@@ -207,20 +207,20 @@ public class DiscordIntegration {
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
-        final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
-        bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
-        bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
-        bstats.addCustomChart(new Metrics.DrilldownPie("addons", () -> {
-            final Map<String, Map<String, Integer>> map = new HashMap<>();
-            if (Configuration.instance().bstats.sendAddonStats) {  //Only send if enabled, else send empty map
+        if (Configuration.instance().bstats.sendAddonStats) {  //Only send if enabled
+            final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
+            bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
+            bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
+            bstats.addCustomChart(new Metrics.DrilldownPie("addons", () -> {
+                final Map<String, Map<String, Integer>> map = new HashMap<>();
                 for (DiscordAddonMeta m : AddonLoader.getAddonMetas()) {
                     final Map<String, Integer> entry = new HashMap<>();
                     entry.put(m.getVersion(), 1);
                     map.put(m.getName(), entry);
                 }
-            }
-            return map;
-        }));
+                return map;
+            }));
+        }
     }
 
     @SubscribeEvent
