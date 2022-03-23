@@ -57,6 +57,7 @@ repositories {
     flatDir {
         dirs 'libs'
     }
+    maven { url "https://repo.erdbeerbaerlp.de/repository/maven-releases" }
 }
 
 //Forge
@@ -101,16 +102,22 @@ reobf {
 artifacts {
     archives tasks.shadowJar
 }
-
+configurations.all {
+    resolutionStrategy {
+        cacheChangingModulesFor 5, 'minutes'
+    }
+}
 //Dependencies
 dependencies {
 
     // =========  Common  =====================
-    embed 'com.github.CDAGaming:DiscordIntegration-Core:5c078b2767'
-    //embed 'dcintegration-core:dcintegration-core-2.3.0'
+    embed('de.erdbeerbaerlp:dcintegration.common:2.4.0') {
+        changing = true
+    }
+    //embed 'dcintegration-core:dcintegration-core-2.4.0'
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-39.1.0"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-40.0.24"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

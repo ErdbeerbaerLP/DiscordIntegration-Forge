@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.net.SocketAddress;
 
 @Mixin(PlayerList.class)
-public class MixinWhitelist {
+public class MixinPlayerLogin {
     @Inject(method = "canPlayerLogin", at = @At("HEAD"), cancellable = true)
     private void canLogin(SocketAddress address, GameProfile profile, CallbackInfoReturnable<Component> cir) {
         if (Configuration.instance().linking.whitelistMode && ServerLifecycleHooks.getCurrentServer().usesAuthentication()) {

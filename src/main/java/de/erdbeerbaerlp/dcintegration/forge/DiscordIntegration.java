@@ -37,12 +37,10 @@ import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
-import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.network.NetworkConstants;
@@ -55,7 +53,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discordDataDir;
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
@@ -268,23 +265,6 @@ public class DiscordIntegration {
         discord_instance = null;
         this.stopped = true;
         LOGGER.info("Shut-down successfully!");
-    }
-
-    private boolean isModIDBlacklisted(String sender) {
-        return ArrayUtils.contains(Configuration.instance().forgeSpecific.IMC_modIdBlacklist, sender);
-    }
-
-    //Still untested
-    @SubscribeEvent
-    public void imc(InterModProcessEvent ev) {
-        final Stream<InterModComms.IMCMessage> stream = ev.getIMCStream();
-        stream.forEach((msg) -> {
-            LOGGER.info("[IMC-Message] Sender: " + msg.getSenderModId() + " method: " + msg.getMethod());
-            if (isModIDBlacklisted(msg.getSenderModId())) return;
-            if ((msg.getMethod().equals("Discord-Message") || msg.getMethod().equals("sendMessage"))) {
-                discord_instance.sendMessage(msg.getMessageSupplier().get().toString());
-            }
-        });
     }
 
     @SubscribeEvent

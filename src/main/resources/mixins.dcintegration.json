@@ -5,6 +5,6 @@
   "compatibilityLevel": "JAVA_11",
   "server": [
     "MixinNetHandlerPlayServer",
-    "MixinWhitelist"
+    "MixinPlayerLogin"
   ]
 }

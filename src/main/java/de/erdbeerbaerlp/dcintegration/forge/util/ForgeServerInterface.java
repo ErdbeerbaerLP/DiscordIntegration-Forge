@@ -33,7 +33,7 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class ForgeServerInterface extends ServerInterface {
+public class ForgeServerInterface implements ServerInterface {
 
     @Override
     public int getMaxPlayers() {

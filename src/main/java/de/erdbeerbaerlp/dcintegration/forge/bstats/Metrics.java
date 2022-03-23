@@ -164,7 +164,7 @@ public class Metrics {
                 }
 
                 // Register our service
-                MinecraftForge.EVENT_BUS.register(this); //Definitely not an effective way, but an working one
+                MinecraftForge.EVENT_BUS.register(this); //Definitely not an effective way, but a working one
                 if (!found) {
                     // We are the first!
                     startSubmitting();
