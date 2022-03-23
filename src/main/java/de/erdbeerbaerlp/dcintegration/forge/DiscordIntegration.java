@@ -253,18 +253,23 @@ public class DiscordIntegration {
             ev.getServer().executeBlocking(() -> {
                 discord_instance.stopThreads();
                 try {
-                    discord_instance.sendMessageReturns(
-                            ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
-                            discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)
-                    ).get();
+                    if (!Configuration.instance().webhook.enable)
+                        discord_instance.sendMessageReturns(
+                                ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
+                                discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)
+                        ).get();
+                    else
+                        discord_instance.sendMessage(ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
+                                discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
                 } catch (InterruptedException | ExecutionException ignored) {
                 }
+                discord_instance.kill();
+                discord_instance = null;
+                this.stopped = true;
+                LOGGER.info("Shut-down successfully!");
+
             });
-            discord_instance.kill();
         }
-        discord_instance = null;
-        this.stopped = true;
-        LOGGER.info("Shut-down successfully!");
     }
 
     @SubscribeEvent
