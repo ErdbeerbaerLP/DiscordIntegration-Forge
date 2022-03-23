@@ -7,6 +7,7 @@ import com.google.gson.JsonPrimitive;
 import dcshadow.com.moandjiezana.toml.Toml;
 import dcshadow.com.moandjiezana.toml.TomlComment;
 import dcshadow.com.moandjiezana.toml.TomlWriter;
+import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegration;
 import net.minecraft.SharedConstants;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -205,7 +206,7 @@ public class Metrics {
             throw new IllegalAccessException("This method must not be called from the main thread!");
         }
         if (logSentData) {
-            System.out.println("Sending data to bStats: " + data);
+            DiscordIntegration.LOGGER.info("Sending data to bStats: " + data);
         }
         HttpsURLConnection connection = (HttpsURLConnection) new URL(URL).openConnection();
 
@@ -236,7 +237,7 @@ public class Metrics {
         }
 
         if (logResponseStatusText) {
-            System.out.println("Sent data to bStats and received response: " + builder);
+            DiscordIntegration.LOGGER.info("Sent data to bStats and received response: " + builder);
         }
     }
 
@@ -397,7 +398,7 @@ public class Metrics {
                         } catch (ClassNotFoundException e) {
                             // minecraft version 1.14+
                             if (logFailedRequests) {
-                                System.err.println("Encountered unexpected exception");
+                                DiscordIntegration.LOGGER.error("Encountered unexpected exception");
                                 e.printStackTrace();
                             }
                         }
@@ -410,19 +411,21 @@ public class Metrics {
         data.add("plugins", pluginData);
 
         // Create a new thread for the connection to the bStats server
-        new Thread(() -> {
+        final Thread t = new Thread(() -> {
             try {
                 // Send the data
                 sendData(plugin, data);
             } catch (Exception e) {
                 // Something went wrong! :(
                 if (logFailedRequests) {
-                    System.out.println("Could not submit plugin stats of " + plugin.getModInfo().getDisplayName());
+                    DiscordIntegration.LOGGER.info("Could not submit plugin stats of " + plugin.getModInfo().getDisplayName());
                     e.printStackTrace();
 
                 }
             }
-        }).start();
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -457,7 +460,7 @@ public class Metrics {
                 chart.add("data", data);
             } catch (Throwable t) {
                 if (logFailedRequests) {
-                    System.err.println("Failed to get data for custom chart with id " + chartId);
+                    DiscordIntegration.LOGGER.error("Failed to get data for custom chart with id " + chartId);
                     t.printStackTrace();
                 }
                 return null;

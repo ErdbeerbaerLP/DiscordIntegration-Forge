@@ -54,8 +54,6 @@ public class ForgeMessageUtils extends MessageUtils {
     public static MessageEmbed genItemStackEmbedIfAvailable(final Component component) {
         if (!Configuration.instance().forgeSpecific.sendItemInfo) return null;
         final JsonObject json = p.parse(Component.Serializer.toJson(component)).getAsJsonObject();
-        System.out.println("Generating embed...");
-        System.out.println("JSON: " + json);
         if (json.has("with")) {
             final JsonArray args = json.getAsJsonArray("with");
             for (JsonElement el : args) {
