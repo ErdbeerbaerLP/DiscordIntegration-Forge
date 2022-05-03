@@ -57,7 +57,7 @@ repositories {
     flatDir {
         dirs 'libs'
     }
-    maven { url "https://repo.erdbeerbaerlp.de/repository/maven-releases" }
+    maven { url "https://repo.erdbeerbaerlp.de/repository/maven-public/" }
 }
 
 //Forge
@@ -111,7 +111,7 @@ configurations.all {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.4.0') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.4.0-SNAPSHOT') {
         changing = true
     }
     //embed 'dcintegration-core:dcintegration-core-2.4.0'
