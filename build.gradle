@@ -170,7 +170,6 @@ curseforge {
     }
 }
 modrinth{
-
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
@@ -178,8 +177,8 @@ modrinth{
         versionName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"
         uploadFile = shadowJar
         changelog = project.changelog
-        addGameVersion("${project.mcVersion}")
-        addLoader('forge')
+        gameVersions = ["${project.mcVersion}"]
+        loaders = ['forge']
         versionType = project.releaseType.toUpperCase()
     }
 }
