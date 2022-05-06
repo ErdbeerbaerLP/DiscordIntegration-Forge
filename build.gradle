@@ -169,9 +169,8 @@ curseforge {
         }
     }
 }
-import com.modrinth.minotaur.TaskModrinthUpload
 
-task publishModrinth (type: TaskModrinthUpload){
+task modrinth (type: TaskModrinthUpload){
 
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
@@ -186,4 +185,4 @@ task publishModrinth (type: TaskModrinthUpload){
     }
 }
 
-tasks.release.dependsOn(tasks.build, tasks.curseforge,tasks.publishModrinth)
+tasks.release.dependsOn(tasks.build, tasks.curseforge,tasks.modrinth)
