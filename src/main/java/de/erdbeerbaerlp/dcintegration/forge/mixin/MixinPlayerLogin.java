@@ -24,6 +24,8 @@ public class MixinPlayerLogin {
             try {
                 if (!PlayerLinkController.isPlayerLinked(profile.getId())) {
                     cir.setReturnValue(new TextComponent(Localization.instance().linking.notWhitelistedCode.replace("%code%",""+Variables.discord_instance.genLinkNumber(profile.getId()))));
+                }else if(!Variables.discord_instance.canPlayerJoin(profile.getId())){
+                    cir.setReturnValue(new TextComponent(Localization.instance().linking.notWhitelistedRole));
                 }
             } catch (IllegalStateException e) {
                 cir.setReturnValue(new TextComponent("Please check " + Variables.discordDataDir + "LinkedPlayers.json\n\n" + e.toString()));

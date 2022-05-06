@@ -111,7 +111,7 @@ configurations.all {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.4.0-SNAPSHOT') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.4.0') {
         changing = true
     }
     //embed 'dcintegration-core:dcintegration-core-2.4.0'
@@ -146,7 +146,8 @@ jar {
                 "Implementation-Title"    : project.name,
                 "Implementation-Version"  : "${project.version}",
                 "Implementation-Vendor"   : "dcintegration",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'MixinConnector'          : 'de.erdbeerbaerlp.dcintegration.forge.DCMixinConnector'
         ])
     }
 }
