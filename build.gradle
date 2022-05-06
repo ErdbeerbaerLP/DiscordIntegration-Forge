@@ -169,8 +169,7 @@ curseforge {
         }
     }
 }
-import com.modrinth.minotaur.dependencies.ModDependency
-task modrinth{
+modrinth{
 
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
