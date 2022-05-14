@@ -34,7 +34,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.3.5"
+version = "2.4.1"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -59,6 +59,7 @@ repositories {
         name = 'howaner'
         url = "https://repo.howaner.de/"
     }
+    maven { url "https://repo.erdbeerbaerlp.de/repository/maven-public/" }
 }
 
 //Forge
@@ -107,7 +108,9 @@ artifacts {
 dependencies {
 
     // =========  Common  =====================
-    embed 'de.erdbeerbaerlp:DiscordIntegration-Core:11ef997b'
+    embed('de.erdbeerbaerlp:dcintegration.common:2.4.1-j8') {
+        changing = true
+    }
     //embed 'dcintegration-core:dcintegration-core-2.3.0'
 
     // =========  Minecraft Forge =============

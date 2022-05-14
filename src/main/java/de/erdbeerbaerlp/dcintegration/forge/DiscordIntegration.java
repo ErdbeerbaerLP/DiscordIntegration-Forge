@@ -7,6 +7,7 @@ import de.erdbeerbaerlp.dcintegration.common.Discord;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
@@ -129,10 +130,10 @@ public class DiscordIntegration {
             }
             if (discord_instance.getJDA() != null) {
                 Thread.sleep(2000); //Wait for it to cache the channels
-                if (!Configuration.instance().localization.serverStarting.isEmpty()) {
+                if (!Localization.instance().serverStarting.isEmpty()) {
                     CommandRegistry.registerDefaultCommandsFromConfig();
                     if (discord_instance.getChannel() != null)
-                        Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
+                        Variables.startingMsg = discord_instance.sendMessageReturns(Localization.instance().serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
                 }
             }
         } catch (InterruptedException | NullPointerException ignored) {
@@ -143,7 +144,7 @@ public class DiscordIntegration {
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null) {
-            discord_instance.sendMessage(Configuration.instance().localization.playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
+            discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
 
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
             final Thread fixLinkStatus = new Thread(() -> {
@@ -168,7 +169,7 @@ public class DiscordIntegration {
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueID()).hideFromDiscord) return;
         if (ev.getPlayer().getServer().getPlayerList().getPlayerAdvancements((ServerPlayerEntity) ev.getPlayer()).getProgress(ev.getAdvancement()).isDone())
             if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
-                discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
+                discord_instance.sendMessage(Localization.instance().advancementMessage.replace("%player%",
                                 TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getPlayer())))
                         .replace("%name%",
                                 TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
@@ -196,8 +197,8 @@ public class DiscordIntegration {
         Variables.started = new Date().getTime();
         if (discord_instance != null) {
             if (Variables.startingMsg != null) {
-                Variables.startingMsg.thenAccept((a) -> a.editMessage(Configuration.instance().localization.serverStarted).queue());
-            } else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
+                Variables.startingMsg.thenAccept((a) -> a.editMessage(Localization.instance().serverStarted).queue());
+            } else discord_instance.sendMessage(Localization.instance().serverStarted);
         }
         if (discord_instance != null) {
             discord_instance.startThreads();
@@ -257,7 +258,7 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void serverStopping(FMLServerStoppingEvent ev) {
         if (discord_instance != null) {
-            discord_instance.sendMessage(Configuration.instance().localization.serverStopped);
+            discord_instance.sendMessage(Localization.instance().serverStopped);
             discord_instance.stopThreads();
         }
         this.stopped = true;
@@ -269,7 +270,7 @@ public class DiscordIntegration {
             if (!stopped && discord_instance.getJDA() != null) ev.getServer().runImmediately(() -> {
                 discord_instance.stopThreads();
                 try {
-                    discord_instance.sendMessageReturns(Configuration.instance().localization.serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
+                    discord_instance.sendMessageReturns(Localization.instance().serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
                 } catch (InterruptedException | ExecutionException ignored) {
                 }
             });
@@ -326,7 +327,7 @@ public class DiscordIntegration {
             if (discord_instance != null) {
                 final ITextComponent deathMessage = ev.getSource().getDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
-                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", "")).replace("@everyone", "[at]everyone").replace("@here", "[at]here")), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
+                discord_instance.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getString()).replace(ev.getEntity().getName().getUnformattedComponentText() + " ", "")).replace("@everyone", "[at]everyone").replace("@here", "[at]here")), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
         }
     }
@@ -336,9 +337,9 @@ public class DiscordIntegration {
         if (stopped) return; //Try to fix player leave messages after stop!
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUniqueID()))
-            discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
+            discord_instance.sendMessage(Localization.instance().playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
         else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUniqueID())) {
-            discord_instance.sendMessage(Configuration.instance().localization.playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
+            discord_instance.sendMessage(Localization.instance().playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
             timeouts.remove(ev.getPlayer().getUniqueID());
         }
     }

@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.forge.mixin;
 
 import com.mojang.authlib.GameProfile;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import net.minecraft.server.management.PlayerList;
@@ -22,7 +23,9 @@ public class MixinWhitelist {
         if (Configuration.instance().linking.whitelistMode && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode()) {
             try {
                 if (!PlayerLinkController.isPlayerLinked(profile.getId())) {
-                    cir.setReturnValue(new StringTextComponent(Configuration.instance().localization.linking.notWhitelistedCode.replace("%code%",""+Variables.discord_instance.genLinkNumber(profile.getId()))));
+                    cir.setReturnValue(new StringTextComponent(Localization.instance().linking.notWhitelistedCode.replace("%code%",""+Variables.discord_instance.genLinkNumber(profile.getId()))));
+                }else if(!Variables.discord_instance.canPlayerJoin(profile.getId())){
+                    cir.setReturnValue(new StringTextComponent(Localization.instance().linking.notWhitelistedRole));
                 }
             } catch (IllegalStateException e) {
                 cir.setReturnValue(new StringTextComponent("Please check " + Variables.discordDataDir + "LinkedPlayers.json\n\n" + e.toString()));
