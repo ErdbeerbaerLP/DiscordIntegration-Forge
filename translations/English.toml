@@ -191,7 +191,7 @@ linkSuccessfulIngame = "Your account is now linked with discord-user %name#tag%"
 # PLACEHOLDERS:
 # %num% - The link number
 # %prefix% - Command prefix
-linkMsgIngame = "Send this command as a direct message to the bot to link your account: %prefix%link %num%\nThis number will expire after 10 minutes"
+linkMsgIngame = "Send this command as a slash command to the bot in the server to link your account: %prefix%link %num%\nThis number will expire after 10 minutes"
 # Shown when hovering over the link message
 hoverMsg_copyClipboard = "Click to copy command to clipboard"
 
