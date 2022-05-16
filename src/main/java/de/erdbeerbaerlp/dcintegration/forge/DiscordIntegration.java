@@ -75,7 +75,7 @@ public class DiscordIntegration {
 
     public DiscordIntegration() {
         try {
-            Configuration.instance().loadConfig();
+            Discord.loadConfigs();
             if (FMLEnvironment.dist == Dist.CLIENT) {
                 System.err.println("This mod cannot be used clientside");
             } else if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client

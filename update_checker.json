@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.4.2",
+    "changelog": "ALPHA Version, expect bugs!\nFix messages file not generated",
+    "type": "alpha"
+  },
+  {
     "version": "2.3.5",
     "changelog": "Fix attachments again",
     "type": "beta"
