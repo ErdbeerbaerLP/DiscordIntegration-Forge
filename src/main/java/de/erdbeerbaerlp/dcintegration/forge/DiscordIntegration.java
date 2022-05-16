@@ -72,7 +72,7 @@ public class DiscordIntegration {
     public DiscordIntegration() {
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
         try {
-            Configuration.instance().loadConfig();
+            Discord.loadConfigs();
             if (FMLEnvironment.dist == Dist.CLIENT) {
                 LOGGER.error("This mod cannot be used client-side");
             } else {
