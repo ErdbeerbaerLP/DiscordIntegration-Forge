@@ -33,7 +33,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.4.3"
+version = "2.4.4"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -111,12 +111,12 @@ configurations.all {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.4.3') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.4.4') {
         changing = true
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-40.0.24"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-41.0.37"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

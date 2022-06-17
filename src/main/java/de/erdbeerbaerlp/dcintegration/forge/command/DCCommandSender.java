@@ -6,7 +6,11 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.minecraft.network.chat.ChatSender;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.PlayerChatMessage;
+import net.minecraft.resources.ResourceKey;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
@@ -33,7 +37,7 @@ public class DCCommandSender extends FakePlayer {
     }
 
     @Override
-    public void sendMessage(Component textComponent, UUID uuid) {
+    public void sendSystemMessage(Component textComponent, ResourceKey<ChatType> p_215100_) {
         message.append(textComponentToDiscordMessage(textComponent)).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {
@@ -41,7 +45,33 @@ public class DCCommandSender extends FakePlayer {
             });
         else
             cmdMessage.thenAccept((msg)->{
-               cmdMessage = msg.editMessage(message.toString().trim()).submit();
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
+            });
+    }
+
+    @Override
+    public void sendChatMessage(PlayerChatMessage p_215106_, ChatSender p_215107_, ResourceKey<ChatType> p_215108_) {
+        message.append(textComponentToDiscordMessage(p_215106_.serverContent())).append("\n");
+        if (cmdMessage == null)
+            cmdMsg.thenAccept((msg) -> {
+                cmdMessage = msg.editOriginal(message.toString().trim()).submit();
+            });
+        else
+            cmdMessage.thenAccept((msg)->{
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
+            });
+    }
+
+    @Override
+    public void sendSystemMessage(Component textComponent) {
+        message.append(textComponentToDiscordMessage(textComponent)).append("\n");
+        if (cmdMessage == null)
+            cmdMsg.thenAccept((msg) -> {
+                cmdMessage = msg.editOriginal(message.toString().trim()).submit();
+            });
+        else
+            cmdMessage.thenAccept((msg)->{
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
             });
     }
 

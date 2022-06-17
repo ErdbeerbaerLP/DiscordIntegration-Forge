@@ -6,7 +6,6 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.players.PlayerList;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,12 +22,12 @@ public class MixinPlayerLogin {
         if (Configuration.instance().linking.whitelistMode && ServerLifecycleHooks.getCurrentServer().usesAuthentication()) {
             try {
                 if (!PlayerLinkController.isPlayerLinked(profile.getId())) {
-                    cir.setReturnValue(new TextComponent(Localization.instance().linking.notWhitelistedCode.replace("%code%",""+Variables.discord_instance.genLinkNumber(profile.getId()))));
+                    cir.setReturnValue(Component.literal(Localization.instance().linking.notWhitelistedCode.replace("%code%",""+Variables.discord_instance.genLinkNumber(profile.getId()))));
                 }else if(!Variables.discord_instance.canPlayerJoin(profile.getId())){
-                    cir.setReturnValue(new TextComponent(Localization.instance().linking.notWhitelistedRole));
+                    cir.setReturnValue(Component.literal(Localization.instance().linking.notWhitelistedRole));
                 }
             } catch (IllegalStateException e) {
-                cir.setReturnValue(new TextComponent("Please check " + Variables.discordDataDir + "LinkedPlayers.json\n\n" + e.toString()));
+                cir.setReturnValue(Component.literal("Please check " + Variables.discordDataDir + "LinkedPlayers.json\n\n" + e.toString()));
             }
         }
     }

@@ -200,7 +200,7 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
-        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.17/update_checker.json");
+        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.19/update_checker.json");
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
@@ -233,10 +233,8 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             boolean raw = false;
 
-            if (((command.startsWith("say")) && Configuration.instance().messages.sendOnSayCommand) || (command.startsWith("me") && Configuration.instance().messages.sendOnMeCommand)) {
+            if ((command.startsWith("me") && Configuration.instance().messages.sendOnMeCommand)) {
                 String msg = command.replace("say ", "");
-                if (command.startsWith("say"))
-                    msg = msg.replaceFirst("say ", "");
                 if (command.startsWith("me")) {
                     raw = true;
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
@@ -275,7 +273,11 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
-        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
+        final ServerPlayer player = ev.getPlayer();
+        if (player != null) {
+            if (PlayerLinkController.getSettings(null, player.getUUID()).hideFromDiscord) return;
+        }
+
         final net.minecraft.network.chat.Component msg = ev.getComponent();
         if (discord_instance.callEvent((e) -> {
             if (e instanceof ForgeDiscordEventHandler) {
@@ -289,7 +291,11 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
             if (channel == null) return;
-            discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUUID().toString(), new DiscordMessage(embed, text, true), channel);
+            if (player != null) {
+                discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(player), player.getUUID().toString(), new DiscordMessage(embed, text, true), channel);
+            }else {
+                discord_instance.sendMessage(ev.getUsername() != null ? ev.getUsername() : Configuration.instance().webhook.serverName, "0000000", new DiscordMessage(null, msg.getString()), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
+            }
             final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
             Component comp = GsonComponentSerializer.gson().deserialize(json);
             final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
@@ -305,7 +311,7 @@ public class DiscordIntegration {
             if (discord_instance != null) {
                 final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
-                discord_instance.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", ChatFormatting.stripFormatting(deathMessage.getString()).replace(ev.getEntity().getName().getContents() + " ", "")).replace("@everyone", "[at]everyone").replace("@here", "[at]here")), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
+                discord_instance.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", ChatFormatting.stripFormatting(deathMessage.getString()).replace(ev.getEntity().getName().getString() + " ", "")).replace("@everyone", "[at]everyone").replace("@here", "[at]here")), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
         }
     }

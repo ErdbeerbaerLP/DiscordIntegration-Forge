@@ -19,8 +19,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
@@ -73,11 +71,11 @@ public class ForgeMessageUtils extends MessageUtils {
                                     }
                                     final CompoundTag itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getContents() : new TranslatableComponent(is.getItem().getDescriptionId()).getContents();
+                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() :Component.translatable(is.getItem().getDescriptionId()).getString();
                                     if (title.isEmpty())
-                                        title = is.getItem().getRegistryName().toString();
+                                        title = is.getItem().getDescriptionId().toString();
                                     else
-                                        b.setFooter(is.getItem().getRegistryName().toString());
+                                        b.setFooter(is.getItem().getDescriptionId().toString());
                                     b.setTitle(title);
                                     final StringBuilder tooltip = new StringBuilder();
                                     boolean[] flags = new boolean[6]; // Enchantments, Modifiers, Unbreakable, CanDestroy, CanPlace, Other
@@ -114,8 +112,8 @@ public class ForgeMessageUtils extends MessageUtils {
                                     list.forEach((nbt) -> {
                                         try {
                                             if (nbt instanceof StringTag) {
-                                                final TextComponent comp = (TextComponent) ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
-                                                tooltip.append("_").append(comp.getContents()).append("_\n");
+                                                final Component comp = ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
+                                                tooltip.append("_").append(comp.getString()).append("_\n");
                                             }
                                         } catch (CommandSyntaxException e) {
                                             e.printStackTrace();
@@ -140,7 +138,7 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Entity p) {
-        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUUID(), p.getDisplayName().getContents().isEmpty() ? p.getName().getContents() : p.getDisplayName().getContents());
+        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUUID(), p.getDisplayName().getString().isEmpty() ? p.getName().getString() : p.getDisplayName().getString());
         return formatPlayerName(e);
     }
 }
