@@ -1,5 +1,9 @@
 [
   {
+    "version": "2.4.3",
+    "changelog": "ALPHA Version, expect bugs!\nFix joining not working when having no required roles set for whitelist mode\nFix whitelist mode link command output\nFix /say and /me commands",
+    "type": "alpha"
+  },{
     "version": "2.4.2",
     "changelog": "ALPHA Version, expect bugs!\nFix messages file not generated",
     "type": "alpha"

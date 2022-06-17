@@ -18,6 +18,7 @@ import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
 import net.dv8tion.jda.api.entities.*;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
@@ -240,8 +241,9 @@ public class DiscordIntegration {
                     raw = true;
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
                 }
-                Entity sourceEntity = ev.getParseResults().getContext().getSource().getEntity();
-                discord_instance.sendMessage(ev.getParseResults().getContext().getSource().getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
+                final CommandSourceStack source = ev.getParseResults().getContext().getSource();
+                final Entity sourceEntity = source.getEntity();
+                discord_instance.sendMessage(source.getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
             }
         }
     }
