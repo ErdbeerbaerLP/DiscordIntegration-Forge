@@ -44,7 +44,7 @@ public class McCommandDiscord {
         })).then(Commands.literal("link").executes((ctx) -> {
             if (Configuration.instance().linking.enableLinking && ServerLifecycleHooks.getCurrentServer().isServerInOnlineMode() && !Configuration.instance().linking.whitelistMode) {
                 if (PlayerLinkController.isPlayerLinked(ctx.getSource().asPlayer().getUniqueID())) {
-                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Localization.instance().linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromBedrockPlayer(ctx.getSource().asPlayer().getUniqueID())).getAsTag())), false);
+                    ctx.getSource().sendFeedback(new StringTextComponent(TextFormatting.RED + Localization.instance().linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().retrieveUserById(PlayerLinkController.getDiscordFromBedrockPlayer(ctx.getSource().asPlayer().getUniqueID())).complete().getAsTag())), false);
                     return 0;
                 }
                 final int r = Variables.discord_instance.genLinkNumber(ctx.getSource().asPlayer().getUniqueID());
