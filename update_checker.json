@@ -1,5 +1,9 @@
 [
   {
+    "version": "2.4.4",
+    "changelog": "ALPHA Version, expect bugs!\nFix member retrieval issues",
+    "type": "alpha"
+  },{
     "version": "2.4.2",
     "changelog": "ALPHA Version, expect bugs!\nFix messages file not generated",
     "type": "alpha"

@@ -154,7 +154,7 @@ public class DiscordIntegration {
                 final Guild guild = discord_instance.getChannel().getGuild();
                 final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
                 if (PlayerLinkController.isPlayerLinked(uuid)) {
-                    final Member member = guild.getMemberById(PlayerLinkController.getDiscordFromPlayer(uuid));
+                    final Member member = guild.retrieveMemberById(PlayerLinkController.getDiscordFromPlayer(uuid)).complete();
                     if (!member.getRoles().contains(linkedRole))
                         guild.addRoleToMember(member, linkedRole).queue();
                 }
