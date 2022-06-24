@@ -1,5 +1,9 @@
 [
   {
+    "version": "2.4.5",
+    "changelog": "Hopefully last member retrieval fix, commands should work again properly now",
+    "type": "beta"
+  },{
     "version": "2.4.4",
     "changelog": "ALPHA Version, expect bugs!\nAnother member retrieval fix",
     "type": "alpha"
