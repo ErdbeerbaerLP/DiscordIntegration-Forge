@@ -111,7 +111,7 @@ configurations.all {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.4.5') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.4.5-j8') {
         changing = true
     }
 
