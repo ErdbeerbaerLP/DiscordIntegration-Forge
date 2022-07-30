@@ -8,10 +8,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
-import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
-import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
-import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
-import de.erdbeerbaerlp.dcintegration.common.util.Variables;
+import de.erdbeerbaerlp.dcintegration.common.util.*;
 import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
@@ -77,11 +74,12 @@ public class DiscordIntegration {
             if (FMLEnvironment.dist == Dist.CLIENT) {
                 LOGGER.error("This mod cannot be used client-side");
             } else {
+
+                MinecraftForge.EVENT_BUS.register(this);
                 if (Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client
                     LOGGER.error("Please check the config file and set an bot token");
                 } else {
                     FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
-                    MinecraftForge.EVENT_BUS.register(this);
 
                     //  ==  Migrate some files from 1.x.x to 2.x.x  ==
 
@@ -139,14 +137,14 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
-        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
         if (discord_instance != null) {
-            discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
+            if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
+            discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())));
 
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
             final Thread fixLinkStatus = new Thread(() -> {
                 if (Configuration.instance().linking.linkedRoleID.equals("0")) return;
-                final UUID uuid = ev.getPlayer().getUUID();
+                final UUID uuid = ev.getEntity().getUUID();
                 if (!PlayerLinkController.isPlayerLinked(uuid)) return;
                 final Guild guild = discord_instance.getChannel().getGuild();
                 final Role linkedRole = guild.getRoleById(Configuration.instance().linking.linkedRoleID);
@@ -163,24 +161,26 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
-        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
-        if (ev.getPlayer().getServer().getPlayerList().getPlayerAdvancements((ServerPlayer) ev.getPlayer()).getOrStartProgress(ev.getAdvancement()).isDone())
-            if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceChat())
-                discord_instance.sendMessage(Localization.instance().advancementMessage.replace("%player%",
-                                ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getPlayer())))
-                        .replace("%name%",
-                                ChatFormatting.stripFormatting(ev.getAdvancement()
-                                        .getDisplay()
-                                        .getTitle()
-                                        .getString()))
-                        .replace("%desc%",
-                                ChatFormatting.stripFormatting(ev.getAdvancement()
-                                        .getDisplay()
-                                        .getDescription()
-                                        .getString()))
-                        .replace("\\n", "\n"));
 
+        if (discord_instance != null) {
+            if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
+            if (ev.getEntity().getServer().getPlayerList().getPlayerAdvancements((ServerPlayer) ev.getEntity()).getOrStartProgress(ev.getAdvancement()).isDone())
+                if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceChat())
+                    discord_instance.sendMessage(Localization.instance().advancementMessage.replace("%player%",
+                                    ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
+                            .replace("%name%",
+                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                            .getDisplay()
+                                            .getTitle()
+                                            .getString()))
+                            .replace("%desc%",
+                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                            .getDisplay()
+                                            .getDescription()
+                                            .getString()))
+                            .replace("\\n", "\n"));
 
+        }
     }
 
     @SubscribeEvent
@@ -196,32 +196,24 @@ public class DiscordIntegration {
             if (Variables.startingMsg != null) {
                 Variables.startingMsg.thenAccept((a) -> a.editMessage(Localization.instance().serverStarted).queue());
             } else discord_instance.sendMessage(Localization.instance().serverStarted);
-        }
-        if (discord_instance != null) {
             discord_instance.startThreads();
+            if (ModList.get().getModContainerById("dynmap").isPresent()) {
+                new DynmapListener().register();
+            }
         }
         UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.19/update_checker.json");
-        if (ModList.get().getModContainerById("dynmap").isPresent()) {
-            new DynmapListener().register();
+
+        if (!DownloadSourceChecker.checkDownloadSource(new File(DiscordIntegration.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("%")[0]))) {
+            LOGGER.warn("You likely got this mod from a third party website.");
+            LOGGER.warn("Some of such websites are distributing malware or old versions.");
+            LOGGER.warn("Download this mod from an official source (https://www.curseforge.com/minecraft/mc-mods/dcintegration) to hide this message");
+            LOGGER.warn("This warning can also be suppressed in the config file");
         }
-        /*if (Configuration.instance().bstats.sendAddonStats) {  //Only send if enabled
-            final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
-            bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
-            bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
-            bstats.addCustomChart(new Metrics.DrilldownPie("addons", () -> {
-                final Map<String, Map<String, Integer>> map = new HashMap<>();
-                for (DiscordAddonMeta m : AddonLoader.getAddonMetas()) {
-                    final Map<String, Integer> entry = new HashMap<>();
-                    entry.put(m.getVersion(), 1);
-                    map.put(m.getName(), entry);
-                }
-                return map;
-            }));
-        }*/
     }
 
     @SubscribeEvent
     public void command(CommandEvent ev) {
+
         String command = ev.getParseResults().getReader().getString().replaceFirst(Pattern.quote("/"), "");
         if (!Configuration.instance().commandLog.channelID.equals("0")) {
             if (!ArrayUtils.contains(Configuration.instance().commandLog.ignoredCommands, command.split(" ")[0]))
@@ -273,43 +265,43 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
-        final ServerPlayer player = ev.getPlayer();
-        if (player != null) {
-            if (PlayerLinkController.getSettings(null, player.getUUID()).hideFromDiscord) return;
-        }
-
-        final net.minecraft.network.chat.Component msg = ev.getComponent();
-        if (discord_instance.callEvent((e) -> {
-            if (e instanceof ForgeDiscordEventHandler) {
-                return ((ForgeDiscordEventHandler) e).onMcChatMessage(ev);
-            }
-            return false;
-        })) return;
-
-        String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
-        final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
         if (discord_instance != null) {
+            final ServerPlayer player = ev.getPlayer();
+            if (player != null) {
+                if (PlayerLinkController.getSettings(null, player.getUUID()).hideFromDiscord) return;
+            }
+
+            final net.minecraft.network.chat.Component msg = ev.getMessage();
+            if (discord_instance.callEvent((e) -> {
+                if (e instanceof ForgeDiscordEventHandler) {
+                    return ((ForgeDiscordEventHandler) e).onMcChatMessage(ev);
+                }
+                return false;
+            })) return;
+
+            String text = MessageUtils.escapeMarkdown(ev.getMessage().getString().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
+            final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
             TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
             if (channel == null) return;
             if (player != null) {
                 discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(player), player.getUUID().toString(), new DiscordMessage(embed, text, true), channel);
-            }else {
+            } else {
                 discord_instance.sendMessage(ev.getUsername() != null ? ev.getUsername() : Configuration.instance().webhook.serverName, "0000000", new DiscordMessage(null, msg.getString()), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
             }
             final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
             Component comp = GsonComponentSerializer.gson().deserialize(json);
             final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
-            ev.setComponent(net.minecraft.network.chat.Component.Serializer.fromJson(editedJson));
+            ev.setMessage(net.minecraft.network.chat.Component.Serializer.fromJson(editedJson));
         }
 
     }
 
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
-        if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
-        if (ev.getEntity() instanceof Player || (ev.getEntity() instanceof TamableAnimal && ((TamableAnimal) ev.getEntity()).getOwner() instanceof Player && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
-            if (discord_instance != null) {
-                final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntityLiving());
+        if (discord_instance != null) {
+            if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
+            if (ev.getEntity() instanceof Player || (ev.getEntity() instanceof TamableAnimal && ((TamableAnimal) ev.getEntity()).getOwner() instanceof Player && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
+                final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntity());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
                 discord_instance.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", ChatFormatting.stripFormatting(deathMessage.getString()).replace(ev.getEntity().getName().getString() + " ", "")).replace("@everyone", "[at]everyone").replace("@here", "[at]here")), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
@@ -319,12 +311,14 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (stopped) return; //Try to fix player leave messages after stop!
-        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
-        if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUUID()))
-            discord_instance.sendMessage(Localization.instance().playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
-        else if (discord_instance != null && timeouts.contains(ev.getPlayer().getUUID())) {
-            discord_instance.sendMessage(Localization.instance().playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
-            timeouts.remove(ev.getPlayer().getUUID());
+        if (discord_instance != null) {
+            if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
+            if (!timeouts.contains(ev.getEntity().getUUID()))
+                discord_instance.sendMessage(Localization.instance().playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())));
+            else if (timeouts.contains(ev.getEntity().getUUID())) {
+                discord_instance.sendMessage(Localization.instance().playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())));
+                timeouts.remove(ev.getEntity().getUUID());
+            }
         }
     }
 }

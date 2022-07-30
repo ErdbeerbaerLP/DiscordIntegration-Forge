@@ -6,11 +6,9 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.minecraft.network.chat.ChatSender;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.PlayerChatMessage;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.network.chat.OutgoingPlayerChatMessage;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
@@ -37,7 +35,7 @@ public class DCCommandSender extends FakePlayer {
     }
 
     @Override
-    public void sendSystemMessage(Component textComponent, ResourceKey<ChatType> p_215100_) {
+    public void sendSystemMessage(Component textComponent, boolean unused) {
         message.append(textComponentToDiscordMessage(textComponent)).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {
@@ -50,8 +48,8 @@ public class DCCommandSender extends FakePlayer {
     }
 
     @Override
-    public void sendChatMessage(PlayerChatMessage p_215106_, ChatSender p_215107_, ResourceKey<ChatType> p_215108_) {
-        message.append(textComponentToDiscordMessage(p_215106_.serverContent())).append("\n");
+    public void sendChatMessage(OutgoingPlayerChatMessage p_243284_, boolean p_243285_, ChatType.Bound p_243314_) {
+        message.append(textComponentToDiscordMessage(p_243284_.serverContent())).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {
                 cmdMessage = msg.editOriginal(message.toString().trim()).submit();
