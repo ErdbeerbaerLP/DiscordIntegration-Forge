@@ -2,7 +2,7 @@
   {
     "version": "2.4.7",
     "changelog": "Update against new Discord version",
-    "type": "beta"
+    "type": "release"
   },{
     "version": "2.4.6",
     "changelog": "1.19.1 port",
