@@ -7,6 +7,7 @@ import de.erdbeerbaerlp.dcintegration.common.Discord;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
@@ -48,7 +49,7 @@ import java.util.concurrent.Executors;
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discordDataDir;
 import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
 
-@Mod(modid = DiscordIntegration.MODID, version = "2.2.0", name = "Discord Integration", serverSideOnly = true, acceptableRemoteVersions = "*")
+@Mod(modid = DiscordIntegration.MODID, version = "2.4.7", name = "Discord Integration", serverSideOnly = true, acceptableRemoteVersions = "*")
 
 public class DiscordIntegration {
     /**
@@ -117,10 +118,10 @@ public class DiscordIntegration {
                 if (discord_instance.getJDA() == null) Thread.sleep(1000);
                 else break;
             }
-            if (discord_instance.getJDA() != null && !Configuration.instance().localization.serverStarting.isEmpty()) {
+            if (discord_instance.getJDA() != null && !Localization.instance().serverStarting.isEmpty()) {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 if (discord_instance.getChannel() != null) {
-                    Variables.startingMsg = discord_instance.sendMessageReturns(Configuration.instance().localization.serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
+                    Variables.startingMsg = discord_instance.sendMessageReturns(Localization.instance().serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
                 }
             }
         } catch (InterruptedException | NullPointerException ignored) {
@@ -157,7 +158,7 @@ public class DiscordIntegration {
     public void playerJoin(final net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent ev) {
         if (PlayerLinkController.getSettings(null, ev.player.getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null) {
-            discord_instance.sendMessage(Configuration.instance().localization.playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
+            discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
 
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
             final Thread fixLinkStatus = new Thread(() -> {
@@ -181,7 +182,7 @@ public class DiscordIntegration {
     public void advancement(AdvancementEvent ev) {
         if (PlayerLinkController.getSettings(null, ev.getEntityPlayer().getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceToChat())
-            discord_instance.sendMessage(Configuration.instance().localization.advancementMessage.replace("%player%",
+            discord_instance.sendMessage(Localization.instance().advancementMessage.replace("%player%",
                             TextFormatting.getTextWithoutFormattingCodes(ForgeMessageUtils.formatPlayerName(ev.getEntityPlayer())))
                     .replace("%name%",
                             TextFormatting.getTextWithoutFormattingCodes(ev.getAdvancement()
@@ -204,8 +205,8 @@ public class DiscordIntegration {
         Variables.started = new Date().getTime();
         if (discord_instance != null)
             if (Variables.startingMsg != null) {
-                Variables.startingMsg.thenAccept((a) -> a.editMessage(Configuration.instance().localization.serverStarted).queue());
-            } else discord_instance.sendMessage(Configuration.instance().localization.serverStarted);
+                Variables.startingMsg.thenAccept((a) -> a.editMessage(Localization.instance().serverStarted).queue());
+            } else discord_instance.sendMessage(Localization.instance().serverStarted);
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
@@ -248,7 +249,7 @@ public class DiscordIntegration {
     @Mod.EventHandler
     public void serverStopping(FMLServerStoppingEvent ev) {
         if (discord_instance != null) {
-            discord_instance.sendMessage(Configuration.instance().localization.serverStopped);
+            discord_instance.sendMessage(Localization.instance().serverStopped);
             discord_instance.stopThreads();
         }
         this.stopped = true;
@@ -264,9 +265,9 @@ public class DiscordIntegration {
             discord_instance.stopThreads();
             try {
                 if (Configuration.instance().webhook.enable)
-                    discord_instance.sendMessageReturns(Configuration.instance().localization.serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
+                    discord_instance.sendMessageReturns(Localization.instance().serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)).get();
                 else
-                    discord_instance.sendMessage(Configuration.instance().localization.serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
+                    discord_instance.sendMessage(Localization.instance().serverCrash, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
             } catch (InterruptedException | ExecutionException ignored) {
             }
             discord_instance.kill();
@@ -309,7 +310,7 @@ public class DiscordIntegration {
             if (discord_instance != null) {
                 final ITextComponent deathMessage = ev.getSource().getDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
-                discord_instance.sendMessage(new DiscordMessage(embed, Configuration.instance().localization.playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getUnformattedText()).replace(ev.getEntity().getName() + " ", ""))), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
+                discord_instance.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.getTextWithoutFormattingCodes(deathMessage.getUnformattedText()).replace(ev.getEntity().getName() + " ", ""))), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
         }
     }
@@ -319,9 +320,9 @@ public class DiscordIntegration {
         if (stopped) return; //Try to fix player leave messages after stop!
         if (PlayerLinkController.getSettings(null, ev.player.getUniqueID()).hideFromDiscord) return;
         if (discord_instance != null && !timeouts.contains(ev.player.getUniqueID()))
-            discord_instance.sendMessage(Configuration.instance().localization.playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
+            discord_instance.sendMessage(Localization.instance().playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
         else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
-            discord_instance.sendMessage(Configuration.instance().localization.playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
+            discord_instance.sendMessage(Localization.instance().playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
             //Fix for buggy timeouts causing leftovers in the timeout list
             timeouts.forEach(e -> {
                 if (e.equals(ev.player.getUniqueID())) {

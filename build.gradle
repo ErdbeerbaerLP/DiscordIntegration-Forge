@@ -1,6 +1,5 @@
 buildscript {
     repositories {
-        jcenter()
         mavenCentral()
         maven { url = "http://files.minecraftforge.net/maven" }
         maven {
@@ -36,7 +35,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.3.5"
+version = "2.4.7"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -48,7 +47,6 @@ compileJava {
 
 //Gradle Repositories
 repositories {
-    jcenter()
     maven { url 'https://jitpack.io' }
     maven {
         name = 'sponge'
@@ -73,6 +71,7 @@ repositories {
         name = 'howaner'
         url = "http://repo.howaner.de/"
     }
+    maven { url "https://repo.erdbeerbaerlp.de/repository/maven-public/" }
 }
 
 //Forge
@@ -119,12 +118,18 @@ reobf {
 artifacts {
     archives tasks.shadowJar
 }
-
+configurations.all {
+    resolutionStrategy {
+        cacheChangingModulesFor 5, 'minutes'
+    }
+}
 //Dependencies
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:DiscordIntegration-Core:11ef997b')
+    embed('de.erdbeerbaerlp:dcintegration.common:2.4.7-j8') {
+        changing = true
+    }
 
     // =========  Minecraft Forge =============
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2855'
@@ -134,10 +139,6 @@ dependencies {
 
     //Dynmap-API
     compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')
-
-    // FTB Utilities
-    compile "com.feed_the_beast.mods:FTBUtilities:5.+"
-    compile "com.feed_the_beast.mods:FTBLib:5.+"
 
     //Votifier Forge
     compile 'com.github.upcraftlp:votifier:master-SNAPSHOT'
@@ -204,7 +205,7 @@ task publishModrinth(type: TaskModrinthUpload) {
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
         token = getProperty("modrinth.apikey") // Use an environment property!
         projectId = 'rbJ7eS5V'
-        versionNumber = version+"."
+        versionNumber = version+"1.12.2"
         versionName = "DiscordIntegration-Forge $version (MC 1.12.2)"
         uploadFile = shadowJar
         changelog = project.changelog

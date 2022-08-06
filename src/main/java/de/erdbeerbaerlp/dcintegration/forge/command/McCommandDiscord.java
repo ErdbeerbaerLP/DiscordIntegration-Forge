@@ -1,6 +1,7 @@
 package de.erdbeerbaerlp.dcintegration.forge.command;
 
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
+import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegration;
@@ -75,18 +76,18 @@ public class McCommandDiscord implements ICommand
             switch (args[0]) {
                 case "ignore":
                     sender.sendMessage(
-                            new TextComponentString(Variables.discord_instance.togglePlayerIgnore(((EntityPlayer) sender).getUniqueID()) ? Configuration.instance().localization.commands.commandIgnore_unignore : Configuration.instance().localization.commands.commandIgnore_ignore));
+                            new TextComponentString(Variables.discord_instance.togglePlayerIgnore(((EntityPlayer) sender).getUniqueID()) ? Localization.instance().commands.commandIgnore_unignore : Localization.instance().commands.commandIgnore_ignore));
                     return;
                 case "link":
                     if (Configuration.instance().linking.enableLinking && FMLCommonHandler.instance().getMinecraftServerInstance().isServerInOnlineMode() && !Configuration.instance().linking.whitelistMode) {
                         if (PlayerLinkController.isPlayerLinked(sender.getCommandSenderEntity().getUniqueID())) {
-                            sender.sendMessage(new TextComponentString(TextFormatting.RED + Configuration.instance().localization.linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromBedrockPlayer(sender.getCommandSenderEntity().getUniqueID())).getAsTag())));
+                            sender.sendMessage(new TextComponentString(TextFormatting.RED +Localization.instance().linking.alreadyLinked.replace("%player%", Variables.discord_instance.getJDA().getUserById(PlayerLinkController.getDiscordFromBedrockPlayer(sender.getCommandSenderEntity().getUniqueID())).getAsTag())));
                            break;
                         }
                         final int r = Variables.discord_instance.genLinkNumber(sender.getCommandSenderEntity().getUniqueID());
-                        sender.sendMessage(new TextComponentString(Configuration.instance().localization.linking.linkMsgIngame.replace("%num%", r + "")).setStyle(new Style().setColor(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/link " + r)).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(Configuration.instance().localization.linking.hoverMsg_copyClipboard)))));
+                        sender.sendMessage(new TextComponentString(Localization.instance().linking.linkMsgIngame.replace("%num%", r + "")).setStyle(new Style().setColor(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/link " + r)).setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(Localization.instance().linking.hoverMsg_copyClipboard)))));
                     } else {
-                        sender.sendMessage(new TextComponentString(TextFormatting.RED + Configuration.instance().localization.commands.subcommandDisabled));
+                        sender.sendMessage(new TextComponentString(TextFormatting.RED +Localization.instance().commands.subcommandDisabled));
                     }
                     break;
                 default:
