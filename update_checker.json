@@ -1,5 +1,9 @@
 [
   {
+    "version": "2.4.7",
+    "changelog": "Update against new discord update",
+    "type": "release"
+  },{
     "version": "2.4.5",
     "changelog": "Hopefully last member retrieval fix, commands should work again properly now",
     "type": "beta"

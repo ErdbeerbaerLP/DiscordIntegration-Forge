@@ -8,10 +8,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
-import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
-import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
-import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
-import de.erdbeerbaerlp.dcintegration.common.util.Variables;
+import de.erdbeerbaerlp.dcintegration.common.util.*;
 import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
@@ -73,6 +70,8 @@ public class DiscordIntegration {
     public DiscordIntegration() {
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
         try {
+            //Create data directory if missing
+            if (!discordDataDir.exists()) discordDataDir.mkdir();
             Discord.loadConfigs();
             if (FMLEnvironment.dist == Dist.CLIENT) {
                 LOGGER.error("This mod cannot be used client-side");
@@ -93,8 +92,6 @@ public class DiscordIntegration {
                     final File ignoreOld = new File("./players_ignoring_discord_v2");
                     final File ignoreNew = new File(discordDataDir, ".PlayerIgnores");
 
-                    //Create data directory if missing
-                    if (!discordDataDir.exists()) discordDataDir.mkdir();
 
                     //Move Files
                     if (linkedOld.exists() && !linkedNew.exists()) {
@@ -107,7 +104,10 @@ public class DiscordIntegration {
             }
         } catch (IOException e) {
             LOGGER.error("Config loading failed");
-            e.printStackTrace();
+            if(!discordDataDir.exists())
+                LOGGER.error("Please create the folder "+discordDataDir.getAbsolutePath()+ " manually");
+            LOGGER.error(e.getMessage());
+            LOGGER.error(e.getCause());
         } catch (IllegalStateException e) {
             LOGGER.error("Failed to read config file! Please check your config file!\nError description: " + e.getMessage());
             LOGGER.error("\nStacktrace: ");
@@ -200,10 +200,19 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             discord_instance.startThreads();
         }
-        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.17/update_checker.json");
+        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.18/update_checker.json");
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
+
+
+        if (!DownloadSourceChecker.checkDownloadSource(new File(DiscordIntegration.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("%")[0]))) {
+            LOGGER.warn("You likely got this mod from a third party website.");
+            LOGGER.warn("Some of such websites are distributing malware or old versions.");
+            LOGGER.warn("Download this mod from an official source (https://www.curseforge.com/minecraft/mc-mods/dcintegration) to hide this message");
+            LOGGER.warn("This warning can also be suppressed in the config file");
+        }
+
         /*if (Configuration.instance().bstats.sendAddonStats) {  //Only send if enabled
             final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
             bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
