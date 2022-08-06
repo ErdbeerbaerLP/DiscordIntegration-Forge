@@ -11,14 +11,13 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.ComponentUtils;
-import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.ServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.minecraft.command.arguments.ComponentArgument;
@@ -32,7 +31,10 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class ForgeServerInterface implements ServerInterface {
@@ -74,17 +76,17 @@ public class ForgeServerInterface implements ServerInterface {
     }
 
     @Override
-    public void sendMCReaction(Member member, RestAction<Message> retrieveMessage, UUID targetUUID, MessageReaction.ReactionEmote reactionEmote) {
+    public void sendMCReaction(Member member, RestAction<Message> retrieveMessage, UUID targetUUID, EmojiUnion reactionEmote) {
         final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         for (final ServerPlayerEntity p : l) {
             if (p.getUniqueID().equals(targetUUID) && !Variables.discord_instance.ignoringPlayers.contains(p.getUniqueID()) && !PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreDiscordChatIngame && !PlayerLinkController.getSettings(null, p.getUniqueID()).ignoreReactions) {
 
-                final String emote = reactionEmote.isEmote() ? ":" + reactionEmote.getEmote().getName() + ":" : MessageUtils.formatEmoteMessage(new ArrayList<>(), reactionEmote.getEmoji());
+                final String emote = ":" + reactionEmote.getName() + ":";
                 String outMsg = Localization.instance().reactionMessage.replace("%name%", member.getEffectiveName()).replace("%name2%", member.getUser().getAsTag()).replace("%emote%", emote);
                 if (Localization.instance().reactionMessage.contains("%msg%"))
                     retrieveMessage.submit().thenAccept((m) -> {
                         String outMsg2 = outMsg.replace("%msg%", m.getContentDisplay());
-                        sendReactionMCMessage(p, ForgeMessageUtils.formatEmoteMessage(m.getEmotes(), outMsg2));
+                        sendReactionMCMessage(p, ForgeMessageUtils.formatEmoteMessage(m.getMentions().getCustomEmojis(), outMsg2));
                     });
                 else sendReactionMCMessage(p, outMsg);
             }

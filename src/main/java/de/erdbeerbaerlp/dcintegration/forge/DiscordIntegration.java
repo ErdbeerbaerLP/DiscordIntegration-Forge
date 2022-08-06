@@ -9,10 +9,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
-import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
-import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
-import de.erdbeerbaerlp.dcintegration.common.util.UpdateChecker;
-import de.erdbeerbaerlp.dcintegration.common.util.Variables;
+import de.erdbeerbaerlp.dcintegration.common.util.*;
 import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.mixin.MixinNetHandlerPlayServer;
@@ -207,6 +204,14 @@ public class DiscordIntegration {
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
+
+        if (!DownloadSourceChecker.checkDownloadSource(new File(DiscordIntegration.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("%")[0]))) {
+            System.out.println("You likely got this mod from a third party website.");
+            System.out.println("Some of such websites are distributing malware or old versions.");
+            System.out.println("Download this mod from an official source (https://www.curseforge.com/minecraft/mc-mods/dcintegration) to hide this message");
+            System.out.println("This warning can also be suppressed in the config file");
+        }
+
         /*
         final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
         bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
