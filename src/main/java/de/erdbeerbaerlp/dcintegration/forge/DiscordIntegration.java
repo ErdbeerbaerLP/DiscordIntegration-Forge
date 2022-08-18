@@ -68,7 +68,7 @@ public class DiscordIntegration {
     @Mod.EventHandler
     public void modConstruction(FMLConstructionEvent ev) {
         try {
-            Configuration.instance().loadConfig();
+            Discord.loadConfigs();
             if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set
                 MinecraftForge.EVENT_BUS.register(this);
             } else {
