@@ -10,6 +10,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.PlayerLinkController;
 import de.erdbeerbaerlp.dcintegration.common.util.DiscordMessage;
+import de.erdbeerbaerlp.dcintegration.common.util.DownloadSourceChecker;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
@@ -212,6 +213,12 @@ public class DiscordIntegration {
         }
         if (Loader.isModLoaded("dynmap")) {
             new DynmapListener().register();
+        }
+        if (!DownloadSourceChecker.checkDownloadSource(new File(DiscordIntegration.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("%")[0]))) {
+            System.out.println("You likely got this mod from a third party website.");
+            System.out.println("Some of such websites are distributing malware or old versions.");
+            System.out.println("Download this mod from an official source (https://www.curseforge.com/minecraft/mc-mods/dcintegration) to hide this message");
+            System.out.println("This warning can also be suppressed in the config file");
         }
     }
 
