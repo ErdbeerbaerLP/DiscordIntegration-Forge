@@ -35,7 +35,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.4.7"
+version = "2.4.7.1"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -57,7 +57,6 @@ repositories {
         url = "https://minecraft.curseforge.com/api/maven/"
     }// Maybe needed for other mods in the future
     //maven { url "https://maven.latmod.com/" } //FTB
-    maven { url "https://nexus.vankka.dev/repository/maven-public/" }
     maven { url "https://repository.dev.gotan.io/repository/gotan.os/" }
     maven { url "https://repo.opencollab.dev/maven-snapshots" }
     maven { url "https://repo.opencollab.dev/maven-releases" }
@@ -65,8 +64,6 @@ repositories {
         name = 'sonatype-oss'
         url = 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
-
-    maven { url "https://maven.latmod.com/" } //FTB
     maven {
         name = 'howaner'
         url = "http://repo.howaner.de/"
