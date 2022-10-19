@@ -38,7 +38,7 @@ public class ForgeMessageUtils extends MessageUtils {
         return formatPlayerName(p, true);
     }
 
-    public static String formatPlayerName(Map.Entry<UUID, String> p, boolean chatFormat) {
+    public static String formatPlayerName(Map.Entry<UUID, String> p, @SuppressWarnings("unused") boolean chatFormat) {
         return ChatFormatting.stripFormatting(p.getValue());
     }
 
@@ -51,13 +51,10 @@ public class ForgeMessageUtils extends MessageUtils {
     public static MessageEmbed genItemStackEmbedIfAvailable(final Component component) {
         if (!Configuration.instance().forgeSpecific.sendItemInfo) return null;
         final JsonObject json = JsonParser.parseString(Component.Serializer.toJson(component)).getAsJsonObject();
-        //System.out.println("Generating embed...");
-        //System.out.println("JSON: " + json);
         if (json.has("with")) {
             final JsonArray args = json.getAsJsonArray("with");
             for (JsonElement el : args) {
-                if (el instanceof JsonObject) {
-                    JsonObject arg1 = (JsonObject) el;
+                if (el instanceof JsonObject arg1) {
                     if (arg1.has("hoverEvent")) {
                         final JsonObject hoverEvent = arg1.getAsJsonObject("hoverEvent");
                         if (hoverEvent.has("action") && hoverEvent.get("action").getAsString().equals("show_item") && hoverEvent.has("contents")) {
@@ -92,6 +89,7 @@ public class ForgeMessageUtils extends MessageUtils {
                                         //Implementing this code myself because the original is broken
                                         for (int i = 0; i < is.getEnchantmentTags().size(); ++i) {
                                             final CompoundTag compoundnbt = is.getEnchantmentTags().getCompound(i);
+                                            //noinspection deprecation
                                             Registry.ENCHANTMENT.getOptional(ResourceLocation.tryParse(compoundnbt.getString("id"))).ifPresent((ench) -> {
                                                 if (compoundnbt.get("lvl") != null) {
                                                     final int level;
@@ -138,7 +136,7 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Entity p) {
-        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUUID(), p.getDisplayName().getString().isEmpty() ? p.getName().getString() : p.getDisplayName().getString());
+        final Map.Entry<UUID, String> e = new DefaultMapEntry<>(p.getUUID(), p.getDisplayName().getString().isEmpty() ? p.getName().getString() : p.getDisplayName().getString());
         return formatPlayerName(e);
     }
 }

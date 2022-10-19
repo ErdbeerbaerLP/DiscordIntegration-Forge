@@ -33,7 +33,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.4.7"
+version = "2.5.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -63,20 +63,6 @@ repositories {
 //Forge
 minecraft {
     mappings channel: 'official', version: "${project.mcVersion}"
-//    runs {
-//        server {
-//            workingDirectory project.file('run')
-//            // Recommended logging data for a userdev environment
-//            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-//            // Recommended logging level for the console
-//            property 'forge.logging.console.level', 'debug'
-//            mods {
-//                dcintegration {
-//                    source sourceSets.main
-//                }
-//            }
-//        }
-//    }
 }
 
 
@@ -89,9 +75,10 @@ task release{
 
 }
 shadowJar {
+    //noinspection GroovyAccessibility
     archiveClassifier = "${project.mcVersion}"
     configurations = [project.configurations.embed]
-    relocate 'org.slf4j', 'dcshadow.org.slf4j' //Required to get forge 1.17 running
+    relocate 'org.slf4j', 'dcshadow.org.slf4j'
 }
 reobf {
     shadowJar {
@@ -111,12 +98,12 @@ configurations.all {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.4.7') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.5.0-SNAPSHOT') {
         changing = true
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-42.0.9"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-43.1.33"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
@@ -134,6 +121,7 @@ mixin {
 
 //Manifest attributes
 jar {
+    //noinspection GroovyAccessibility
     archiveClassifier = "${project.mcVersion}"
     manifest {
         attributes([
@@ -172,7 +160,7 @@ curseforge {
 }
 modrinth{
     if (project.hasProperty('modrinth.apikey')) { // $GRADLE_USER_HOME/gradle.properties
-        token = getProperty("modrinth.apikey") // Use an environment property!
+        token = getProperty("modrinth.apikey")
         projectId = 'rbJ7eS5V'
         versionNumber = version+"-${project.mcVersion}"
         versionName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"

@@ -13,7 +13,11 @@ import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -67,6 +71,7 @@ public class DiscordIntegration {
     public static final ArrayList<UUID> timeouts = new ArrayList<>();
     private boolean stopped = false;
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public DiscordIntegration() {
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
         try {
@@ -159,8 +164,9 @@ public class DiscordIntegration {
         }
     }
 
+    @SuppressWarnings({"ConstantConditions", "deprecation"})
     @SubscribeEvent
-    public void advancement(AdvancementEvent ev) {
+    public void advancement(AdvancementEvent.AdvancementEarnEvent ev) {
 
         if (discord_instance != null) {
             if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
@@ -296,6 +302,7 @@ public class DiscordIntegration {
 
     }
 
+    @SuppressWarnings("ConstantConditions")
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
         if (discord_instance != null) {

@@ -36,15 +36,7 @@ public class DCCommandSender extends FakePlayer {
 
     @Override
     public void sendSystemMessage(Component textComponent, boolean unused) {
-        message.append(textComponentToDiscordMessage(textComponent)).append("\n");
-        if (cmdMessage == null)
-            cmdMsg.thenAccept((msg) -> {
-                cmdMessage = msg.editOriginal(message.toString().trim()).submit();
-            });
-        else
-            cmdMessage.thenAccept((msg)->{
-                cmdMessage = msg.editMessage(message.toString().trim()).submit();
-            });
+        sendSystemMessage(textComponent);
     }
 
     @Override

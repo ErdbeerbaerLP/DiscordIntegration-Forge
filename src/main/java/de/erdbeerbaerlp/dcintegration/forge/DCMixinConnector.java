@@ -3,6 +3,7 @@ package de.erdbeerbaerlp.dcintegration.forge;
 import org.spongepowered.asm.mixin.Mixins;
 import org.spongepowered.asm.mixin.connect.IMixinConnector;
 
+@SuppressWarnings("unused")
 public class DCMixinConnector implements IMixinConnector {
     /**
      * Connect to Mixin
