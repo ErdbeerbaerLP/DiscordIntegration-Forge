@@ -69,7 +69,7 @@ public class DiscordIntegration {
     @Mod.EventHandler
     public void modConstruction(FMLConstructionEvent ev) {
         try {
-            Configuration.instance().loadConfig();
+            Discord.loadConfigs();
             if (!Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set
                 MinecraftForge.EVENT_BUS.register(this);
             } else {
@@ -331,7 +331,8 @@ public class DiscordIntegration {
         else if (discord_instance != null && timeouts.contains(ev.player.getUniqueID())) {
             discord_instance.sendMessage(Localization.instance().playerTimeout.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.player)));
             //Fix for buggy timeouts causing leftovers in the timeout list
-            timeouts.forEach(e -> {
+            ArrayList<UUID> tempList = new ArrayList<>(timeouts); // iterating temp list to prevent ConcurrentModificationException
+            tempList.forEach(e -> {
                 if (e.equals(ev.player.getUniqueID())) {
                     timeouts.remove(e);
                 }
