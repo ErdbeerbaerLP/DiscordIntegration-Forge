@@ -25,17 +25,7 @@ public class McCommandDiscord {
                             .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.instance().ingameCommand.inviteURL))), false);
             return 0;
         });
-        l.then(Commands.literal("restart").requires((p) -> p.hasPermission(3)).executes((ctx) -> {
-            final Thread t = new Thread(() -> {
-                if (Variables.discord_instance.restart()) {
-                    ctx.getSource().sendSuccess(Component.literal(ChatFormatting.GREEN + "Discord bot restarted!"), true);
-                } else
-                    ctx.getSource().sendFailure(Component.literal(ChatFormatting.RED + "Failed to properly restart the discord bot!"));
-            });
-            t.setDaemon(true);
-            t.start();
-            return 0;
-        })).then(Commands.literal("ignore").executes((ctx) -> {
+        l.then(Commands.literal("ignore").executes((ctx) -> {
             ctx.getSource().sendSuccess(
                     Component.literal(Variables.discord_instance.togglePlayerIgnore(ctx.getSource().getPlayerOrException().getUUID()) ? Localization.instance().commands.commandIgnore_unignore : Localization.instance().commands.commandIgnore_ignore), true);
             return 0;
@@ -50,10 +40,6 @@ public class McCommandDiscord {
             } else {
                 ctx.getSource().sendSuccess(Component.literal(ChatFormatting.RED + Localization.instance().commands.subcommandDisabled), false);
             }
-            return 0;
-        })).then(Commands.literal("stop").requires((p) -> p.hasPermission(4)).executes((ctx) -> {
-            Variables.discord_instance.kill();
-            ctx.getSource().sendSuccess(Component.literal("DiscordIntegration was successfully stopped!"), false);
             return 0;
         })).then(Commands.literal("reload").requires((p) -> p.hasPermission(4)).executes((ctx) -> {
             try {
