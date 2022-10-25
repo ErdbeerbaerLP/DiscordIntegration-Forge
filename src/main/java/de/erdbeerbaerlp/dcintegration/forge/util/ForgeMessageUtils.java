@@ -70,9 +70,9 @@ public class ForgeMessageUtils extends MessageUtils {
                                     final EmbedBuilder b = new EmbedBuilder();
                                     String title = is.hasCustomHoverName() ? is.getDisplayName().getString() :Component.translatable(is.getItem().getDescriptionId()).getString();
                                     if (title.isEmpty())
-                                        title = is.getItem().getDescriptionId().toString();
+                                        title = is.getItem().getDescriptionId();
                                     else
-                                        b.setFooter(is.getItem().getDescriptionId().toString());
+                                        b.setFooter(is.getItem().getDescriptionId());
                                     b.setTitle(title);
                                     final StringBuilder tooltip = new StringBuilder();
                                     boolean[] flags = new boolean[6]; // Enchantments, Modifiers, Unbreakable, CanDestroy, CanPlace, Other
@@ -100,10 +100,7 @@ public class ForgeMessageUtils extends MessageUtils {
                                                     tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
                                                 }
                                             });
-                                        }/*
-                                        EnchantmentHelper.getEnchantments(is).forEach((ench, lvl) -> {
-                                            tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(lvl).getUnformattedComponentText())).append("\n");
-                                        });*/
+                                        }
                                     }
                                     //Add Lores
                                     final ListTag list = itemTag.getCompound("display").getList("Lore", 8);

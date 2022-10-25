@@ -125,6 +125,11 @@ public class ForgeServerInterface implements ServerInterface {
         return Configuration.instance().bungee.isBehindBungee || ServerLifecycleHooks.getCurrentServer().usesAuthentication();
     }
 
+    @Override
+    public String getLoaderName() {
+        return "Forge";
+    }
+
     private void sendReactionMCMessage(ServerPlayer target, String msg) {
         final Component msgComp = MinecraftSerializer.INSTANCE.serialize(msg.replace("\n", "\\n"), DiscordEventListener.mcSerializerOptions);
         final String jsonComp = GsonComponentSerializer.gson().serialize(msgComp).replace("\\\\n", "\n");
@@ -140,4 +145,5 @@ public class ForgeServerInterface implements ServerInterface {
     public String getNameFromUUID(UUID uuid) {
         return ServerLifecycleHooks.getCurrentServer().getSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();
     }
+
 }

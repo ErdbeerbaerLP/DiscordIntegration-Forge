@@ -79,33 +79,13 @@ public class DiscordIntegration {
             if (FMLEnvironment.dist == Dist.CLIENT) {
                 LOGGER.error("This mod cannot be used client-side");
             } else {
-
                 MinecraftForge.EVENT_BUS.register(this);
                 if (Configuration.instance().general.botToken.equals("INSERT BOT TOKEN HERE")) { //Prevent events when token not set or on client
                     LOGGER.error("Please check the config file and set an bot token");
                 } else {
                     FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
-
-                    //  ==  Migrate some files from 1.x.x to 2.x.x  ==
-
-                    //LinkedPlayers JSON file
-                    final File linkedOld = new File("./linkedPlayers.json");
-                    final File linkedNew = new File(discordDataDir, "LinkedPlayers.json");
-
-                    //Player Ignores
-                    final File ignoreOld = new File("./players_ignoring_discord_v2");
-                    final File ignoreNew = new File(discordDataDir, ".PlayerIgnores");
-
                     //Create data directory if missing
                     if (!discordDataDir.exists()) discordDataDir.mkdir();
-
-                    //Move Files
-                    if (linkedOld.exists() && !linkedNew.exists()) {
-                        linkedOld.renameTo(linkedNew);
-                    }
-                    if (ignoreOld.exists() && !ignoreNew.exists()) {
-                        ignoreOld.renameTo(ignoreNew);
-                    }
                 }
             }
         } catch (IOException e) {
