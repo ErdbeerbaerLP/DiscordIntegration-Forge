@@ -33,7 +33,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.4.7"
+version = "2.5.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -63,20 +63,6 @@ repositories {
 //Forge
 minecraft {
     mappings channel: 'official', version: "${project.mcVersion}"
-//    runs {
-//        server {
-//            workingDirectory project.file('run')
-//            // Recommended logging data for a userdev environment
-//            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-//            // Recommended logging level for the console
-//            property 'forge.logging.console.level', 'debug'
-//            mods {
-//                dcintegration {
-//                    source sourceSets.main
-//                }
-//            }
-//        }
-//    }
 }
 
 
@@ -91,7 +77,7 @@ task release{
 shadowJar {
     archiveClassifier = "${project.mcVersion}"
     configurations = [project.configurations.embed]
-    relocate 'org.slf4j', 'dcshadow.org.slf4j' //Required to get forge 1.17 running
+    relocate 'org.slf4j', 'dcshadow.org.slf4j'
 }
 reobf {
     shadowJar {
@@ -109,14 +95,13 @@ configurations.all {
 }
 //Dependencies
 dependencies {
-
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.4.7') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.5.0') {
         changing = true
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-40.0.24"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-40.1.0"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

@@ -13,7 +13,11 @@ import de.erdbeerbaerlp.dcintegration.forge.api.ForgeDiscordEventHandler;
 import de.erdbeerbaerlp.dcintegration.forge.command.McCommandDiscord;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeMessageUtils;
 import de.erdbeerbaerlp.dcintegration.forge.util.ForgeServerInterface;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,8 +44,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.network.NetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +53,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
-import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discordDataDir;
-import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
+import static de.erdbeerbaerlp.dcintegration.common.util.Variables.*;
 
 @Mod(DiscordIntegration.MODID)
 public class DiscordIntegration {
@@ -60,7 +61,6 @@ public class DiscordIntegration {
      * Modid
      */
     public static final String MODID = "dcintegration";
-    public static final Logger LOGGER = LogManager.getLogger(MODID);
     /**
      * Contains timed-out player UUIDs, gets filled in MixinNetHandlerPlayServer
      */
@@ -81,25 +81,6 @@ public class DiscordIntegration {
                 } else {
                     FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverSetup);
                     MinecraftForge.EVENT_BUS.register(this);
-
-                    //  ==  Migrate some files from 1.x.x to 2.x.x  ==
-
-                    //LinkedPlayers JSON file
-                    final File linkedOld = new File("./linkedPlayers.json");
-                    final File linkedNew = new File(discordDataDir, "LinkedPlayers.json");
-
-                    //Player Ignores
-                    final File ignoreOld = new File("./players_ignoring_discord_v2");
-                    final File ignoreNew = new File(discordDataDir, ".PlayerIgnores");
-
-
-                    //Move Files
-                    if (linkedOld.exists() && !linkedNew.exists()) {
-                        linkedOld.renameTo(linkedNew);
-                    }
-                    if (ignoreOld.exists() && !ignoreNew.exists()) {
-                        ignoreOld.renameTo(ignoreNew);
-                    }
                 }
             }
         } catch (IOException e) {

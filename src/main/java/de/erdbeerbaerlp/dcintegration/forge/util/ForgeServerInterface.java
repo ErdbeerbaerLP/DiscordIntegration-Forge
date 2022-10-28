@@ -142,4 +142,9 @@ public class ForgeServerInterface implements ServerInterface {
     public String getNameFromUUID(UUID uuid) {
         return ServerLifecycleHooks.getCurrentServer().getSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();
     }
+
+    @Override
+    public String getLoaderName() {
+        return "Forge";
+    }
 }

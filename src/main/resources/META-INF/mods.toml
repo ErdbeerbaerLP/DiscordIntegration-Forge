@@ -1,6 +1,6 @@
 modLoader = "javafml" #mandatory
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
-loaderVersion = "[32,)" #mandatory
+loaderVersion = "[40,)" #mandatory
 license = "MIT License"
 # A URL to refer people to when problems occur with this mod
 issueTrackerURL = "https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/issues" #optional
@@ -29,6 +29,6 @@ side = "SERVER"
 [[dependencies.dcintegration]]
 modId = "forge"
 mandatory = true
-versionRange = "[39.0.0,)"
+versionRange = "[40.1.0,)"
 ordering = "NONE"
 side = "BOTH"

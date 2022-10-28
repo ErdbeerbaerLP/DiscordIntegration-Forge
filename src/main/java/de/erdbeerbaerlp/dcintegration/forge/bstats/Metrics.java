@@ -7,7 +7,7 @@ import com.google.gson.JsonPrimitive;
 import dcshadow.com.moandjiezana.toml.Toml;
 import dcshadow.com.moandjiezana.toml.TomlComment;
 import dcshadow.com.moandjiezana.toml.TomlWriter;
-import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegration;
+import de.erdbeerbaerlp.dcintegration.common.util.Variables;
 import net.minecraft.SharedConstants;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -206,7 +206,7 @@ public class Metrics {
             throw new IllegalAccessException("This method must not be called from the main thread!");
         }
         if (logSentData) {
-            DiscordIntegration.LOGGER.info("Sending data to bStats: " + data);
+            Variables.LOGGER.info("Sending data to bStats: " + data);
         }
         HttpsURLConnection connection = (HttpsURLConnection) new URL(URL).openConnection();
 
@@ -237,7 +237,7 @@ public class Metrics {
         }
 
         if (logResponseStatusText) {
-            DiscordIntegration.LOGGER.info("Sent data to bStats and received response: " + builder);
+            Variables.LOGGER.info("Sent data to bStats and received response: " + builder);
         }
     }
 
@@ -398,7 +398,7 @@ public class Metrics {
                         } catch (ClassNotFoundException e) {
                             // minecraft version 1.14+
                             if (logFailedRequests) {
-                                DiscordIntegration.LOGGER.error("Encountered unexpected exception");
+                                Variables.LOGGER.error("Encountered unexpected exception");
                                 e.printStackTrace();
                             }
                         }
@@ -418,7 +418,7 @@ public class Metrics {
             } catch (Exception e) {
                 // Something went wrong! :(
                 if (logFailedRequests) {
-                    DiscordIntegration.LOGGER.info("Could not submit plugin stats of " + plugin.getModInfo().getDisplayName());
+                    Variables.LOGGER.info("Could not submit plugin stats of " + plugin.getModInfo().getDisplayName());
                     e.printStackTrace();
 
                 }
@@ -460,7 +460,7 @@ public class Metrics {
                 chart.add("data", data);
             } catch (Throwable t) {
                 if (logFailedRequests) {
-                    DiscordIntegration.LOGGER.error("Failed to get data for custom chart with id " + chartId);
+                    Variables.LOGGER.error("Failed to get data for custom chart with id " + chartId);
                     t.printStackTrace();
                 }
                 return null;
