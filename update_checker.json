@@ -1,5 +1,9 @@
 [
   {
+    "version": "2.5.0",
+    "changelog": "Fix a few issues\nAdd new custom command parameter\nFix default webhook name\nBump minimum Forge version to 40.1.0\nFix mentions in webhooks\nFix mentions in any non-chat message\nRemove /discord stop and /discord restart ingame commands",
+    "type": "beta"
+  },{
     "version": "2.4.7",
     "changelog": "Update against new discord update",
     "type": "release"
