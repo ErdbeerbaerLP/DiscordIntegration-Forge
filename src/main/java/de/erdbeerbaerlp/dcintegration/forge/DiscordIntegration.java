@@ -44,8 +44,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.network.NetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,8 +53,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
-import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discordDataDir;
-import static de.erdbeerbaerlp.dcintegration.common.util.Variables.discord_instance;
+import static de.erdbeerbaerlp.dcintegration.common.util.Variables.*;
 
 @Mod(DiscordIntegration.MODID)
 public class DiscordIntegration {
@@ -64,7 +61,6 @@ public class DiscordIntegration {
      * Modid
      */
     public static final String MODID = "dcintegration";
-    public static final Logger LOGGER = LogManager.getLogger(MODID);
     /**
      * Contains timed-out player UUIDs, gets filled in MixinNetHandlerPlayServer
      */

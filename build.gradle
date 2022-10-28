@@ -91,7 +91,7 @@ artifacts {
 }
 configurations.all {
     resolutionStrategy {
-        cacheChangingModulesFor 5, 'minutes'
+        cacheChangingModulesFor 1, 'minutes'
     }
 }
 //Dependencies
