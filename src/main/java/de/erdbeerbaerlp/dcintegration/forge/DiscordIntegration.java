@@ -1,9 +1,13 @@
 package de.erdbeerbaerlp.dcintegration.forge;
 
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
+import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.MCSubCommand;
+import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.McCommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
@@ -20,6 +24,7 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildMessageChannel;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.ComponentArgument;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
@@ -48,6 +53,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -85,8 +91,8 @@ public class DiscordIntegration {
             }
         } catch (IOException e) {
             LOGGER.error("Config loading failed");
-            if(!discordDataDir.exists())
-                LOGGER.error("Please create the folder "+discordDataDir.getAbsolutePath()+ " manually");
+            if (!discordDataDir.exists())
+                LOGGER.error("Please create the folder " + discordDataDir.getAbsolutePath() + " manually");
             LOGGER.error(e.getMessage());
             LOGGER.error(e.getCause());
         } catch (IllegalStateException e) {
@@ -234,37 +240,80 @@ public class DiscordIntegration {
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
                 }
                 discord_instance.sendMessage(source.getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
-            }/*
-            if(command.startsWith("discord ") || command.startsWith("dc ")){
-                final String[] args = command.replace("discord ","").replace("dc ","").split(" ");
+            }
+            if (command.startsWith("discord ") || command.startsWith("dc ")) {
+                final String[] args = command.replace("discord ", "").replace("dc ", "").split(" ");
                 for (MCSubCommand mcSubCommand : McCommandRegistry.getCommands()) {
                     if (args[0].equals(mcSubCommand.getName())) {
                         final String[] cmdArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0];
                         switch (mcSubCommand.getType()) {
                             case CONSOLE_ONLY:
-                                if ((sourceEntity != null)) {
-                                    sourceEntity.sendMessage();
-                                    break;
+                                try {
+                                    source.getPlayerOrException();
+                                    source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.consoleOnly));
+                                } catch (CommandSyntaxException e) {
+                                    final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
+                                    try {
+                                        source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                    } catch (CommandSyntaxException ignored) {
+                                    }
                                 }
+                                break;
                             case PLAYER_ONLY:
+                                try {
+                                    final ServerPlayer player = source.getPlayerOrException();
+                                    if (!mcSubCommand.needsOP()) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    } else if (source.hasPermission(4)) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    } else {
+                                        source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
+                                    }
+                                } catch (CommandSyntaxException e) {
+                                    source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.ingameOnly));
+
+                                }
                                 break;
                             case BOTH:
-                                if ((sender instanceof final Player p)) {
+
+                                try {
+                                    final ServerPlayer player = source.getPlayerOrException();
                                     if (!mcSubCommand.needsOP()) {
-                                        sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(mcSubCommand.execute(cmdArgs, p.getUniqueId())));
-                                    }else if(p.hasPermission("dcintegration.admin")) {
-                                        sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(mcSubCommand.execute(cmdArgs, p.getUniqueId())));
-                                    }else{
-                                        sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Localization.instance().commands.noPermission)));
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    } else if (source.hasPermission(4)) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    } else {
+                                        source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
                                     }
-                                } else {
-                                    sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(mcSubCommand.execute(cmdArgs, null)));
+                                } catch (CommandSyntaxException e) {
+                                    final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
+                                    try {
+                                        source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                    } catch (CommandSyntaxException ignored) {
+                                    }
                                 }
-                                return true;
+                                break;
                         }
                     }
+                    ev.setCanceled(true);
                 }
-            }*/
+            }
         }
     }
 
