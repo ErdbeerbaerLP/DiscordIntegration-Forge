@@ -33,7 +33,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.5.0"
+version = "2.6.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -98,12 +98,12 @@ configurations.all {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.5.0-SNAPSHOT') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.6.1-SNAPSHOT') {
         changing = true
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-43.1.47"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-44.0.37"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
@@ -148,7 +148,6 @@ curseforge {
             changelog = project.changelog
             releaseType = project.releaseType.toLowerCase()
             addGameVersion "${project.mcVersion}"
-            addGameVersion "1.19.2"
             mainArtifact(jar) {
                 displayName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"
             }

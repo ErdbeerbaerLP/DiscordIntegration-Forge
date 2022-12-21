@@ -14,7 +14,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.arguments.ComponentArgument;
 import net.minecraft.commands.arguments.NbtTagArgument;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -23,6 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 
@@ -68,7 +68,7 @@ public class ForgeMessageUtils extends MessageUtils {
                                     }
                                     final CompoundTag itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() :Component.translatable(is.getItem().getDescriptionId()).getString();
+                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : Component.translatable(is.getItem().getDescriptionId()).getString();
                                     if (title.isEmpty())
                                         title = is.getItem().getDescriptionId();
                                     else
@@ -89,17 +89,15 @@ public class ForgeMessageUtils extends MessageUtils {
                                         //Implementing this code myself because the original is broken
                                         for (int i = 0; i < is.getEnchantmentTags().size(); ++i) {
                                             final CompoundTag compoundnbt = is.getEnchantmentTags().getCompound(i);
-                                            //noinspection deprecation
-                                            Registry.ENCHANTMENT.getOptional(ResourceLocation.tryParse(compoundnbt.getString("id"))).ifPresent((ench) -> {
-                                                if (compoundnbt.get("lvl") != null) {
-                                                    final int level;
-                                                    if (compoundnbt.get("lvl") instanceof StringTag) {
-                                                        level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
-                                                    } else
-                                                        level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
-                                                    tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
-                                                }
-                                            });
+                                            final Enchantment ench = Enchantment.byId(compoundnbt.getInt("id"));
+                                            if (compoundnbt.get("lvl") != null) {
+                                                final int level;
+                                                if (compoundnbt.get("lvl") instanceof StringTag) {
+                                                    level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
+                                                } else
+                                                    level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
+                                                tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
+                                            }
                                         }
                                     }
                                     //Add Lores

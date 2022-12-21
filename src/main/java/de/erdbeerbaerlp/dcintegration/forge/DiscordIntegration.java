@@ -1,9 +1,13 @@
 package de.erdbeerbaerlp.dcintegration.forge;
 
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.Discord;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
+import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.MCSubCommand;
+import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.McCommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
@@ -17,9 +21,11 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildMessageChannel;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.ComponentArgument;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
@@ -48,6 +54,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -207,15 +214,79 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             boolean raw = false;
 
+            final CommandSourceStack source = ev.getParseResults().getContext().getSource();
+            final Entity sourceEntity = source.getEntity();
             if ((command.startsWith("me") && Configuration.instance().messages.sendOnMeCommand)) {
                 String msg = command.replace("say ", "");
                 if (command.startsWith("me")) {
                     raw = true;
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
                 }
-                final CommandSourceStack source = ev.getParseResults().getContext().getSource();
-                final Entity sourceEntity = source.getEntity();
                 discord_instance.sendMessage(source.getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
+            }
+
+            if(command.startsWith("discord ") || command.startsWith("dc ")){
+                final String[] args = command.replace("discord ","").replace("dc ","").split(" ");
+                for (MCSubCommand mcSubCommand : McCommandRegistry.getCommands()) {
+                    if (args[0].equals(mcSubCommand.getName())) {
+                        final String[] cmdArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0];
+                        switch (mcSubCommand.getType()) {
+                            case CONSOLE_ONLY:
+                                if (source.source instanceof MinecraftServer) {
+                                    final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
+                                    try {
+                                        source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
+                                    } catch (CommandSyntaxException ignored) {
+                                    }
+                                    break;
+                                }else source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.consoleOnly));
+                            case PLAYER_ONLY:
+                                if ((source.source instanceof final Player p)) {
+                                    if (!mcSubCommand.needsOP()) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
+                                        try {
+                                            source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    }else if(source.hasPermission(4)) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
+                                        try {
+                                            source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    }else{
+                                        source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.noPermission));
+                                    }
+                                }else source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.ingameOnly));
+                                break;
+                            case BOTH:
+                                if ((source.source instanceof final Player p)) {
+                                    if (!mcSubCommand.needsOP()) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
+                                        try {
+                                            source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    }else if(source.hasPermission(4)) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
+                                        try {
+                                            source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    }else{
+                                        source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.noPermission));
+                                    }
+                                } else {
+                                    final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
+                                    try {
+                                        source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
+                                    } catch (CommandSyntaxException ignored) {
+                                    }
+                                }
+                        }
+                    }
+                    ev.setCanceled(true);
+                }
             }
         }
     }
@@ -263,7 +334,7 @@ public class DiscordIntegration {
 
             String text = MessageUtils.escapeMarkdown(ev.getMessage().getString().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
             final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
-            TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
+            StandardGuildMessageChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
             if (channel == null) return;
             if (player != null) {
                 discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(player), player.getUUID().toString(), new DiscordMessage(embed, text, true), channel);
