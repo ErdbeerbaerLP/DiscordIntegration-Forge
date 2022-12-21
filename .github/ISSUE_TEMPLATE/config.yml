@@ -1,5 +1,5 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: Discord Server
     url: https://discord.gg/PGPWdRBQms
-    about: Feel free to ask your questions here. Reporting bugs here is also possible, i might be quicker to see them there
+    about: Moving the bug tracking fully here now, as I will see that much faster than github. If you don't have discord (why are you here tho?), you can create a blank issue tho
