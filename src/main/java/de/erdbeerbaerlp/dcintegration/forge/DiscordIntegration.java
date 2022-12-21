@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildMessageChannel;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -221,6 +221,8 @@ public class DiscordIntegration {
                         .replace("%cmd-no-args%", command.split(" ")[0]), discord_instance.getChannel(Configuration.instance().commandLog.channelID));
         }
         if (discord_instance != null) {
+            final CommandSourceStack source = ev.getParseResults().getContext().getSource();
+            final Entity sourceEntity = source.getEntity();
             boolean raw = false;
 
             if (((command.startsWith("say")) && Configuration.instance().messages.sendOnSayCommand) || (command.startsWith("me") && Configuration.instance().messages.sendOnMeCommand)) {
@@ -231,10 +233,38 @@ public class DiscordIntegration {
                     raw = true;
                     msg = "*" + MessageUtils.escapeMarkdown(msg.replaceFirst("me ", "").trim()) + "*";
                 }
-                final CommandSourceStack source = ev.getParseResults().getContext().getSource();
-                final Entity sourceEntity = source.getEntity();
                 discord_instance.sendMessage(source.getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
-            }
+            }/*
+            if(command.startsWith("discord ") || command.startsWith("dc ")){
+                final String[] args = command.replace("discord ","").replace("dc ","").split(" ");
+                for (MCSubCommand mcSubCommand : McCommandRegistry.getCommands()) {
+                    if (args[0].equals(mcSubCommand.getName())) {
+                        final String[] cmdArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0];
+                        switch (mcSubCommand.getType()) {
+                            case CONSOLE_ONLY:
+                                if ((sourceEntity != null)) {
+                                    sourceEntity.sendMessage();
+                                    break;
+                                }
+                            case PLAYER_ONLY:
+                                break;
+                            case BOTH:
+                                if ((sender instanceof final Player p)) {
+                                    if (!mcSubCommand.needsOP()) {
+                                        sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(mcSubCommand.execute(cmdArgs, p.getUniqueId())));
+                                    }else if(p.hasPermission("dcintegration.admin")) {
+                                        sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(mcSubCommand.execute(cmdArgs, p.getUniqueId())));
+                                    }else{
+                                        sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(Component.text(Localization.instance().commands.noPermission)));
+                                    }
+                                } else {
+                                    sender.spigot().sendMessage(SpigotMessageUtils.adventureToSpigot(mcSubCommand.execute(cmdArgs, null)));
+                                }
+                                return true;
+                        }
+                    }
+                }
+            }*/
         }
     }
 
@@ -274,10 +304,10 @@ public class DiscordIntegration {
             return false;
         })) return;
 
-        String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
+        final String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
         final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
         if (discord_instance != null) {
-            TextChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
+            StandardGuildMessageChannel channel = discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID);
             if (channel == null) return;
             discord_instance.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUUID().toString(), new DiscordMessage(embed, text, true), channel);
             final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);

@@ -28,7 +28,7 @@ public class MixinPlayerLogin {
                     cir.setReturnValue(new TextComponent(Localization.instance().linking.notWhitelistedRole));
                 }
             } catch (IllegalStateException e) {
-                cir.setReturnValue(new TextComponent("Please check " + Variables.discordDataDir + "LinkedPlayers.json\n\n" + e.toString()));
+                cir.setReturnValue(new TextComponent("An error occured\nPlease check Server Log for more information\n\n" + e));
             }
         }
     }

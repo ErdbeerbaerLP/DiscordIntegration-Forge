@@ -19,6 +19,8 @@ import java.io.IOException;
 public class McCommandDiscord {
     public McCommandDiscord(CommandDispatcher<CommandSourceStack> dispatcher) {
         final LiteralArgumentBuilder<CommandSourceStack> l = Commands.literal("discord");
+
+
         if (Configuration.instance().ingameCommand.enabled) l.executes((ctx) -> {
             ctx.getSource().sendSuccess(ComponentUtils.mergeStyles(new TextComponent(Configuration.instance().ingameCommand.message),
                     Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(Configuration.instance().ingameCommand.hoverMessage)))
@@ -45,11 +47,14 @@ public class McCommandDiscord {
             try {
                 Configuration.instance().loadConfig();
             } catch (IOException e) {
-                ctx.getSource().sendSuccess(new TextComponent(e.getMessage()).setStyle(Style.EMPTY.applyFormat(ChatFormatting.RED)),true);
+                ctx.getSource().sendSuccess(new TextComponent(e.getMessage()).setStyle(Style.EMPTY.applyFormat(ChatFormatting.RED)), true);
                 e.printStackTrace();
             }
             AddonLoader.reloadAll();
             ctx.getSource().sendSuccess(new TextComponent(Localization.instance().commands.configReloaded), true);
+            return 0;
+        })).then(Commands.literal("migrate").requires((p) -> p.hasPermission(4)).executes((ctx) -> {
+            PlayerLinkController.migrateToDatabase();
             return 0;
         }));
         dispatcher.register(l);
