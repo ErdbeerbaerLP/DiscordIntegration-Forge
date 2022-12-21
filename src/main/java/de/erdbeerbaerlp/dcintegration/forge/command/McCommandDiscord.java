@@ -2,6 +2,8 @@ package de.erdbeerbaerlp.dcintegration.forge.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.MCSubCommand;
+import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.McCommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -17,6 +19,9 @@ public class McCommandDiscord {
                             .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Configuration.instance().ingameCommand.inviteURL))), false);
             return 0;
         });
+        for (MCSubCommand cmd : McCommandRegistry.getCommands()) {
+            l.then(Commands.literal(cmd.getName()));
+        }
         dispatcher.register(l);
     }
 }

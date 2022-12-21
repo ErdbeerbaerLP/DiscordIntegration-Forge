@@ -225,8 +225,8 @@ public class DiscordIntegration {
                 discord_instance.sendMessage(source.getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), discord_instance.getChannel(Configuration.instance().advanced.chatOutputChannelID));
             }
 
-            if(command.startsWith("discord ") || command.startsWith("dc ")){
-                final String[] args = command.replace("discord ","").replace("dc ","").split(" ");
+            if (command.startsWith("discord ") || command.startsWith("dc ")) {
+                final String[] args = command.replace("discord ", "").replace("dc ", "").split(" ");
                 for (MCSubCommand mcSubCommand : McCommandRegistry.getCommands()) {
                     if (args[0].equals(mcSubCommand.getName())) {
                         final String[] cmdArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0];
@@ -238,8 +238,10 @@ public class DiscordIntegration {
                                         source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
                                     } catch (CommandSyntaxException ignored) {
                                     }
-                                    break;
-                                }else source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.consoleOnly));
+                                } else
+                                    source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.consoleOnly));
+
+                                break;
                             case PLAYER_ONLY:
                                 if ((source.source instanceof final Player p)) {
                                     if (!mcSubCommand.needsOP()) {
@@ -248,16 +250,17 @@ public class DiscordIntegration {
                                             source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
                                         } catch (CommandSyntaxException ignored) {
                                         }
-                                    }else if(source.hasPermission(4)) {
+                                    } else if (source.hasPermission(4)) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
                                         try {
                                             source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
                                         } catch (CommandSyntaxException ignored) {
                                         }
-                                    }else{
+                                    } else {
                                         source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.noPermission));
                                     }
-                                }else source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.ingameOnly));
+                                } else
+                                    source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.ingameOnly));
                                 break;
                             case BOTH:
                                 if ((source.source instanceof final Player p)) {
@@ -267,13 +270,13 @@ public class DiscordIntegration {
                                             source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
                                         } catch (CommandSyntaxException ignored) {
                                         }
-                                    }else if(source.hasPermission(4)) {
+                                    } else if (source.hasPermission(4)) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
                                         try {
                                             source.source.sendSystemMessage(ComponentArgument.textComponent().parse(new StringReader(txt)));
                                         } catch (CommandSyntaxException ignored) {
                                         }
-                                    }else{
+                                    } else {
                                         source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.noPermission));
                                     }
                                 } else {
@@ -283,6 +286,7 @@ public class DiscordIntegration {
                                     } catch (CommandSyntaxException ignored) {
                                     }
                                 }
+                                break;
                         }
                     }
                     ev.setCanceled(true);
