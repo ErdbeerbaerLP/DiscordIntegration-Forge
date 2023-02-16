@@ -32,6 +32,14 @@ jobs:
       uses: gradle/gradle-build-action@v2
     - name: Setup Permission
       run: chmod u+x gradlew
-    
+      
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
     - name: Execute Gradle build
       run: ./gradlew build
