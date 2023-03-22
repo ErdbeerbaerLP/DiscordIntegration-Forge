@@ -115,7 +115,7 @@ public class DiscordIntegration {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 if (!Localization.instance().serverStarting.isEmpty()) {
                     CommandRegistry.registerDefaultCommandsFromConfig();
-                    if (discord_instance.getChannel() != null)
+                    if (discord_instance.getChannel() != null && !(Localization.instance().serverStarting.isBlank() || Localization.instance().serverStarted.isBlank()))
                         Variables.startingMsg = discord_instance.sendMessageReturns(Localization.instance().serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
                 }
             }
@@ -127,7 +127,8 @@ public class DiscordIntegration {
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (discord_instance != null) {
             if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
-            discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())));
+            if (!Localization.instance().playerJoin.isBlank())
+                discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())));
 
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
             final Thread fixLinkStatus = new Thread(() -> {
@@ -149,8 +150,8 @@ public class DiscordIntegration {
 
     @SuppressWarnings({"ConstantConditions", "deprecation"})
     @SubscribeEvent
-    public void advancement(AdvancementEvent.AdvancementEarnEvent ev) {
-
+    public void advancement(final AdvancementEvent.AdvancementEarnEvent ev) {
+        if (Localization.instance().advancementMessage.isBlank()) return;
         if (discord_instance != null) {
             if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
             if (ev.getEntity().getServer().getPlayerList().getPlayerAdvancements((ServerPlayer) ev.getEntity()).getOrStartProgress(ev.getAdvancement()).isDone())
@@ -231,7 +232,7 @@ public class DiscordIntegration {
                     if (args[0].equals(mcSubCommand.getName())) {
                         final String[] cmdArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0];
                         switch (mcSubCommand.getType()) {
-                            case CONSOLE_ONLY:
+                            case CONSOLE_ONLY -> {
                                 if (source.source instanceof MinecraftServer) {
                                     final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
                                     try {
@@ -240,9 +241,8 @@ public class DiscordIntegration {
                                     }
                                 } else
                                     source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.consoleOnly));
-
-                                break;
-                            case PLAYER_ONLY:
+                            }
+                            case PLAYER_ONLY -> {
                                 if ((source.source instanceof final Player p)) {
                                     if (!mcSubCommand.needsOP()) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
@@ -261,8 +261,8 @@ public class DiscordIntegration {
                                     }
                                 } else
                                     source.source.sendSystemMessage(net.minecraft.network.chat.Component.literal(Localization.instance().commands.ingameOnly));
-                                break;
-                            case BOTH:
+                            }
+                            case BOTH -> {
                                 if ((source.source instanceof final Player p)) {
                                     if (!mcSubCommand.needsOP()) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, p.getUUID()));
@@ -286,7 +286,7 @@ public class DiscordIntegration {
                                     } catch (CommandSyntaxException ignored) {
                                     }
                                 }
-                                break;
+                            }
                         }
                     }
                     ev.setCanceled(true);
@@ -300,28 +300,29 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             ev.getServer().executeBlocking(() -> {
                 discord_instance.stopThreads();
-                try {
-                    if (!Configuration.instance().webhook.enable)
-                        discord_instance.sendMessageReturns(
-                                ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
-                                discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)
-                        ).get();
-                    else
-                        discord_instance.sendMessage(ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
-                                discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
-                } catch (InterruptedException | ExecutionException ignored) {
-                }
+                if (!Localization.instance().serverStopped.isBlank() && !Localization.instance().serverCrash.isBlank())
+                    try {
+                        if (!Configuration.instance().webhook.enable)
+                            discord_instance.sendMessageReturns(
+                                    ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
+                                    discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)
+                            ).get();
+                        else
+                            discord_instance.sendMessage(ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
+                                    discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
+                    } catch (InterruptedException | ExecutionException ignored) {
+                    }
                 discord_instance.kill();
                 discord_instance = null;
                 this.stopped = true;
                 LOGGER.info("Shut-down successfully!");
-
             });
         }
     }
 
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
+        if (Localization.instance().discordChatMessage.isBlank()) return;
         if (discord_instance != null) {
             final ServerPlayer player = ev.getPlayer();
             if (player != null) {
@@ -356,6 +357,7 @@ public class DiscordIntegration {
     @SuppressWarnings("ConstantConditions")
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
+        if (Localization.instance().playerDeath.isBlank()) return;
         if (discord_instance != null) {
             if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
             if (ev.getEntity() instanceof Player || (ev.getEntity() instanceof TamableAnimal && ((TamableAnimal) ev.getEntity()).getOwner() instanceof Player && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
@@ -369,6 +371,7 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (stopped) return; //Try to fix player leave messages after stop!
+        if (Localization.instance().playerLeave.isBlank()) return;
         if (discord_instance != null) {
             if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
             if (!timeouts.contains(ev.getEntity().getUUID()))

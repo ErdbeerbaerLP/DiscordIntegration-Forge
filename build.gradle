@@ -33,7 +33,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.6.2"
+version = "2.6.4"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -46,7 +46,6 @@ repositories {
         name = 'sponge'
         url = 'https://repo.spongepowered.org/maven'
     }
-    maven { url "https://nexus.vankka.dev/repository/maven-public/" }
     maven { url "https://repository.dev.gotan.io/repository/gotan.os/" }
     maven { url "https://repo.opencollab.dev/maven-snapshots" }
     maven { url "https://repo.opencollab.dev/maven-releases" }
@@ -98,7 +97,7 @@ configurations.all {
 dependencies {
 
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.6.2') {
+    embed('de.erdbeerbaerlp:dcintegration.common:2.6.4') {
         changing = true
     }
 
