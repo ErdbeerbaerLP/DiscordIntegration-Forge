@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.6.4",
+    "changelog": "Added new event handling methods for addons\nOtherwise mostly a bug fix update\nDon't forget to use 'discord migrate' in console when updating from below 2.6.0",
+    "type": "beta"
+  },
+  {
     "version": "2.5.0",
     "changelog": "Fix a few issues\nAdd new custom command parameter\nFix default webhook name\nBump minimum Forge version to 40.1.0\nFix mentions in webhooks\nFix mentions in any non-chat message\nRemove /discord stop and /discord restart ingame commands",
     "type": "beta"

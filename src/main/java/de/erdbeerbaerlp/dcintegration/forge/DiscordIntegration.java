@@ -116,7 +116,7 @@ public class DiscordIntegration {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 if (!Localization.instance().serverStarting.isEmpty()) {
                     CommandRegistry.registerDefaultCommandsFromConfig();
-                    if (discord_instance.getChannel() != null)
+                    if (discord_instance.getChannel() != null && !(Localization.instance().serverStarting.isBlank() || Localization.instance().serverStarted.isBlank()))
                         Variables.startingMsg = discord_instance.sendMessageReturns(Localization.instance().serverStarting, discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
                 }
             }
@@ -126,9 +126,10 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
-        if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
         if (discord_instance != null) {
-            discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
+            if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
+            if (!Localization.instance().playerJoin.isBlank())
+                discord_instance.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())));
 
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
             final Thread fixLinkStatus = new Thread(() -> {
@@ -150,6 +151,7 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
+        if (Localization.instance().advancementMessage.isBlank()) return;
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
         if (ev.getPlayer().getServer().getPlayerList().getPlayerAdvancements((ServerPlayer) ev.getPlayer()).getOrStartProgress(ev.getAdvancement()).isDone())
             if (discord_instance != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceChat())
@@ -199,21 +201,6 @@ public class DiscordIntegration {
             LOGGER.warn("Download this mod from an official source (https://www.curseforge.com/minecraft/mc-mods/dcintegration) to hide this message");
             LOGGER.warn("This warning can also be suppressed in the config file");
         }
-
-        /*if (Configuration.instance().bstats.sendAddonStats) {  //Only send if enabled
-            final Metrics bstats = new Metrics(ModList.get().getModContainerById(MODID).get(), 9765);
-            bstats.addCustomChart(new Metrics.SimplePie("webhook_mode", () -> Configuration.instance().webhook.enable ? "Enabled" : "Disabled"));
-            bstats.addCustomChart(new Metrics.SimplePie("command_log", () -> !Configuration.instance().commandLog.channelID.equals("0") ? "Enabled" : "Disabled"));
-            bstats.addCustomChart(new Metrics.DrilldownPie("addons", () -> {
-                final Map<String, Map<String, Integer>> map = new HashMap<>();
-                for (DiscordAddonMeta m : AddonLoader.getAddonMetas()) {
-                    final Map<String, Integer> entry = new HashMap<>();
-                    entry.put(m.getVersion(), 1);
-                    map.put(m.getName(), entry);
-                }
-                return map;
-            }));
-        }*/
     }
 
     @SubscribeEvent
@@ -322,28 +309,29 @@ public class DiscordIntegration {
         if (discord_instance != null) {
             ev.getServer().executeBlocking(() -> {
                 discord_instance.stopThreads();
-                try {
-                    if (!Configuration.instance().webhook.enable)
-                        discord_instance.sendMessageReturns(
-                                ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
-                                discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)
-                        ).get();
-                    else
-                        discord_instance.sendMessage(ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
-                                discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
-                } catch (InterruptedException | ExecutionException ignored) {
-                }
+                if (!Localization.instance().serverStopped.isBlank() && !Localization.instance().serverCrash.isBlank())
+                    try {
+                        if (!Configuration.instance().webhook.enable)
+                            discord_instance.sendMessageReturns(
+                                    ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
+                                    discord_instance.getChannel(Configuration.instance().advanced.serverChannelID)
+                            ).get();
+                        else
+                            discord_instance.sendMessage(ev.getServer().isRunning() ? Localization.instance().serverCrash : Localization.instance().serverStopped,
+                                    discord_instance.getChannel(Configuration.instance().advanced.serverChannelID));
+                    } catch (InterruptedException | ExecutionException ignored) {
+                    }
                 discord_instance.kill();
                 discord_instance = null;
                 this.stopped = true;
                 LOGGER.info("Shut-down successfully!");
-
             });
         }
     }
 
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
+        if (Localization.instance().discordChatMessage.isBlank()) return;
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
         final net.minecraft.network.chat.Component msg = ev.getComponent();
         if (discord_instance.callEvent((e) -> {
@@ -369,6 +357,7 @@ public class DiscordIntegration {
 
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
+        if (Localization.instance().playerDeath.isBlank()) return;
         if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
         if (ev.getEntity() instanceof Player || (ev.getEntity() instanceof TamableAnimal && ((TamableAnimal) ev.getEntity()).getOwner() instanceof Player && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
             if (discord_instance != null) {
@@ -382,6 +371,7 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (stopped) return; //Try to fix player leave messages after stop!
+        if (Localization.instance().playerLeave.isBlank()) return;
         if (PlayerLinkController.getSettings(null, ev.getPlayer().getUUID()).hideFromDiscord) return;
         if (discord_instance != null && !timeouts.contains(ev.getPlayer().getUUID()))
             discord_instance.sendMessage(Localization.instance().playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getPlayer())));
