@@ -1,5 +1,10 @@
 [
   {
+    "version": "2.6.4",
+    "changelog": "Added new event handling methods for addons\nOtherwise mostly a bug fix update\nAlso forgot to update this json a long time :eyes:",
+    "type": "beta"
+  },
+  {
     "version": "2.4.7",
     "changelog": "Update against new Discord version",
     "type": "release"
