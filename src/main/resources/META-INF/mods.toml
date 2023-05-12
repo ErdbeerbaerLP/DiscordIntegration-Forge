@@ -29,6 +29,6 @@ side = "SERVER"
 [[dependencies.dcintegration]]
 modId = "forge"
 mandatory = true
-versionRange = "[44.0.37,)"
+versionRange = "[43.2.0,)"
 ordering = "NONE"
 side = "BOTH"
