@@ -3,6 +3,7 @@ package de.erdbeerbaerlp.dcintegration.forge.util;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dcshadow.com.vdurmont.emoji.EmojiParser;
 import dcshadow.dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.TextReplacementConfig;
@@ -23,6 +24,7 @@ import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -82,7 +84,7 @@ public class ForgeServerInterface implements ServerInterface {
         final List<ServerPlayer> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         for (final ServerPlayer p : l) {
             if (p.getUUID().equals(targetUUID) && !Variables.discord_instance.ignoringPlayers.contains(p.getUUID()) && !PlayerLinkController.getSettings(null, p.getUUID()).ignoreDiscordChatIngame && !PlayerLinkController.getSettings(null, p.getUUID()).ignoreReactions) {
-                final String emote = ":" + reactionEmote.getName() + ":";
+                final String emote = reactionEmote.getType() == Emoji.Type.UNICODE ? EmojiParser.parseToAliases(reactionEmote.getName()) : ":" + reactionEmote.getName() + ":";
 
                 Style.Builder memberStyle = Style.style();
                 if (Configuration.instance().messages.discordRoleColorIngame)
