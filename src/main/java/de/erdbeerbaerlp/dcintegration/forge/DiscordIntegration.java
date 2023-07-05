@@ -359,8 +359,8 @@ public class DiscordIntegration {
     public void death(LivingDeathEvent ev) {
         if (Localization.instance().playerDeath.isBlank()) return;
         if (discord_instance != null) {
-            if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
             if (ev.getEntity() instanceof Player || (ev.getEntity() instanceof TamableAnimal && ((TamableAnimal) ev.getEntity()).getOwner() instanceof Player && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
+                if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
                 final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntity());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
                 discord_instance.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", ChatFormatting.stripFormatting(deathMessage.getString()).replace(ev.getEntity().getName().getString() + " ", "")).replace("@everyone", "[at]everyone").replace("@here", "[at]here")), discord_instance.getChannel(Configuration.instance().advanced.deathsChannelID));
