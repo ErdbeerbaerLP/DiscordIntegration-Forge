@@ -358,8 +358,8 @@ public class DiscordIntegration {
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
         if (Localization.instance().playerDeath.isBlank()) return;
-        if (PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord) return;
-        if (ev.getEntity() instanceof Player || (ev.getEntity() instanceof TamableAnimal && ((TamableAnimal) ev.getEntity()).getOwner() instanceof Player && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
+        if ((ev.getEntity() instanceof Player && !PlayerLinkController.getSettings(null, ev.getEntity().getUUID()).hideFromDiscord)
+                || (ev.getEntity() instanceof TamableAnimal && ((TamableAnimal) ev.getEntity()).getOwner() instanceof Player && Configuration.instance().messages.sendDeathMessagesForTamedAnimals)) {
             if (discord_instance != null) {
                 final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
