@@ -478,9 +478,9 @@ public class DiscordIntegrationMod {
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
         if (Localization.instance().playerDeath.isBlank()) return;
-        if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
-            return;
         if (ev.getEntity() instanceof Player) {
+            if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
+                return;
             if (INSTANCE != null) {
                 final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntity());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
