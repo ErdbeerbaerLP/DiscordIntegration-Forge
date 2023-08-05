@@ -1,5 +1,9 @@
 [
   {
+    "version": "3.0.0",
+    "changelog": "Added new event handling methods for addons\nOtherwise mostly a bug fix update\nDon't forget to use 'discord migrate' in console when updating from below 2.6.0",
+    "type": "alpha"
+  },{
     "version": "2.6.4",
     "changelog": "Added new event handling methods for addons\nOtherwise mostly a bug fix update\nDon't forget to use 'discord migrate' in console when updating from below 2.6.0",
     "type": "beta"
