@@ -6,7 +6,9 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.OutgoingChatMessage;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
@@ -22,7 +24,7 @@ public class DCCommandSender extends FakePlayer {
     final StringBuilder message = new StringBuilder();
 
     public DCCommandSender(CompletableFuture<InteractionHook> cmdMsg, User user) {
-        super(ServerLifecycleHooks.getCurrentServer().overworld(), new GameProfile(uuid, "@" + user.getAsTag()));
+        super(ServerLifecycleHooks.getCurrentServer().overworld(), new GameProfile(uuid, "@" + (!user.getDiscriminator().equals("0000") ? user.getAsTag() : user.getName())));
         this.cmdMsg = cmdMsg;
     }
 
@@ -33,16 +35,43 @@ public class DCCommandSender extends FakePlayer {
     }
 
     @Override
-    public void sendMessage(Component textComponent, UUID uuid) {
-        message.append(textComponentToDiscordMessage(textComponent)).append("\n");
+    public void sendSystemMessage(Component p_215097_) {
+        message.append(textComponentToDiscordMessage(p_215097_)).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {
                 cmdMessage = msg.editOriginal(message.toString().trim()).submit();
             });
         else
             cmdMessage.thenAccept((msg)->{
-               cmdMessage = msg.editMessage(message.toString().trim()).submit();
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
             });
     }
+
+    @Override
+    public void sendSystemMessage(Component p_240560_, boolean p_240545_) {
+        message.append(textComponentToDiscordMessage(p_240560_)).append("\n");
+        if (cmdMessage == null)
+            cmdMsg.thenAccept((msg) -> {
+                cmdMessage = msg.editOriginal(message.toString().trim()).submit();
+            });
+        else
+            cmdMessage.thenAccept((msg)->{
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
+            });
+    }
+
+    @Override
+    public void sendChatMessage(OutgoingChatMessage p_249852_, boolean p_250110_, ChatType.Bound p_252108_) {
+        message.append(textComponentToDiscordMessage(p_249852_.content())).append("\n");
+        if (cmdMessage == null)
+            cmdMsg.thenAccept((msg) -> {
+                cmdMessage = msg.editOriginal(message.toString().trim()).submit();
+            });
+        else
+            cmdMessage.thenAccept((msg)->{
+                cmdMessage = msg.editMessage(message.toString().trim()).submit();
+            });
+    }
+
 
 }

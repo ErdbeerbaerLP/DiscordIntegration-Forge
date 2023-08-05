@@ -14,17 +14,15 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.arguments.ComponentArgument;
 import net.minecraft.commands.arguments.NbtTagArgument;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 
@@ -71,11 +69,11 @@ public class ForgeMessageUtils extends MessageUtils {
                                     }
                                     final CompoundTag itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getContents() : new TranslatableComponent(is.getItem().getDescriptionId()).getContents();
+                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : Component.translatable(is.getItem().getDescriptionId()).getString();
                                     if (title.isEmpty())
-                                        title = is.getItem().getRegistryName().toString();
+                                        title = is.getItem().getDescriptionId();
                                     else
-                                        b.setFooter(is.getItem().getRegistryName().toString());
+                                        b.setFooter(is.getItem().getDescriptionId());
                                     b.setTitle(title);
                                     final StringBuilder tooltip = new StringBuilder();
                                     boolean[] flags = new boolean[6]; // Enchantments, Modifiers, Unbreakable, CanDestroy, CanPlace, Other
@@ -92,16 +90,15 @@ public class ForgeMessageUtils extends MessageUtils {
                                         //Implementing this code myself because the original is broken
                                         for (int i = 0; i < is.getEnchantmentTags().size(); ++i) {
                                             final CompoundTag compoundnbt = is.getEnchantmentTags().getCompound(i);
-                                            Registry.ENCHANTMENT.getOptional(ResourceLocation.tryParse(compoundnbt.getString("id"))).ifPresent((ench) -> {
-                                                if (compoundnbt.get("lvl") != null) {
-                                                    final int level;
-                                                    if (compoundnbt.get("lvl") instanceof StringTag) {
-                                                        level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
-                                                    } else
-                                                        level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
-                                                    tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
-                                                }
-                                            });
+                                            final Enchantment ench = Enchantment.byId(compoundnbt.getInt("id"));
+                                            if (compoundnbt.get("lvl") != null) {
+                                                final int level;
+                                                if (compoundnbt.get("lvl") instanceof StringTag) {
+                                                    level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
+                                                } else
+                                                    level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
+                                                tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
+                                            }
                                         }/*
                                         EnchantmentHelper.getEnchantments(is).forEach((ench, lvl) -> {
                                             tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(lvl).getUnformattedComponentText())).append("\n");
@@ -112,8 +109,8 @@ public class ForgeMessageUtils extends MessageUtils {
                                     list.forEach((nbt) -> {
                                         try {
                                             if (nbt instanceof StringTag) {
-                                                final TextComponent comp = (TextComponent) ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
-                                                tooltip.append("_").append(comp.getContents()).append("_\n");
+                                                final Component comp = (Component) ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
+                                                tooltip.append("_").append(comp.getString()).append("_\n");
                                             }
                                         } catch (CommandSyntaxException e) {
                                             e.printStackTrace();
@@ -138,7 +135,7 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Entity p) {
-        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUUID(), p.getDisplayName().getContents().isEmpty() ? p.getName().getContents() : p.getDisplayName().getContents());
+        final Map.Entry<UUID, String> e = new DefaultMapEntry(p.getUUID(), p.getDisplayName().getString().isEmpty() ? p.getName().getContents() : p.getDisplayName().getString());
         return formatPlayerName(e);
     }
 }

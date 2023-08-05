@@ -33,7 +33,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "2.6.4"
+version = "3.0.0"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -69,7 +69,7 @@ minecraft {
 //ShadowJar
 configurations {
     embed
-    compileOnly.extendsFrom(embed)
+    minecraftLibrary.extendsFrom(embed)
 }
 task release{
 
@@ -90,18 +90,18 @@ artifacts {
 }
 configurations.all {
     resolutionStrategy {
-        cacheChangingModulesFor 5, 'minutes'
+        cacheChangingModulesFor 1, 'minutes'
     }
 }
 //Dependencies
 dependencies {
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:2.6.4') {
+    embed('de.erdbeerbaerlp:dcintegration.common:3.0.0') {
         changing = true
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-40.2.0"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-47.1.43"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
