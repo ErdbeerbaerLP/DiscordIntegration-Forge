@@ -116,16 +116,16 @@ public class DiscordIntegrationMod {
             if (DiscordIntegration.INSTANCE.getJDA() != null) {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 CommandRegistry.registerDefaultCommands();
-                    if (!Localization.instance().serverStarting.isBlank())
-                        if (DiscordIntegration.INSTANCE.getChannel() != null) {
-                            final MessageCreateData m;
-                            if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed)
-                                m = new MessageCreateBuilder().setEmbeds(Configuration.instance().embedMode.startMessages.toEmbed().setDescription(Localization.instance().serverStarting).build()).build();
-                            else
-                                m = new MessageCreateBuilder().addContent(Localization.instance().serverStarting).build();
-                            DiscordIntegration.startingMsg = DiscordIntegration.INSTANCE.sendMessageReturns(m, DiscordIntegration.INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
-                        }
-                }
+                if (!Localization.instance().serverStarting.isBlank())
+                    if (DiscordIntegration.INSTANCE.getChannel() != null) {
+                        final MessageCreateData m;
+                        if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed)
+                            m = new MessageCreateBuilder().setEmbeds(Configuration.instance().embedMode.startMessages.toEmbed().setDescription(Localization.instance().serverStarting).build()).build();
+                        else
+                            m = new MessageCreateBuilder().addContent(Localization.instance().serverStarting).build();
+                        DiscordIntegration.startingMsg = DiscordIntegration.INSTANCE.sendMessageReturns(m, DiscordIntegration.INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
+                    }
+            }
         } catch (InterruptedException | NullPointerException ignored) {
         }
     }
@@ -207,18 +207,18 @@ public class DiscordIntegrationMod {
                             INSTANCE.sendMessage(new DiscordMessage(b.build()));
                         }
                     } else INSTANCE.sendMessage(Localization.instance().advancementMessage.replace("%player%",
-                                        ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
-                                .replace("%name%",
-                                        ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                .getDisplay()
-                                                .getTitle()
-                                                .getString()))
-                                .replace("%desc%",
-                                        ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                .getDisplay()
-                                                .getDescription()
-                                                .getString()))
-                                .replace("\\n", "\n"));
+                                    ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
+                            .replace("%name%",
+                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                            .getDisplay()
+                                            .getTitle()
+                                            .getString()))
+                            .replace("%desc%",
+                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                            .getDisplay()
+                                            .getDescription()
+                                            .getString()))
+                            .replace("\\n", "\n"));
                 }
     }
 
@@ -304,13 +304,10 @@ public class DiscordIntegrationMod {
                                     source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.consoleOnly));
                                 } catch (CommandSyntaxException e) {
                                     final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
-                                    source.sendSuccess(() -> {
-                                        try {
-                                            return ComponentArgument.textComponent().parse(new StringReader(txt));
-                                        } catch (CommandSyntaxException ignored) {
-                                            return null;
-                                        }
-                                    }, false);
+                                    try {
+                                        source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                    } catch (CommandSyntaxException ignored) {
+                                    }
                                 }
                                 break;
                             case PLAYER_ONLY:
@@ -319,24 +316,17 @@ public class DiscordIntegrationMod {
                                     if (!mcSubCommand.needsOP()) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
-                                        source.sendSuccess(() -> {
-                                            try {
-                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
-                                            } catch (CommandSyntaxException ignored) {
-                                                return null;
-                                            }
-                                        }, false);
-
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
                                     } else if (source.hasPermission(4)) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
-                                        source.sendSuccess(() -> {
-                                            try {
-                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
-                                            } catch (CommandSyntaxException ignored) {
-                                                return null;
-                                            }
-                                        }, false);
 
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
                                     } else {
                                         source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
                                     }
@@ -351,38 +341,30 @@ public class DiscordIntegrationMod {
                                     final ServerPlayer player = source.getPlayerOrException();
                                     if (!mcSubCommand.needsOP()) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
-                                        source.sendSuccess(() -> {
-                                            try {
-                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
-                                            } catch (CommandSyntaxException ignored) {
-                                                return null;
-                                            }
-                                        }, false);
 
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
                                     } else if (source.hasPermission(4)) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
-                                        source.sendSuccess(() -> {
-                                            try {
-                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
-                                            } catch (CommandSyntaxException ignored) {
-                                                return null;
-                                            }
-                                        }, false);
+
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
                                     } else {
                                         source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
                                     }
 
                                 } catch (CommandSyntaxException e) {
                                     final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
-                                    source.sendSuccess(() -> {
-                                        try {
-                                            return ComponentArgument.textComponent().parse(new StringReader(txt));
-                                        } catch (CommandSyntaxException ignored) {
-                                            return null;
-                                        }
-                                    }, false);
 
+                                    try {
+                                        source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                    } catch (CommandSyntaxException ignored) {
+                                    }
                                 }
                                 break;
                         }
@@ -520,7 +502,8 @@ public class DiscordIntegrationMod {
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (stopped) return; //Try to fix player leave messages after stop!
         if (Localization.instance().playerLeave.isBlank()) return;
-        if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord) return;
+        if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
+            return;
         if (INSTANCE != null && !timeouts.contains(ev.getEntity().getUUID()))
             INSTANCE.sendMessage(Localization.instance().playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())));
         else if (INSTANCE != null && timeouts.contains(ev.getEntity().getUUID())) {

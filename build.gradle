@@ -74,6 +74,7 @@ configurations {
 task release{
 
 }
+
 shadowJar {
     archiveClassifier = "${project.mcVersion}"
     configurations = [project.configurations.embed]
@@ -101,7 +102,7 @@ dependencies {
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-47.1.43"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-45.1.0"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
