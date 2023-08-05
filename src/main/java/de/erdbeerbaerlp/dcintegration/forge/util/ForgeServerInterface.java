@@ -3,9 +3,15 @@ package de.erdbeerbaerlp.dcintegration.forge.util;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dcshadow.dev.vankka.mcdiscordreserializer.minecraft.MinecraftSerializer;
+import dcshadow.com.vdurmont.emoji.EmojiParser;
 import dcshadow.net.kyori.adventure.text.Component;
+import dcshadow.net.kyori.adventure.text.TextReplacementConfig;
+import dcshadow.net.kyori.adventure.text.event.ClickEvent;
+import dcshadow.net.kyori.adventure.text.event.HoverEvent;
+import dcshadow.net.kyori.adventure.text.format.Style;
+import dcshadow.net.kyori.adventure.text.format.TextColor;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import dcshadow.net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
@@ -17,6 +23,7 @@ import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -76,14 +83,28 @@ public class ForgeServerInterface implements McServerInterface {
         final List<ServerPlayer> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         for (final ServerPlayer p : l) {
             if (p.getUUID().equals(targetUUID) && !DiscordIntegration.INSTANCE.ignoringPlayers.contains(p.getUUID()) && (LinkManager.isPlayerLinked(p.getUUID()) && !LinkManager.getLink(null, p.getUUID()).settings.ignoreDiscordChatIngame && !LinkManager.getLink(null, p.getUUID()).settings.ignoreReactions)) {
-                final String emote = ":" + reactionEmote.getName() + ":";
-                String outMsg = Localization.instance().reactionMessage.replace("%name%", member.getEffectiveName()).replace("%name2%", member.getUser().getAsTag()).replace("%emote%", emote);
+                final String emote = reactionEmote.getType() == Emoji.Type.UNICODE ? EmojiParser.parseToAliases(reactionEmote.getName()) : ":" + reactionEmote.getName() + ":";
+
+                Style.Builder memberStyle = Style.style();
+                if (Configuration.instance().messages.discordRoleColorIngame)
+                    memberStyle = memberStyle.color(TextColor.color(member.getColorRaw()));
+
+                final Component user = Component.text(member.getEffectiveName()).style(memberStyle
+                        .clickEvent(ClickEvent.suggestCommand("<@" + member.getId() + ">"))
+                        .hoverEvent(HoverEvent.showText(Component.text(Localization.instance().discordUserHover.replace("%user#tag%", member.getUser().getAsTag()).replace("%user%", member.getEffectiveName()).replace("%id%", member.getUser().getId())))));
+                final TextReplacementConfig userReplacer = ComponentUtils.replaceLiteral("%user%", user);
+                final TextReplacementConfig emoteReplacer = ComponentUtils.replaceLiteral("%emote%", emote);
+
+                final Component out = LegacyComponentSerializer.legacySection().deserialize(Localization.instance().reactionMessage)
+                        .replaceText(userReplacer).replaceText(emoteReplacer);
+
                 if (Localization.instance().reactionMessage.contains("%msg%"))
                     retrieveMessage.submit().thenAccept((m) -> {
-                        String outMsg2 = outMsg.replace("%msg%", m.getContentDisplay());
-                        sendReactionMCMessage(p, ForgeMessageUtils.formatEmoteMessage(m.getMentions().getCustomEmojis(), outMsg2));
+                        final String msg = ForgeMessageUtils.formatEmoteMessage(m.getMentions().getCustomEmojis(), m.getContentDisplay());
+                        final TextReplacementConfig msgReplacer = ComponentUtils.replaceLiteral("%msg%", msg);
+                        sendReactionMCMessage(p, out.replaceText(msgReplacer));
                     });
-                else sendReactionMCMessage(p, outMsg);
+                else sendReactionMCMessage(p, out);
             }
         }
     }
@@ -124,8 +145,7 @@ public class ForgeServerInterface implements McServerInterface {
         return Configuration.instance().bungee.isBehindBungee || ServerLifecycleHooks.getCurrentServer().usesAuthentication();
     }
 
-    private void sendReactionMCMessage(ServerPlayer target, String msg) {
-        final Component msgComp = MinecraftSerializer.INSTANCE.serialize(msg.replace("\n", "\\n"), DiscordIntegration.mcSerializerOptions);
+    private void sendReactionMCMessage(ServerPlayer target, Component msgComp) {
         final String jsonComp = GsonComponentSerializer.gson().serialize(msgComp).replace("\\\\n", "\n");
         try {
             final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
