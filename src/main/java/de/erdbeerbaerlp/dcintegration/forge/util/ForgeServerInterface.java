@@ -19,6 +19,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.linking.LinkManager;
 import de.erdbeerbaerlp.dcintegration.common.util.ComponentUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.McServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.MinecraftPermission;
+import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegrationMod;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -28,6 +29,7 @@ import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.minecraft.commands.arguments.ComponentArgument;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -61,10 +63,10 @@ public class ForgeServerInterface implements McServerInterface {
                     final Map.Entry<Boolean, Component> ping = ComponentUtils.parsePing(msg, p.getUUID(), p.getName().getString());
                     final String jsonComp = GsonComponentSerializer.gson().serialize(ping.getValue()).replace("\\\\n", "\n");
                     final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
-                    p.sendSystemMessage(comp);
+                    p.sendMessage(comp, DiscordIntegration.dummyUUID);
                     if (ping.getKey()) {
                         if (LinkManager.isPlayerLinked(p.getUUID()) && LinkManager.getLink(null, p.getUUID()).settings.pingSound) {
-                            p.connection.send(new ClientboundSoundPacket(SoundEvents.NOTE_BLOCK_PLING, SoundSource.MASTER, p.position().x,p.position().y,p.position().z, 1,1, 1));
+                            p.connection.send(new ClientboundSoundPacket(SoundEvents.NOTE_BLOCK_PLING, SoundSource.MASTER, p.position().x,p.position().y,p.position().z, 1,1));
                         }
                     }
                 }
@@ -72,7 +74,7 @@ public class ForgeServerInterface implements McServerInterface {
             //Send to server console too
             final String jsonComp = GsonComponentSerializer.gson().serialize(msg).replace("\\\\n", "\n");
             final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
-            ServerLifecycleHooks.getCurrentServer().sendSystemMessage(comp);
+            ServerLifecycleHooks.getCurrentServer().sendMessage(comp, DiscordIntegration.dummyUUID);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -116,10 +118,10 @@ public class ForgeServerInterface implements McServerInterface {
             try {
                 ServerLifecycleHooks.getCurrentServer().getCommands().getDispatcher().execute(cmd.trim(), s.createCommandSourceStack());
             } catch (CommandSyntaxException e) {
-                s.sendSystemMessage(net.minecraft.network.chat.Component.literal(e.getMessage()));
+                s.sendMessage(new TextComponent(e.getMessage()), DiscordIntegration.dummyUUID);
             }
         } else
-            s.sendSystemMessage(net.minecraft.network.chat.Component.literal("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```"));
+            s.sendMessage(new TextComponent("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```"), DiscordIntegration.dummyUUID);
 
     }
 
@@ -136,7 +138,7 @@ public class ForgeServerInterface implements McServerInterface {
     public void sendIngameMessage(String msg, UUID player) {
         final ServerPlayer p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
         if (p != null)
-            p.sendSystemMessage(net.minecraft.network.chat.Component.literal(msg));
+            p.sendMessage(new TextComponent(msg), DiscordIntegration.dummyUUID);
 
     }
 
@@ -149,7 +151,7 @@ public class ForgeServerInterface implements McServerInterface {
         final String jsonComp = GsonComponentSerializer.gson().serialize(msgComp).replace("\\\\n", "\n");
         try {
             final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
-            target.sendSystemMessage(comp);
+            target.sendMessage(comp, DiscordIntegration.dummyUUID);
         } catch (Exception e) {
             e.printStackTrace();
         }

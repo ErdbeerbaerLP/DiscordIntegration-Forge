@@ -138,7 +138,7 @@ public class DiscordIntegrationMod {
                 return;
             LinkManager.checkGlobalAPI(ev.getEntity().getUUID());
             if (!Localization.instance().playerJoin.isBlank()) {
-                final Player p = ev.getEntity();
+                final Player p = ev.getPlayer();
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.playerJoinMessage.asEmbed) {
                     final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", p.getUUID().toString()).replace("%uuid_dashless%", p.getUUID().toString().replace("-", "")).replace("%name%", p.getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
                     if (!Configuration.instance().embedMode.playerJoinMessage.customJSON.isBlank()) {
@@ -177,7 +177,7 @@ public class DiscordIntegrationMod {
     }
 
     @SubscribeEvent
-    public void advancement(AdvancementEvent.AdvancementEarnEvent ev) {
+    public void advancement(AdvancementEvent ev) {
         if (Localization.instance().advancementMessage.isBlank()) return;
         if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
             return;
@@ -411,7 +411,7 @@ public class DiscordIntegrationMod {
         if (Localization.instance().discordChatMessage.isBlank()) return;
         if (LinkManager.isPlayerLinked(ev.getPlayer().getUUID()) && LinkManager.getLink(null, ev.getPlayer().getUUID()).settings.hideFromDiscord)
             return;
-        final net.minecraft.network.chat.Component msg = ev.getMessage();
+        final net.minecraft.network.chat.Component msg = ev.getComponent();
         if (INSTANCE.callEvent((e) -> {
             if (e instanceof ForgeDiscordEventHandler) {
                 return ((ForgeDiscordEventHandler) e).onMcChatMessage(ev);
@@ -419,7 +419,7 @@ public class DiscordIntegrationMod {
             return false;
         })) return;
 
-        final String text = MessageUtils.escapeMarkdown(ev.getMessage().getString().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
+        final String text = MessageUtils.escapeMarkdown(ev.getMessage().replace("@everyone", "[at]everyone").replace("@here", "[at]here"));
         final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(msg);
         if (INSTANCE != null) {
             GuildMessageChannel channel = INSTANCE.getChannel(Configuration.instance().advanced.chatOutputChannelID);
@@ -451,7 +451,7 @@ public class DiscordIntegrationMod {
             final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
             Component comp = GsonComponentSerializer.gson().deserialize(json);
             final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
-            ev.setMessage(net.minecraft.network.chat.Component.Serializer.fromJson(editedJson));
+            ev.setComponent(net.minecraft.network.chat.Component.Serializer.fromJson(editedJson));
         }
 
     }
@@ -463,7 +463,7 @@ public class DiscordIntegrationMod {
             if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
                 return;
             if (INSTANCE != null) {
-                final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntity());
+                final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.deathMessage.asEmbed) {
                     final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", ev.getEntity().getUUID().toString()).replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", "")).replace("%name%", ev.getEntity().getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());

@@ -1,6 +1,6 @@
 modLoader = "javafml" #mandatory
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
-loaderVersion = "[43,)" #mandatory
+loaderVersion = "[40,)" #mandatory
 license = "MIT License"
 # A URL to refer people to when problems occur with this mod
 issueTrackerURL = "https://github.com/ErdbeerbaerLP/Discord-Chat-Integration/issues" #optional
@@ -23,12 +23,12 @@ This mod links your server chat with a channel on your discord server.
 [[dependencies.dcintegration]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.19,]"
+versionRange = "[1.18,]"
 ordering = "NONE"
 side = "SERVER"
 [[dependencies.dcintegration]]
 modId = "forge"
 mandatory = true
-versionRange = "[43.2.0,)"
+versionRange = "[40.2.0,)"
 ordering = "NONE"
 side = "BOTH"

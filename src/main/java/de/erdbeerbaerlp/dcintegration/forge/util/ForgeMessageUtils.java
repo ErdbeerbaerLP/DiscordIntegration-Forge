@@ -18,6 +18,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
@@ -69,7 +70,7 @@ public class ForgeMessageUtils extends MessageUtils {
                                     }
                                     final CompoundTag itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : Component.translatable(is.getItem().getDescriptionId()).getString();
+                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : new TranslatableComponent(is.getItem().getDescriptionId()).getString();
                                     if (title.isEmpty())
                                         title = is.getItem().getDescriptionId();
                                     else
