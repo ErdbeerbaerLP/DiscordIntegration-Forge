@@ -100,7 +100,7 @@ dependencies {
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-45.1.0"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-43.2.21"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.OutgoingChatMessage;
+import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
@@ -61,8 +61,8 @@ public class DCCommandSender extends FakePlayer {
     }
 
     @Override
-    public void sendChatMessage(OutgoingChatMessage p_249852_, boolean p_250110_, ChatType.Bound p_252108_) {
-        message.append(textComponentToDiscordMessage(p_249852_.content())).append("\n");
+    public void displayClientMessage(Component chatComponent, boolean actionBar) {
+        message.append(textComponentToDiscordMessage(chatComponent)).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {
                 cmdMessage = msg.editOriginal(message.toString().trim()).submit();
