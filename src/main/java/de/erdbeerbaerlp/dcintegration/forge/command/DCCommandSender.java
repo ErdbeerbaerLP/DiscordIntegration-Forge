@@ -60,7 +60,7 @@ public class DCCommandSender implements CommandSource {
 
 
     @Override
-    public void sendSystemMessage(Component p_215097_) {
+    public void sendMessage(Component p_215097_, UUID uuid) {
         message.append(textComponentToDiscordMessage(p_215097_)).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {

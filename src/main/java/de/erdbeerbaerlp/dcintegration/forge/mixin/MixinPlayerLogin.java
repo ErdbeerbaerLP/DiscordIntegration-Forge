@@ -7,6 +7,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.linking.LinkManager;
 import de.erdbeerbaerlp.dcintegration.common.util.MinecraftPermission;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.players.PlayerList;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,12 +28,12 @@ public class MixinPlayerLogin {
             }
             try {
                 if (!LinkManager.isPlayerLinked(profile.getId())) {
-                    cir.setReturnValue(Component.literal(Localization.instance().linking.notWhitelistedCode.replace("%code%",""+LinkManager.genLinkNumber(profile.getId()))));
+                    cir.setReturnValue(new TextComponent(Localization.instance().linking.notWhitelistedCode.replace("%code%",""+LinkManager.genLinkNumber(profile.getId()))));
                 }else if(!DiscordIntegration.INSTANCE.canPlayerJoin(profile.getId())){
-                    cir.setReturnValue(Component.literal(Localization.instance().linking.notWhitelistedRole));
+                    cir.setReturnValue(new TextComponent(Localization.instance().linking.notWhitelistedRole));
                 }
             } catch (IllegalStateException e) {
-                cir.setReturnValue(Component.literal("An error occured\nPlease check Server Log for more information\n\n" + e));
+                cir.setReturnValue(new TextComponent("An error occured\nPlease check Server Log for more information\n\n" + e));
             }
         }
     }
