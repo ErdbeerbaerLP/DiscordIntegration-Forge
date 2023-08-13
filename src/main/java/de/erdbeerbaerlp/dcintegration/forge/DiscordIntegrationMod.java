@@ -5,6 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
+import de.erdbeerbaerlp.dcintegration.common.WorkThread;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
 import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.MCSubCommand;
 import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.McCommandRegistry;
@@ -160,7 +161,7 @@ public class DiscordIntegrationMod {
                     DiscordIntegration.INSTANCE.sendMessage(Localization.instance().playerJoin.replace("%player%", ForgeMessageUtils.formatPlayerName(p)));
             }
             // Fix link status (if user does not have role, give the role to the user, or vice versa)
-            final Thread fixLinkStatus = new Thread(() -> {
+            WorkThread.executeJob(() -> {
                 if (Configuration.instance().linking.linkedRoleID.equals("0")) return;
                 final UUID uuid = ev.getEntity().getUUID();
                 if (!LinkManager.isPlayerLinked(uuid)) return;
@@ -172,8 +173,6 @@ public class DiscordIntegrationMod {
                         guild.addRoleToMember(member, linkedRole).queue();
                 }
             });
-            fixLinkStatus.setDaemon(true);
-            fixLinkStatus.start();
         }
     }
 
