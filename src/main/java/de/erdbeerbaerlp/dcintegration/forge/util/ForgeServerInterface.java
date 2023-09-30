@@ -1,6 +1,5 @@
 package de.erdbeerbaerlp.dcintegration.forge.util;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.com.vdurmont.emoji.EmojiParser;
@@ -157,7 +156,7 @@ public class ForgeServerInterface implements McServerInterface {
 
     @Override
     public String getNameFromUUID(UUID uuid) {
-        return ServerLifecycleHooks.getCurrentServer().getSessionService().fillProfileProperties(new GameProfile(uuid, ""), false).getName();
+        return ServerLifecycleHooks.getCurrentServer().getSessionService().fetchProfile(uuid, false).profile().getName();
     }
 
     @Override

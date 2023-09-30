@@ -9,6 +9,9 @@ import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.OutgoingChatMessage;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
@@ -24,7 +27,9 @@ public class DCCommandSender extends FakePlayer {
     final StringBuilder message = new StringBuilder();
 
     public DCCommandSender(CompletableFuture<InteractionHook> cmdMsg, User user) {
-        super(ServerLifecycleHooks.getCurrentServer().overworld(), new GameProfile(uuid, "@" + (!user.getDiscriminator().equals("0000") ? user.getAsTag() : user.getName())));
+        super(ServerLifecycleHooks.getCurrentServer().overworld(),
+                new GameProfile(uuid, "@" + (!user.getDiscriminator().equals("0000") ? user.getAsTag() : user.getName())),
+                new ClientInformation("en-US",0, ChatVisiblity.FULL, true,0,HumanoidArm.RIGHT, false, false));
         this.cmdMsg = cmdMsg;
     }
 

@@ -51,7 +51,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.network.NetworkConstants;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
@@ -77,7 +76,7 @@ public class DiscordIntegrationMod {
     private boolean stopped = false;
 
     public DiscordIntegrationMod() {
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> IExtensionPoint.DisplayTest.IGNORESERVERONLY, (a, b) -> true));
         try {
             //Create data directory if missing
             if (!discordDataDir.exists()) discordDataDir.mkdir();
@@ -183,7 +182,7 @@ public class DiscordIntegrationMod {
         if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
             return;
         if (ev.getEntity().getServer().getPlayerList().getPlayerAdvancements((ServerPlayer) ev.getEntity()).getOrStartProgress(ev.getAdvancement()).isDone())
-            if (INSTANCE != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceChat())
+            if (INSTANCE != null && ev.getAdvancement() != null && ev.getAdvancement().value().display().isPresent() && ev.getAdvancement().value().display().get().shouldAnnounceChat())
                 if (!Localization.instance().advancementMessage.isBlank()) {
                     if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.advancementMessage.asEmbed) {
                         final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", ev.getEntity().getUUID().toString()).replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", "")).replace("%name%", ev.getEntity().getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
@@ -194,8 +193,8 @@ public class DiscordIntegrationMod {
                                     .replace("%name%", ForgeMessageUtils.formatPlayerName(ev.getEntity()))
                                     .replace("%randomUUID%", UUID.randomUUID().toString())
                                     .replace("%avatarURL%", avatarURL)
-                                    .replace("%advName%", ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()))
-                                    .replace("%advDesc%", ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))
+                                    .replace("%advName%", ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getTitle().getString()))
+                                    .replace("%advDesc%", ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getDescription().getString()))
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
@@ -205,12 +204,16 @@ public class DiscordIntegrationMod {
                             b = b.setAuthor(ForgeMessageUtils.formatPlayerName(ev.getEntity()), null, avatarURL)
                                     .setDescription(Localization.instance().advancementMessage.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%advName%",
                                                     ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                            .getDisplay()
+                                                            .value()
+                                                            .display()
+                                                            .get()
                                                             .getTitle()
                                                             .getString()))
                                             .replace("%advDesc%",
                                                     ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                            .getDisplay()
+                                                            .value()
+                                                            .display()
+                                                            .get()
                                                             .getDescription()
                                                             .getString()))
                                             .replace("\\n", "\n"));
@@ -220,12 +223,16 @@ public class DiscordIntegrationMod {
                                         ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
                                 .replace("%advName%",
                                         ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                .getDisplay()
+                                                .value()
+                                                .display()
+                                                .get()
                                                 .getTitle()
                                                 .getString()))
                                 .replace("%advDesc%",
                                         ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                .getDisplay()
+                                                .value()
+                                                .display()
+                                                .get()
                                                 .getDescription()
                                                 .getString()))
                                 .replace("\\n", "\n"));
