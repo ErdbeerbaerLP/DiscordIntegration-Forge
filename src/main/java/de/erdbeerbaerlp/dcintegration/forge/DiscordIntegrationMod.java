@@ -2,7 +2,6 @@ package de.erdbeerbaerlp.dcintegration.forge;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dcshadow.dev.vankka.mcdiscordreserializer.discord.DiscordSerializer;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
@@ -484,7 +483,7 @@ public class DiscordIntegrationMod {
                     }
                 } else
                     INSTANCE.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUUID().toString(), new DiscordMessage(embed, text, true), channel);
-            if (!Configuration.instance().compatibility.disableParsingMentionsIngame) {
+            if(!Configuration.instance().compatibility.disableParsingMentionsIngame) {
                 final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
                 Component comp = GsonComponentSerializer.gson().deserialize(json);
                 final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
