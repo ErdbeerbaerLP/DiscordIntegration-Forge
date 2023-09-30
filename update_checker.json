@@ -5,8 +5,17 @@
     "type": "beta"
   },
   {
+    "version": "3.0.3",
+    "changelog": "Large discord integration rewrite adding new features and fixing long existing bugs\nOld configuration can be used as-is\n\nAdded custom status\nAdded tellraw\nAdded option to disable chat message editing for compatibility reasons\nFixed lots of bugs",
+    "type": "beta"
+  },
+  {
+    "version": "3.0.2",
+    "changelog": "Fixed linking not being saved\nOptimized code",
+    "type": "alpha"
+  },{
     "version": "3.0.0",
-    "changelog": "Added new event handling methods for addons\nOtherwise mostly a bug fix update\nDon't forget to use 'discord migrate' in console when updating from below 2.6.0",
+    "changelog": "Large discord integration rewrite adding new features and fixing long existing bugs Old configuration can be used as-is",
     "type": "alpha"
   },{
     "version": "2.6.4",

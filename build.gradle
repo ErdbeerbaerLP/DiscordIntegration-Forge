@@ -147,7 +147,7 @@ curseforge {
                 displayName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"
             }
             relations {
-                optionalDependency("luckperms")
+                // No Support for 1.18 Forge optionalDependency("luckperms")
             }
         }
     }
@@ -164,7 +164,7 @@ modrinth {
         loaders = ['forge']
         versionType = project.releaseType.toUpperCase()
         dependencies {
-            optional.project "luckperms"
+            // No Support for 1.18 Forge optional.project "luckperms"
         }
     }
 }
