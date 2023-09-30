@@ -55,8 +55,7 @@ public class ForgeMessageUtils extends MessageUtils {
         if (json.has("with")) {
             final JsonArray args = json.getAsJsonArray("with");
             for (JsonElement el : args) {
-                if (el instanceof JsonObject) {
-                    JsonObject arg1 = (JsonObject) el;
+                if (el instanceof JsonObject arg1) {
                     if (arg1.has("hoverEvent")) {
                         final JsonObject hoverEvent = arg1.getAsJsonObject("hoverEvent");
                         if (hoverEvent.has("action") && hoverEvent.get("action").getAsString().equals("show_item") && hoverEvent.has("contents")) {
