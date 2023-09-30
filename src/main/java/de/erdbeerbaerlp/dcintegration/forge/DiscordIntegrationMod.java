@@ -2,7 +2,6 @@ package de.erdbeerbaerlp.dcintegration.forge;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dcshadow.dev.vankka.mcdiscordreserializer.discord.DiscordSerializer;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
@@ -120,16 +119,16 @@ public class DiscordIntegrationMod {
             if (DiscordIntegration.INSTANCE.getJDA() != null) {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 CommandRegistry.registerDefaultCommands();
-                if (!Localization.instance().serverStarting.isBlank())
-                    if (DiscordIntegration.INSTANCE.getChannel() != null) {
-                        final MessageCreateData m;
-                        if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed)
-                            m = new MessageCreateBuilder().setEmbeds(Configuration.instance().embedMode.startMessages.toEmbed().setDescription(Localization.instance().serverStarting).build()).build();
-                        else
-                            m = new MessageCreateBuilder().addContent(Localization.instance().serverStarting).build();
-                        DiscordIntegration.startingMsg = DiscordIntegration.INSTANCE.sendMessageReturns(m, DiscordIntegration.INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
-                    }
-            }
+                    if (!Localization.instance().serverStarting.isBlank())
+                        if (DiscordIntegration.INSTANCE.getChannel() != null) {
+                            final MessageCreateData m;
+                            if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed)
+                                m = new MessageCreateBuilder().setEmbeds(Configuration.instance().embedMode.startMessages.toEmbed().setDescription(Localization.instance().serverStarting).build()).build();
+                            else
+                                m = new MessageCreateBuilder().addContent(Localization.instance().serverStarting).build();
+                            DiscordIntegration.startingMsg = DiscordIntegration.INSTANCE.sendMessageReturns(m, DiscordIntegration.INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
+                        }
+                }
         } catch (InterruptedException | NullPointerException ignored) {
         }
     }
@@ -227,18 +226,18 @@ public class DiscordIntegrationMod {
                             INSTANCE.sendMessage(new DiscordMessage(b.build()));
                         }
                     } else INSTANCE.sendMessage(Localization.instance().advancementMessage.replace("%player%",
-                                    ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
-                            .replace("%advName%",
-                                    ChatFormatting.stripFormatting(ev.getAdvancement()
-                                            .getDisplay()
-                                            .getTitle()
-                                            .getString()))
-                            .replace("%advDesc%",
-                                    ChatFormatting.stripFormatting(ev.getAdvancement()
-                                            .getDisplay()
-                                            .getDescription()
-                                            .getString()))
-                            .replace("\\n", "\n"));
+                                        ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
+                                .replace("%advName%",
+                                        ChatFormatting.stripFormatting(ev.getAdvancement()
+                                                .getDisplay()
+                                                .getTitle()
+                                                .getString()))
+                                .replace("%advDesc%",
+                                        ChatFormatting.stripFormatting(ev.getAdvancement()
+                                                .getDisplay()
+                                                .getDescription()
+                                                .getString()))
+                                .replace("\\n", "\n"));
                 }
     }
 
@@ -273,7 +272,7 @@ public class DiscordIntegrationMod {
             }
             INSTANCE.startThreads();
         }
-        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.19.4/update_checker.json");
+        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.19.2/update_checker.json");
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
@@ -484,7 +483,7 @@ public class DiscordIntegrationMod {
                     }
                 } else
                     INSTANCE.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUUID().toString(), new DiscordMessage(embed, text, true), channel);
-            if (!Configuration.instance().compatibility.disableParsingMentionsIngame) {
+            if(!Configuration.instance().compatibility.disableParsingMentionsIngame) {
                 final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
                 Component comp = GsonComponentSerializer.gson().deserialize(json);
                 final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
