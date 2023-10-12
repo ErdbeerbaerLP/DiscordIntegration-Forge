@@ -3,7 +3,6 @@ package de.erdbeerbaerlp.dcintegration.forge.util;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dcshadow.org.apache.commons.collections4.keyvalue.DefaultMapEntry;
@@ -11,19 +10,19 @@ import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.minecraft.ChatFormatting;
-import net.minecraft.commands.arguments.ComponentArgument;
-import net.minecraft.commands.arguments.NbtTagArgument;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.command.arguments.ComponentArgument;
+import net.minecraft.command.arguments.NBTTagArgument;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.StringNBT;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 
@@ -33,6 +32,8 @@ import java.util.UUID;
 
 public class ForgeMessageUtils extends MessageUtils {
 
+    private static final com.google.gson.JsonParser p = new com.google.gson.JsonParser();
+
     private static final IForgeRegistry<Item> itemreg = ForgeRegistries.ITEMS;
 
     public static String formatPlayerName(Map.Entry<UUID, String> p) {
@@ -40,22 +41,23 @@ public class ForgeMessageUtils extends MessageUtils {
     }
 
     public static String formatPlayerName(Map.Entry<UUID, String> p, boolean chatFormat) {
-        return ChatFormatting.stripFormatting(p.getValue());
+        return TextFormatting.stripFormatting(p.getValue());
     }
 
     /**
-     * Attempts to generate an {@link MessageEmbed} showing item info from an {@link Component} instance
+     * Attempts to generate an {@link MessageEmbed} showing item info from an {@link ITextComponent} instance
      *
      * @param component The TextComponent to scan for item info
      * @return an {@link MessageEmbed} when there was an Item info, or {@link null} if there was no item info OR the item info was disabled
      */
-    public static MessageEmbed genItemStackEmbedIfAvailable(final Component component) {
+    public static MessageEmbed genItemStackEmbedIfAvailable(final ITextComponent component) {
         if (!Configuration.instance().forgeSpecific.sendItemInfo) return null;
-        final JsonObject json = JsonParser.parseString(Component.Serializer.toJson(component)).getAsJsonObject();
+        final JsonObject json = p.parse(ITextComponent.Serializer.toJson(component)).getAsJsonObject();
         if (json.has("with")) {
             final JsonArray args = json.getAsJsonArray("with");
             for (JsonElement el : args) {
-                if (el instanceof JsonObject arg1) {
+                if (el instanceof JsonObject) {
+                    JsonObject arg1 = (JsonObject) el;
                     if (arg1.has("hoverEvent")) {
                         final JsonObject hoverEvent = arg1.getAsJsonObject("hoverEvent");
                         if (hoverEvent.has("action") && hoverEvent.get("action").getAsString().equals("show_item") && hoverEvent.has("contents")) {
@@ -64,12 +66,13 @@ public class ForgeMessageUtils extends MessageUtils {
                                 try {
                                     final ItemStack is = new ItemStack(itemreg.getValue(new ResourceLocation(item.get("id").getAsString())));
                                     if (item.has("tag")) {
-                                        final CompoundTag tag = (CompoundTag) NbtTagArgument.nbtTag().parse(new StringReader(item.get("tag").getAsString()));
+
+                                        final CompoundNBT tag = (CompoundNBT) NBTTagArgument.nbtTag().parse(new StringReader(item.get("tag").getAsString()));
                                         is.setTag(tag);
                                     }
-                                    final CompoundTag itemTag = is.getOrCreateTag();
+                                    final CompoundNBT itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : new TranslatableComponent(is.getItem().getDescriptionId()).getString();
+                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : new TranslationTextComponent(is.getItem().getDescriptionId()).getString();
                                     if (title.isEmpty())
                                         title = is.getItem().getDescriptionId();
                                     else
@@ -89,27 +92,28 @@ public class ForgeMessageUtils extends MessageUtils {
                                     if (!flags[0]) {
                                         //Implementing this code myself because the original is broken
                                         for (int i = 0; i < is.getEnchantmentTags().size(); ++i) {
-                                            final CompoundTag compoundnbt = is.getEnchantmentTags().getCompound(i);
-                                            final Enchantment ench = Enchantment.byId(compoundnbt.getInt("id"));
-                                            if (compoundnbt.get("lvl") != null) {
-                                                final int level;
-                                                if (compoundnbt.get("lvl") instanceof StringTag) {
-                                                    level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
-                                                } else
-                                                    level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
-                                                tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
-                                            }
+                                            final CompoundNBT compoundnbt = is.getEnchantmentTags().getCompound(i);
+                                            Registry.ENCHANTMENT.getOptional(ResourceLocation.tryParse(compoundnbt.getString("id"))).ifPresent((ench) -> {
+                                                if (compoundnbt.get("lvl") != null) {
+                                                    final int level;
+                                                    if (compoundnbt.get("lvl") instanceof StringNBT) {
+                                                        level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
+                                                    } else
+                                                        level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
+                                                    tooltip.append(TextFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
+                                                }
+                                            });
                                         }/*
                                         EnchantmentHelper.getEnchantments(is).forEach((ench, lvl) -> {
                                             tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(lvl).getUnformattedComponentText())).append("\n");
                                         });*/
                                     }
                                     //Add Lores
-                                    final ListTag list = itemTag.getCompound("display").getList("Lore", 8);
+                                    final ListNBT list = itemTag.getCompound("display").getList("Lore", 8);
                                     list.forEach((nbt) -> {
                                         try {
-                                            if (nbt instanceof StringTag) {
-                                                final Component comp = (Component) ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
+                                            if (nbt instanceof StringNBT) {
+                                                final ITextComponent comp = ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
                                                 tooltip.append("_").append(comp.getString()).append("_\n");
                                             }
                                         } catch (CommandSyntaxException e) {

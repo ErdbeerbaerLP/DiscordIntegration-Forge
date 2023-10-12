@@ -34,7 +34,7 @@ version = "3.0.3"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 //Gradle Repositories
 repositories {
@@ -86,6 +86,7 @@ reobf {
 artifacts {
     archives tasks.shadowJar
 }
+
 configurations.all {
     resolutionStrategy {
         cacheChangingModulesFor 1, 'minutes'
@@ -94,12 +95,12 @@ configurations.all {
 //Dependencies
 dependencies {
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:3.0.3') {
+    embed('de.erdbeerbaerlp:dcintegration.common:3.0.3-j8') {
         changing = true
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-40.2.10"
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.34'
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

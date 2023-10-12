@@ -6,11 +6,9 @@ import de.erdbeerbaerlp.dcintegration.common.util.MessageUtils;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.minecraft.network.chat.ChatType;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ServerboundChatPacket;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -29,13 +27,13 @@ public class DCCommandSender extends FakePlayer {
     }
 
 
-    private static String textComponentToDiscordMessage(Component component) {
+    private static String textComponentToDiscordMessage(ITextComponent component) {
         if (component == null) return "";
         return MessageUtils.convertMCToMarkdown(component.getString());
     }
 
     @Override
-    public void sendMessage(Component p_215097_, UUID uuid) {
+    public void sendMessage(ITextComponent p_215097_, UUID uuid) {
         message.append(textComponentToDiscordMessage(p_215097_)).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {
@@ -48,7 +46,7 @@ public class DCCommandSender extends FakePlayer {
     }
 
     @Override
-    public void displayClientMessage(Component chatComponent, boolean actionBar) {
+    public void displayClientMessage(ITextComponent chatComponent, boolean actionBar) {
         message.append(textComponentToDiscordMessage(chatComponent)).append("\n");
         if (cmdMessage == null)
             cmdMsg.thenAccept((msg) -> {
