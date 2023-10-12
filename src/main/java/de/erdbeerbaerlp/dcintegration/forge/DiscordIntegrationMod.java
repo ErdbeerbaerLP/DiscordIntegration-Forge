@@ -28,12 +28,13 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
-import net.minecraft.ChatFormatting;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.ComponentArgument;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.arguments.ComponentArgument;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
@@ -42,21 +43,22 @@ import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.IExtensionPoint;
+import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.network.NetworkConstants;
+import net.minecraftforge.fml.network.FMLNetworkConstants;
 import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import net.minecraftforge.server.permission.nodes.PermissionTypes;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,7 +81,8 @@ public class DiscordIntegrationMod {
 
     public DiscordIntegrationMod() {
         LOGGER.info("Version is " + VERSION);
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
+                () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
         try {
             //Create data directory if missing
             if (!discordDataDir.exists()) discordDataDir.mkdir();
@@ -120,7 +123,7 @@ public class DiscordIntegrationMod {
             if (DiscordIntegration.INSTANCE.getJDA() != null) {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 CommandRegistry.registerDefaultCommands();
-                    if (!Localization.instance().serverStarting.isBlank())
+                    if (!Localization.instance().serverStarting.isEmpty())
                         if (DiscordIntegration.INSTANCE.getChannel() != null) {
                             final MessageCreateData m;
                             if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed)
@@ -148,11 +151,11 @@ public class DiscordIntegrationMod {
             if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
                 return;
             LinkManager.checkGlobalAPI(ev.getEntity().getUUID());
-            if (!Localization.instance().playerJoin.isBlank()) {
-                final Player p = ev.getPlayer();
+            if (!Localization.instance().playerJoin.isEmpty()) {
+                final PlayerEntity p = ev.getPlayer();
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.playerJoinMessage.asEmbed) {
                     final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", p.getUUID().toString()).replace("%uuid_dashless%", p.getUUID().toString().replace("-", "")).replace("%name%", p.getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
-                    if (!Configuration.instance().embedMode.playerJoinMessage.customJSON.isBlank()) {
+                    if (!Configuration.instance().embedMode.playerJoinMessage.customJSON.isEmpty()) {
                         final EmbedBuilder b = Configuration.instance().embedMode.playerJoinMessage.toEmbedJson(Configuration.instance().embedMode.playerJoinMessage.customJSON
                                 .replace("%uuid%", p.getUUID().toString())
                                 .replace("%uuid_dashless%", p.getUUID().toString().replace("-", ""))
@@ -189,23 +192,23 @@ public class DiscordIntegrationMod {
 
     @SubscribeEvent
     public void advancement(AdvancementEvent ev) {
-        if (Localization.instance().advancementMessage.isBlank()) return;
+        if (Localization.instance().advancementMessage.isEmpty()) return;
         if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
             return;
-        if (ev.getEntity().getServer().getPlayerList().getPlayerAdvancements((ServerPlayer) ev.getEntity()).getOrStartProgress(ev.getAdvancement()).isDone())
+        if (ev.getEntity().getServer().getPlayerList().getPlayerAdvancements((ServerPlayerEntity) ev.getEntity()).getOrStartProgress(ev.getAdvancement()).isDone())
             if (INSTANCE != null && ev.getAdvancement() != null && ev.getAdvancement().getDisplay() != null && ev.getAdvancement().getDisplay().shouldAnnounceChat())
-                if (!Localization.instance().advancementMessage.isBlank()) {
+                if (!Localization.instance().advancementMessage.isEmpty()) {
                     if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.advancementMessage.asEmbed) {
                         final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", ev.getEntity().getUUID().toString()).replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", "")).replace("%name%", ev.getEntity().getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
-                        if (!Configuration.instance().embedMode.advancementMessage.customJSON.isBlank()) {
+                        if (!Configuration.instance().embedMode.advancementMessage.customJSON.isEmpty()) {
                             final EmbedBuilder b = Configuration.instance().embedMode.advancementMessage.toEmbedJson(Configuration.instance().embedMode.advancementMessage.customJSON
                                     .replace("%uuid%", ev.getEntity().getUUID().toString())
                                     .replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", ""))
                                     .replace("%name%", ForgeMessageUtils.formatPlayerName(ev.getEntity()))
                                     .replace("%randomUUID%", UUID.randomUUID().toString())
                                     .replace("%avatarURL%", avatarURL)
-                                    .replace("%advName%", ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()))
-                                    .replace("%advDesc%", ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))
+                                    .replace("%advName%", TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()))
+                                    .replace("%advDesc%", TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
@@ -214,12 +217,12 @@ public class DiscordIntegrationMod {
                             EmbedBuilder b = Configuration.instance().embedMode.advancementMessage.toEmbed();
                             b = b.setAuthor(ForgeMessageUtils.formatPlayerName(ev.getEntity()), null, avatarURL)
                                     .setDescription(Localization.instance().advancementMessage.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%advName%",
-                                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                                    TextFormatting.stripFormatting(ev.getAdvancement()
                                                             .getDisplay()
                                                             .getTitle()
                                                             .getString()))
                                             .replace("%advDesc%",
-                                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                                    TextFormatting.stripFormatting(ev.getAdvancement()
                                                             .getDisplay()
                                                             .getDescription()
                                                             .getString()))
@@ -227,14 +230,14 @@ public class DiscordIntegrationMod {
                             INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                         }
                     } else INSTANCE.sendMessage(Localization.instance().advancementMessage.replace("%player%",
-                                        ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
+                                    TextFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
                                 .replace("%advName%",
-                                        ChatFormatting.stripFormatting(ev.getAdvancement()
+                                        TextFormatting.stripFormatting(ev.getAdvancement()
                                                 .getDisplay()
                                                 .getTitle()
                                                 .getString()))
                                 .replace("%advDesc%",
-                                        ChatFormatting.stripFormatting(ev.getAdvancement()
+                                        TextFormatting.stripFormatting(ev.getAdvancement()
                                                 .getDisplay()
                                                 .getDescription()
                                                 .getString()))
@@ -248,13 +251,13 @@ public class DiscordIntegrationMod {
     }
 
     @SubscribeEvent
-    public void serverStarted(final ServerStartedEvent ev) {
+    public void serverStarted(final FMLServerStartedEvent ev) {
         LOGGER.info("Started");
         started = new Date().getTime();
         if (INSTANCE != null) {
             if (DiscordIntegration.startingMsg != null) {
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed) {
-                    if (!Configuration.instance().embedMode.startMessages.customJSON.isBlank()) {
+                    if (!Configuration.instance().embedMode.startMessages.customJSON.isEmpty()) {
                         final EmbedBuilder b = Configuration.instance().embedMode.startMessages.toEmbedJson(Configuration.instance().embedMode.startMessages.customJSON);
                         DiscordIntegration.startingMsg.thenAccept((a) -> a.editMessageEmbeds(b.build()).queue());
                     } else
@@ -263,7 +266,7 @@ public class DiscordIntegrationMod {
                     DiscordIntegration.startingMsg.thenAccept((a) -> a.editMessage(Localization.instance().serverStarted).queue());
             } else {
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed) {
-                    if (!Configuration.instance().embedMode.startMessages.customJSON.isBlank()) {
+                    if (!Configuration.instance().embedMode.startMessages.customJSON.isEmpty()) {
                         final EmbedBuilder b = Configuration.instance().embedMode.startMessages.toEmbedJson(Configuration.instance().embedMode.startMessages.customJSON);
                         DiscordIntegration.INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                     } else
@@ -273,11 +276,10 @@ public class DiscordIntegrationMod {
             }
             INSTANCE.startThreads();
         }
-        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.18/update_checker.json");
+        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.16.5/update_checker.json");
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
-
 
         if (!DownloadSourceChecker.checkDownloadSource(new File(DiscordIntegrationMod.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("%")[0]))) {
             LOGGER.warn("You likely got this mod from a third party website.");
@@ -298,7 +300,7 @@ public class DiscordIntegrationMod {
                         .replace("%cmd-no-args%", command.split(" ")[0]), INSTANCE.getChannel(Configuration.instance().commandLog.channelID));
         }
         if (INSTANCE != null) {
-            final CommandSourceStack source = ev.getParseResults().getContext().getSource();
+            final CommandSource source = ev.getParseResults().getContext().getSource();
             final Entity sourceEntity = source.getEntity();
             boolean raw = false;
 
@@ -313,7 +315,7 @@ public class DiscordIntegrationMod {
                 INSTANCE.sendMessage(source.getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), INSTANCE.getChannel(Configuration.instance().advanced.chatOutputChannelID));
             }
 
-            if (command.startsWith("tellraw ") && !Configuration.instance().messages.tellrawSelector.isBlank()) {
+            if (command.startsWith("tellraw ") && !Configuration.instance().messages.tellrawSelector.isEmpty()) {
                 final String[] args = command.replace("tellraw ", "").replace("dc ", "").split(" ");
                 if (args[0].equals(Configuration.instance().messages.tellrawSelector)) {
                     INSTANCE.sendMessage(DiscordSerializer.INSTANCE.serialize(GsonComponentSerializer.gson().deserialize(command.replace("tellraw " + args[0], ""))));
@@ -328,7 +330,7 @@ public class DiscordIntegrationMod {
                             case CONSOLE_ONLY:
                                 try {
                                     source.getPlayerOrException();
-                                    source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.consoleOnly));
+                                    source.sendFailure(ITextComponent.nullToEmpty(Localization.instance().commands.consoleOnly));
                                 } catch (CommandSyntaxException e) {
                                     final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
                                     try {
@@ -339,7 +341,7 @@ public class DiscordIntegrationMod {
                                 break;
                             case PLAYER_ONLY:
                                 try {
-                                    final ServerPlayer player = source.getPlayerOrException();
+                                    final ServerPlayerEntity player = source.getPlayerOrException();
                                     if (!mcSubCommand.needsOP() && !(ModList.get().getModContainerById("dynmap").isPresent() && LuckpermsUtils.uuidHasPermission(MinecraftPermission.RUN_DISCORD_COMMAND.getAsString(), player.getUUID()))) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
@@ -361,17 +363,17 @@ public class DiscordIntegrationMod {
                                         } catch (CommandSyntaxException ignored) {
                                         }
                                     } else {
-                                        source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
+                                        source.sendFailure(ITextComponent.nullToEmpty(Localization.instance().commands.noPermission));
                                     }
                                 } catch (CommandSyntaxException e) {
-                                    source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.ingameOnly));
+                                    source.sendFailure(ITextComponent.nullToEmpty(Localization.instance().commands.ingameOnly));
 
                                 }
                                 break;
                             case BOTH:
 
                                 try {
-                                    final ServerPlayer player = source.getPlayerOrException();
+                                    final ServerPlayerEntity player = source.getPlayerOrException();
                                     if (!mcSubCommand.needsOP()) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
@@ -388,7 +390,7 @@ public class DiscordIntegrationMod {
                                         } catch (CommandSyntaxException ignored) {
                                         }
                                     } else {
-                                        source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
+                                        source.sendFailure(ITextComponent.nullToEmpty(Localization.instance().commands.noPermission));
                                     }
 
                                 } catch (CommandSyntaxException e) {
@@ -410,22 +412,22 @@ public class DiscordIntegrationMod {
     }
 
     @SubscribeEvent
-    public void serverStopping(ServerStoppedEvent ev) {
+    public void serverStopping(FMLServerStoppedEvent ev) {
         if (INSTANCE != null) {
             ev.getServer().executeBlocking(() -> {
                 INSTANCE.stopThreads();
-                if (!ev.getServer().isRunning() && !Localization.instance().serverStopped.isBlank())
+                if (!ev.getServer().isRunning() && !Localization.instance().serverStopped.isEmpty())
                     if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.stopMessages.asEmbed) {
-                        if (!Configuration.instance().embedMode.stopMessages.customJSON.isBlank()) {
+                        if (!Configuration.instance().embedMode.stopMessages.customJSON.isEmpty()) {
                             final EmbedBuilder b = Configuration.instance().embedMode.stopMessages.toEmbedJson(Configuration.instance().embedMode.stopMessages.customJSON);
                             DiscordIntegration.INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                         } else
                             DiscordIntegration.INSTANCE.sendMessage(new DiscordMessage(Configuration.instance().embedMode.stopMessages.toEmbed().setDescription(Localization.instance().serverStopped).build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                     } else
                         DiscordIntegration.INSTANCE.sendMessage(Localization.instance().serverStopped,INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
-                else if (ev.getServer().isRunning() && !Localization.instance().serverCrash.isBlank()) {
+                else if (ev.getServer().isRunning() && !Localization.instance().serverCrash.isEmpty()) {
                     if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.stopMessages.asEmbed) {
-                        if (!Configuration.instance().embedMode.stopMessages.customJSON.isBlank()) {
+                        if (!Configuration.instance().embedMode.stopMessages.customJSON.isEmpty()) {
                             final EmbedBuilder b = Configuration.instance().embedMode.stopMessages.toEmbedJson(Configuration.instance().embedMode.stopMessages.customJSON);
                             DiscordIntegration.INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                         } else
@@ -443,11 +445,11 @@ public class DiscordIntegrationMod {
 
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
-        if (Localization.instance().discordChatMessage.isBlank()) return;
+        if (Localization.instance().discordChatMessage.isEmpty()) return;
         if(!DiscordIntegration.INSTANCE.getServerInterface().playerHasPermissions(ev.getPlayer().getUUID(), MinecraftPermission.SEMD_MESSAGES,MinecraftPermission.USER)) return;
         if (LinkManager.isPlayerLinked(ev.getPlayer().getUUID()) && LinkManager.getLink(null, ev.getPlayer().getUUID()).settings.hideFromDiscord)
             return;
-        final net.minecraft.network.chat.Component msg = ev.getComponent();
+        final ITextComponent msg = ev.getComponent();
         if (INSTANCE.callEvent((e) -> {
             if (e instanceof ForgeDiscordEventHandler) {
                 return ((ForgeDiscordEventHandler) e).onMcChatMessage(ev);
@@ -460,10 +462,10 @@ public class DiscordIntegrationMod {
         if (INSTANCE != null) {
             GuildMessageChannel channel = INSTANCE.getChannel(Configuration.instance().advanced.chatOutputChannelID);
             if (channel == null) return;
-            if (!Localization.instance().discordChatMessage.isBlank())
+            if (!Localization.instance().discordChatMessage.isEmpty())
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.chatMessages.asEmbed) {
                     final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", ev.getPlayer().getUUID().toString()).replace("%uuid_dashless%", ev.getPlayer().getUUID().toString().replace("-", "")).replace("%name%", ev.getPlayer().getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
-                    if (!Configuration.instance().embedMode.chatMessages.customJSON.isBlank()) {
+                    if (!Configuration.instance().embedMode.chatMessages.customJSON.isEmpty()) {
                         final EmbedBuilder b = Configuration.instance().embedMode.chatMessages.toEmbedJson(Configuration.instance().embedMode.chatMessages.customJSON
                                 .replace("%uuid%", ev.getPlayer().getUUID().toString())
                                 .replace("%uuid_dashless%", ev.getPlayer().getUUID().toString().replace("-", ""))
@@ -485,10 +487,10 @@ public class DiscordIntegrationMod {
                 } else
                     INSTANCE.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUUID().toString(), new DiscordMessage(embed, text, true), channel);
             if(!Configuration.instance().compatibility.disableParsingMentionsIngame) {
-                final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
+                final String json = ITextComponent.Serializer.toJson(msg);
                 Component comp = GsonComponentSerializer.gson().deserialize(json);
                 final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
-                ev.setComponent(net.minecraft.network.chat.Component.Serializer.fromJson(editedJson));
+                ev.setComponent(ITextComponent.Serializer.fromJson(editedJson));
             }
         }
 
@@ -496,23 +498,23 @@ public class DiscordIntegrationMod {
 
     @SubscribeEvent
     public void death(LivingDeathEvent ev) {
-        if (Localization.instance().playerDeath.isBlank()) return;
-        if (ev.getEntity() instanceof Player) {
+        if (Localization.instance().playerDeath.isEmpty()) return;
+        if (ev.getEntity() instanceof PlayerEntity) {
             if (LinkManager.isPlayerLinked(ev.getEntity().getUUID()) && LinkManager.getLink(null, ev.getEntity().getUUID()).settings.hideFromDiscord)
                 return;
             if (INSTANCE != null) {
-                final net.minecraft.network.chat.Component deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntityLiving());
+                final ITextComponent deathMessage = ev.getSource().getLocalizedDeathMessage(ev.getEntityLiving());
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.deathMessage.asEmbed) {
                     final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", ev.getEntity().getUUID().toString()).replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", "")).replace("%name%", ev.getEntity().getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
-                    if (!Configuration.instance().embedMode.deathMessage.customJSON.isBlank()) {
+                    if (!Configuration.instance().embedMode.deathMessage.customJSON.isEmpty()) {
                         final EmbedBuilder b = Configuration.instance().embedMode.deathMessage.toEmbedJson(Configuration.instance().embedMode.deathMessage.customJSON
                                 .replace("%uuid%", ev.getEntity().getUUID().toString())
                                 .replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", ""))
                                 .replace("%name%", ForgeMessageUtils.formatPlayerName(ev.getEntity()))
                                 .replace("%randomUUID%", UUID.randomUUID().toString())
                                 .replace("%avatarURL%", avatarURL)
-                                .replace("%deathMessage%", ChatFormatting.stripFormatting(deathMessage.getString()).replace(ForgeMessageUtils.formatPlayerName(ev.getEntity()) + " ", ""))
+                                .replace("%deathMessage%", TextFormatting.stripFormatting(deathMessage.getString()).replace(ForgeMessageUtils.formatPlayerName(ev.getEntity()) + " ", ""))
                                 .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                         );
                         if (embed != null) {
@@ -522,7 +524,7 @@ public class DiscordIntegrationMod {
                         INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.deathsChannelID));
                     } else {
                         final EmbedBuilder b = Configuration.instance().embedMode.deathMessage.toEmbed();
-                        b.setDescription(":skull: " + Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", ChatFormatting.stripFormatting(deathMessage.getString()).replace(ForgeMessageUtils.formatPlayerName(ev.getEntity()) + " ", "")));
+                        b.setDescription(":skull: " + Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.stripFormatting(deathMessage.getString()).replace(ForgeMessageUtils.formatPlayerName(ev.getEntity()) + " ", "")));
                         if (embed != null) {
                             b.addBlankField(false);
                             b.addField(embed.getTitle() + " *(" + embed.getFooter().getText() + ")*", embed.getDescription(), false);
@@ -530,7 +532,7 @@ public class DiscordIntegrationMod {
                         INSTANCE.sendMessage(new DiscordMessage(b.build()), INSTANCE.getChannel(Configuration.instance().advanced.deathsChannelID));
                     }
                 } else
-                    INSTANCE.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", ChatFormatting.stripFormatting(deathMessage.getString()).replace(ForgeMessageUtils.formatPlayerName(ev.getEntity()) + " ", ""))), INSTANCE.getChannel(Configuration.instance().advanced.deathsChannelID));
+                    INSTANCE.sendMessage(new DiscordMessage(embed, Localization.instance().playerDeath.replace("%player%", ForgeMessageUtils.formatPlayerName(ev.getEntity())).replace("%msg%", TextFormatting.stripFormatting(deathMessage.getString()).replace(ForgeMessageUtils.formatPlayerName(ev.getEntity()) + " ", ""))), INSTANCE.getChannel(Configuration.instance().advanced.deathsChannelID));
             }
         }
     }
@@ -538,13 +540,13 @@ public class DiscordIntegrationMod {
     @SubscribeEvent
     public void playerLeave(PlayerEvent.PlayerLoggedOutEvent ev) {
         if (stopped) return; //Try to fix player leave messages after stop!
-        if (Localization.instance().playerLeave.isBlank()) return;
-        final Player player = ev.getPlayer();
+        if (Localization.instance().playerLeave.isEmpty()) return;
+        final PlayerEntity player = ev.getPlayer();
         final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", player.getUUID().toString()).replace("%uuid_dashless%", player.getUUID().toString().replace("-", "")).replace("%name%", player.getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
         if (DiscordIntegration.INSTANCE != null && !DiscordIntegrationMod.timeouts.contains(player.getUUID())) {
-            if (!Localization.instance().playerLeave.isBlank()) {
+            if (!Localization.instance().playerLeave.isEmpty()) {
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.playerLeaveMessages.asEmbed) {
-                    if (!Configuration.instance().embedMode.playerLeaveMessages.customJSON.isBlank()) {
+                    if (!Configuration.instance().embedMode.playerLeaveMessages.customJSON.isEmpty()) {
                         final EmbedBuilder b = Configuration.instance().embedMode.playerLeaveMessages.toEmbedJson(Configuration.instance().embedMode.playerLeaveMessages.customJSON
                                 .replace("%uuid%", player.getUUID().toString())
                                 .replace("%uuid_dashless%", player.getUUID().toString().replace("-", ""))
@@ -564,7 +566,7 @@ public class DiscordIntegrationMod {
                     DiscordIntegration.INSTANCE.sendMessage(Localization.instance().playerLeave.replace("%player%", ForgeMessageUtils.formatPlayerName(player)));
             }
         } else if (DiscordIntegration.INSTANCE != null && DiscordIntegrationMod.timeouts.contains(player.getUUID())) {
-            if (!Localization.instance().playerTimeout.isBlank()) {
+            if (!Localization.instance().playerTimeout.isEmpty()) {
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.playerLeaveMessages.asEmbed) {
                     EmbedBuilder b = Configuration.instance().embedMode.playerLeaveMessages.toEmbed();
                     b = b.setAuthor(ForgeMessageUtils.formatPlayerName(player), null, avatarURL)

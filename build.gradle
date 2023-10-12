@@ -34,7 +34,7 @@ version = "3.0.4"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 //Gradle Repositories
 repositories {
@@ -86,6 +86,7 @@ reobf {
 artifacts {
     archives tasks.shadowJar
 }
+
 configurations.all {
     resolutionStrategy {
         cacheChangingModulesFor 1, 'minutes'
@@ -99,7 +100,7 @@ dependencies {
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-40.2.10"
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.34'
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
@@ -146,9 +147,6 @@ curseforge {
             mainArtifact(jar) {
                 displayName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"
             }
-            //relations {
-                // No Support for 1.18 Forge optionalDependency("luckperms")
-           // }
         }
     }
 }
@@ -163,9 +161,6 @@ modrinth {
         gameVersions = ["${project.mcVersion}"]
         loaders = ['forge']
         versionType = project.releaseType.toUpperCase()
-        //dependencies {
-            // No Support for 1.18 Forge optional.project "luckperms"
-       // }
     }
 }
 

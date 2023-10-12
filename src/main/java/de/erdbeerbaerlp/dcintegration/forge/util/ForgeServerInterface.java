@@ -28,13 +28,15 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.minecraft.commands.arguments.ComponentArgument;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.protocol.game.ClientboundSoundPacket;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraft.command.arguments.ComponentArgument;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.play.server.SPlaySoundPacket;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import java.util.HashMap;
@@ -57,26 +59,26 @@ public class ForgeServerInterface implements McServerInterface {
 
     @Override
     public void sendIngameMessage(Component msg) {
-        final List<ServerPlayer> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
+        final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         try {
-            for (final ServerPlayer p : l) {
+            for (final ServerPlayerEntity p : l) {
                 if (!playerHasPermissions(p.getUUID(), MinecraftPermission.READ_MESSAGES, MinecraftPermission.USER))
                     return;
                 if (!DiscordIntegration.INSTANCE.ignoringPlayers.contains(p.getUUID()) && !(LinkManager.isPlayerLinked(p.getUUID()) && LinkManager.getLink(null, p.getUUID()).settings.ignoreDiscordChatIngame)) {
                     final Map.Entry<Boolean, Component> ping = ComponentUtils.parsePing(msg, p.getUUID(), p.getName().getString());
                     final String jsonComp = GsonComponentSerializer.gson().serialize(ping.getValue()).replace("\\\\n", "\n");
-                    final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
+                    final ITextComponent comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
                     p.sendMessage(comp, DiscordIntegration.dummyUUID);
                     if (ping.getKey()) {
                         if (LinkManager.isPlayerLinked(p.getUUID()) && LinkManager.getLink(null, p.getUUID()).settings.pingSound) {
-                            p.connection.send(new ClientboundSoundPacket(SoundEvents.NOTE_BLOCK_PLING, SoundSource.MASTER, p.position().x, p.position().y, p.position().z, 1, 1));
+                            p.connection.send(new SPlaySoundPacket(SoundEvents.NOTE_BLOCK_PLING.getLocation(), SoundCategory.MASTER, new Vector3d(p.position().x, p.position().y, p.position().z), 1, 1));
                         }
                     }
                 }
             }
             //Send to server console too
             final String jsonComp = GsonComponentSerializer.gson().serialize(msg).replace("\\\\n", "\n");
-            final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
+            final ITextComponent comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
             ServerLifecycleHooks.getCurrentServer().sendMessage(comp, DiscordIntegration.dummyUUID);
         } catch (Exception e) {
             e.printStackTrace();
@@ -85,8 +87,8 @@ public class ForgeServerInterface implements McServerInterface {
 
     @Override
     public void sendIngameReaction(Member member, RestAction<Message> retrieveMessage, UUID targetUUID, EmojiUnion reactionEmote) {
-        final List<ServerPlayer> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
-        for (final ServerPlayer p : l) {
+        final List<ServerPlayerEntity> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
+        for (final ServerPlayerEntity p : l) {
             if (p.getUUID().equals(targetUUID) && !DiscordIntegration.INSTANCE.ignoringPlayers.contains(p.getUUID()) && (LinkManager.isPlayerLinked(p.getUUID()) && !LinkManager.getLink(null, p.getUUID()).settings.ignoreDiscordChatIngame && !LinkManager.getLink(null, p.getUUID()).settings.ignoreReactions)) {
                 final String emote = reactionEmote.getType() == Emoji.Type.UNICODE ? EmojiParser.parseToAliases(reactionEmote.getName()) : ":" + reactionEmote.getName() + ":";
 
@@ -121,14 +123,14 @@ public class ForgeServerInterface implements McServerInterface {
         try {
             ServerLifecycleHooks.getCurrentServer().getCommands().getDispatcher().execute(cmd.trim(), s.createCommandSourceStack());
         } catch (CommandSyntaxException e) {
-            s.sendMessage(new TextComponent(e.getMessage()), DiscordIntegration.dummyUUID);
+            s.sendMessage(new StringTextComponent(e.getMessage()), DiscordIntegration.dummyUUID);
         }
     }
 
     @Override
     public HashMap<UUID, String> getPlayers() {
         final HashMap<UUID, String> players = new HashMap<>();
-        for (ServerPlayer p : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
+        for (ServerPlayerEntity p : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
             players.put(p.getUUID(), p.getDisplayName().getString().isEmpty() ? p.getName().getString() : p.getDisplayName().getString());
         }
         return players;
@@ -136,9 +138,9 @@ public class ForgeServerInterface implements McServerInterface {
 
     @Override
     public void sendIngameMessage(String msg, UUID player) {
-        final ServerPlayer p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
+        final ServerPlayerEntity p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
         if (p != null)
-            p.sendMessage(new TextComponent(msg), DiscordIntegration.dummyUUID);
+            p.sendMessage(new StringTextComponent(msg), DiscordIntegration.dummyUUID);
     }
 
     @Override
@@ -146,12 +148,12 @@ public class ForgeServerInterface implements McServerInterface {
         return Configuration.instance().bungee.isBehindBungee || ServerLifecycleHooks.getCurrentServer().usesAuthentication();
     }
 
-    private void sendReactionMCMessage(ServerPlayer target, Component msgComp) {
+    private void sendReactionMCMessage(ServerPlayerEntity target, Component msgComp) {
         if (!playerHasPermissions(target.getUUID(), MinecraftPermission.READ_MESSAGES, MinecraftPermission.USER))
             return;
         final String jsonComp = GsonComponentSerializer.gson().serialize(msgComp).replace("\\\\n", "\n");
         try {
-            final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
+            final ITextComponent comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
             target.sendMessage(comp, DiscordIntegration.dummyUUID);
         } catch (Exception e) {
             e.printStackTrace();
