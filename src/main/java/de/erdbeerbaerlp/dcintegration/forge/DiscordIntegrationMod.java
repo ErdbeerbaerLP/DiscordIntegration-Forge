@@ -77,6 +77,7 @@ public class DiscordIntegrationMod {
     private boolean stopped = false;
 
     public DiscordIntegrationMod() {
+        LOGGER.info("Version is "+VERSION);
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
         try {
             //Create data directory if missing
