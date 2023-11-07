@@ -30,7 +30,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "3.0.3"
+version = "3.0.4-SNAPSHOT"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -94,7 +94,7 @@ configurations.all {
 //Dependencies
 dependencies {
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:3.0.3') {
+    embed('de.erdbeerbaerlp:dcintegration.common:3.0.4') {
         changing = true
     }
 
