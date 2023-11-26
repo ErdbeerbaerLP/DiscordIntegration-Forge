@@ -135,13 +135,15 @@ public class DiscordIntegrationMod {
     }
 
     public static final HashMap<String, PermissionNode<Boolean>> nodes = new HashMap();
+
     @SubscribeEvent
     public void addPermissions(final PermissionGatherEvent.Nodes ev) {
-        for(MinecraftPermission p : MinecraftPermission.values()){
+        for (MinecraftPermission p : MinecraftPermission.values()) {
             nodes.put(p.getAsString(), new PermissionNode<>("dcintegration", p.getAsString().replace("dcintegration.", ""), PermissionTypes.BOOLEAN, (player, playerUUID, context) -> p.getDefaultValue()));
         }
         ev.addNodes(nodes.values().toArray(new PermissionNode[0]));
     }
+
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (INSTANCE != null) {
@@ -331,10 +333,15 @@ public class DiscordIntegrationMod {
                                     source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.consoleOnly));
                                 } catch (CommandSyntaxException e) {
                                     final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
-                                    try {
-                                        source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
-                                    } catch (CommandSyntaxException ignored) {
-                                    }
+
+                                    source.sendSuccess(() -> {
+                                        try {
+                                            return ComponentArgument.textComponent().parse(new StringReader(txt));
+                                        } catch (CommandSyntaxException ignored) {
+                                            return null;
+                                        }
+                                    }, false);
+
                                 }
                                 break;
                             case PLAYER_ONLY:
@@ -343,23 +350,33 @@ public class DiscordIntegrationMod {
                                     if (!mcSubCommand.needsOP() && !(ModList.get().getModContainerById("dynmap").isPresent() && LuckpermsUtils.uuidHasPermission(MinecraftPermission.RUN_DISCORD_COMMAND.getAsString(), player.getUUID()))) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
-                                        try {
-                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
-                                        } catch (CommandSyntaxException ignored) {
-                                        }
+
+                                        source.sendSuccess(() -> {
+                                            try {
+                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
+                                            } catch (CommandSyntaxException ignored) {
+                                                return null;
+                                            }
+                                        }, false);
                                     } else if (source.hasPermission(4)) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
-                                        try {
-                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
-                                        } catch (CommandSyntaxException ignored) {
-                                        }
+                                        source.sendSuccess(() -> {
+                                            try {
+                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
+                                            } catch (CommandSyntaxException ignored) {
+                                                return null;
+                                            }
+                                        }, false);
                                     } else if (ModList.get().getModContainerById("luckperms").isPresent() && (LuckpermsUtils.uuidHasPermission(MinecraftPermission.RUN_DISCORD_COMMAND_ADMIN.getAsString(), player.getUUID()) || LuckpermsUtils.uuidHasPermission(MinecraftPermission.ADMIN.getAsString(), player.getUUID()))) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
-                                        try {
-                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
-                                        } catch (CommandSyntaxException ignored) {
-                                        }
+                                        source.sendSuccess(() -> {
+                                            try {
+                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
+                                            } catch (CommandSyntaxException ignored) {
+                                                return null;
+                                            }
+                                        }, false);
                                     } else {
                                         source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
                                     }
@@ -375,18 +392,26 @@ public class DiscordIntegrationMod {
                                     if (!mcSubCommand.needsOP()) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
-                                        try {
-                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
-                                        } catch (CommandSyntaxException ignored) {
-                                        }
+                                        source.sendSuccess(() -> {
+                                            try {
+                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
+                                            } catch (CommandSyntaxException ignored) {
+                                                return null;
+                                            }
+                                        }, false);
+
                                     } else if (source.hasPermission(4)) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
 
-                                        try {
-                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
-                                        } catch (CommandSyntaxException ignored) {
-                                        }
+                                        source.sendSuccess(() -> {
+                                            try {
+                                                return ComponentArgument.textComponent().parse(new StringReader(txt));
+                                            } catch (CommandSyntaxException ignored) {
+                                                return null;
+                                            }
+                                        }, false);
+
                                     } else {
                                         source.sendFailure(net.minecraft.network.chat.Component.nullToEmpty(Localization.instance().commands.noPermission));
                                     }
@@ -394,10 +419,13 @@ public class DiscordIntegrationMod {
                                 } catch (CommandSyntaxException e) {
                                     final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, null));
 
-                                    try {
-                                        source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
-                                    } catch (CommandSyntaxException ignored) {
-                                    }
+                                    source.sendSuccess(() -> {
+                                        try {
+                                            return ComponentArgument.textComponent().parse(new StringReader(txt));
+                                        } catch (CommandSyntaxException ignored) {
+                                            return null;
+                                        }
+                                    }, false);
                                 }
                                 break;
                         }
@@ -444,7 +472,8 @@ public class DiscordIntegrationMod {
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
         if (Localization.instance().discordChatMessage.isBlank()) return;
-        if(!DiscordIntegration.INSTANCE.getServerInterface().playerHasPermissions(ev.getPlayer().getUUID(), MinecraftPermission.SEMD_MESSAGES,MinecraftPermission.USER)) return;
+        if (!DiscordIntegration.INSTANCE.getServerInterface().playerHasPermissions(ev.getPlayer().getUUID(), MinecraftPermission.SEMD_MESSAGES, MinecraftPermission.USER))
+            return;
         if (LinkManager.isPlayerLinked(ev.getPlayer().getUUID()) && LinkManager.getLink(null, ev.getPlayer().getUUID()).settings.hideFromDiscord)
             return;
         final net.minecraft.network.chat.Component msg = ev.getMessage();
@@ -484,7 +513,7 @@ public class DiscordIntegrationMod {
                     }
                 } else
                     INSTANCE.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUUID().toString(), new DiscordMessage(embed, text, true), channel);
-            if(!Configuration.instance().compatibility.disableParsingMentionsIngame) {
+            if (!Configuration.instance().compatibility.disableParsingMentionsIngame) {
                 final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
                 Component comp = GsonComponentSerializer.gson().deserialize(json);
                 final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));
