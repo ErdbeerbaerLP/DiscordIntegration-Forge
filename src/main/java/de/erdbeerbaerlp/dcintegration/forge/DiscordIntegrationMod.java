@@ -2,6 +2,7 @@ package de.erdbeerbaerlp.dcintegration.forge;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dcshadow.dev.vankka.mcdiscordreserializer.discord.DiscordSerializer;
 import dcshadow.net.kyori.adventure.text.Component;
 import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
