@@ -8,6 +8,7 @@ import dcshadow.net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
 import de.erdbeerbaerlp.dcintegration.common.WorkThread;
 import de.erdbeerbaerlp.dcintegration.common.compat.DynmapListener;
+import de.erdbeerbaerlp.dcintegration.common.compat.LuckpermsUtils;
 import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.MCSubCommand;
 import de.erdbeerbaerlp.dcintegration.common.minecraftCommands.McCommandRegistry;
 import de.erdbeerbaerlp.dcintegration.common.storage.CommandRegistry;
@@ -52,14 +53,14 @@ import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.network.NetworkConstants;
+import net.minecraftforge.server.permission.events.PermissionGatherEvent;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.server.permission.nodes.PermissionTypes;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static de.erdbeerbaerlp.dcintegration.common.DiscordIntegration.*;
@@ -77,7 +78,7 @@ public class DiscordIntegrationMod {
     private boolean stopped = false;
 
     public DiscordIntegrationMod() {
-        LOGGER.info("Version is "+VERSION);
+        LOGGER.info("Version is " + VERSION);
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
         try {
             //Create data directory if missing
@@ -119,20 +120,28 @@ public class DiscordIntegrationMod {
             if (DiscordIntegration.INSTANCE.getJDA() != null) {
                 Thread.sleep(2000); //Wait for it to cache the channels
                 CommandRegistry.registerDefaultCommands();
-                    if (!Localization.instance().serverStarting.isBlank())
-                        if (DiscordIntegration.INSTANCE.getChannel() != null) {
-                            final MessageCreateData m;
-                            if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed)
-                                m = new MessageCreateBuilder().setEmbeds(Configuration.instance().embedMode.startMessages.toEmbed().setDescription(Localization.instance().serverStarting).build()).build();
-                            else
-                                m = new MessageCreateBuilder().addContent(Localization.instance().serverStarting).build();
-                            DiscordIntegration.startingMsg = DiscordIntegration.INSTANCE.sendMessageReturns(m, DiscordIntegration.INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
-                        }
-                }
+                if (!Localization.instance().serverStarting.isBlank())
+                    if (DiscordIntegration.INSTANCE.getChannel() != null) {
+                        final MessageCreateData m;
+                        if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.startMessages.asEmbed)
+                            m = new MessageCreateBuilder().setEmbeds(Configuration.instance().embedMode.startMessages.toEmbed().setDescription(Localization.instance().serverStarting).build()).build();
+                        else
+                            m = new MessageCreateBuilder().addContent(Localization.instance().serverStarting).build();
+                        DiscordIntegration.startingMsg = DiscordIntegration.INSTANCE.sendMessageReturns(m, DiscordIntegration.INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
+                    }
+            }
         } catch (InterruptedException | NullPointerException ignored) {
         }
     }
 
+    public static final HashMap<String, PermissionNode<Boolean>> nodes = new HashMap();
+    @SubscribeEvent
+    public void addPermissions(final PermissionGatherEvent.Nodes ev) {
+        for(MinecraftPermission p : MinecraftPermission.values()){
+            nodes.put(p.getAsString(), new PermissionNode<>("dcintegration", p.getAsString().replace("dcintegration.", ""), PermissionTypes.BOOLEAN, (player, playerUUID, context) -> p.getDefaultValue()));
+        }
+        ev.addNodes(nodes.values().toArray(new PermissionNode[0]));
+    }
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (INSTANCE != null) {
@@ -218,18 +227,18 @@ public class DiscordIntegrationMod {
                             INSTANCE.sendMessage(new DiscordMessage(b.build()));
                         }
                     } else INSTANCE.sendMessage(Localization.instance().advancementMessage.replace("%player%",
-                                        ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
-                                .replace("%advName%",
-                                        ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                .getDisplay()
-                                                .getTitle()
-                                                .getString()))
-                                .replace("%advDesc%",
-                                        ChatFormatting.stripFormatting(ev.getAdvancement()
-                                                .getDisplay()
-                                                .getDescription()
-                                                .getString()))
-                                .replace("\\n", "\n"));
+                                    ChatFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
+                            .replace("%advName%",
+                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                            .getDisplay()
+                                            .getTitle()
+                                            .getString()))
+                            .replace("%advDesc%",
+                                    ChatFormatting.stripFormatting(ev.getAdvancement()
+                                            .getDisplay()
+                                            .getDescription()
+                                            .getString()))
+                            .replace("\\n", "\n"));
                 }
     }
 
@@ -304,9 +313,9 @@ public class DiscordIntegrationMod {
                 INSTANCE.sendMessage(source.getTextName(), sourceEntity != null ? sourceEntity.getUUID().toString() : "0000000", new DiscordMessage(null, msg, !raw), INSTANCE.getChannel(Configuration.instance().advanced.chatOutputChannelID));
             }
 
-            if(command.startsWith("tellraw ") && !Configuration.instance().messages.tellrawSelector.isBlank()){
+            if (command.startsWith("tellraw ") && !Configuration.instance().messages.tellrawSelector.isBlank()) {
                 final String[] args = command.replace("tellraw ", "").replace("dc ", "").split(" ");
-                if(args[0].equals(Configuration.instance().messages.tellrawSelector)){
+                if (args[0].equals(Configuration.instance().messages.tellrawSelector)) {
                     INSTANCE.sendMessage(DiscordSerializer.INSTANCE.serialize(GsonComponentSerializer.gson().deserialize(command.replace("tellraw " + args[0], ""))));
                 }
             }
@@ -331,7 +340,7 @@ public class DiscordIntegrationMod {
                             case PLAYER_ONLY:
                                 try {
                                     final ServerPlayer player = source.getPlayerOrException();
-                                    if (!mcSubCommand.needsOP()) {
+                                    if (!mcSubCommand.needsOP() && !(ModList.get().getModContainerById("dynmap").isPresent() && LuckpermsUtils.uuidHasPermission(MinecraftPermission.RUN_DISCORD_COMMAND.getAsString(), player.getUUID()))) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
                                         try {
@@ -341,6 +350,12 @@ public class DiscordIntegrationMod {
                                     } else if (source.hasPermission(4)) {
                                         final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
 
+                                        try {
+                                            source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
+                                        } catch (CommandSyntaxException ignored) {
+                                        }
+                                    } else if (ModList.get().getModContainerById("luckperms").isPresent() && (LuckpermsUtils.uuidHasPermission(MinecraftPermission.RUN_DISCORD_COMMAND_ADMIN.getAsString(), player.getUUID()) || LuckpermsUtils.uuidHasPermission(MinecraftPermission.ADMIN.getAsString(), player.getUUID()))) {
+                                        final String txt = GsonComponentSerializer.gson().serialize(mcSubCommand.execute(cmdArgs, player.getUUID()));
                                         try {
                                             source.sendSuccess(ComponentArgument.textComponent().parse(new StringReader(txt)), false);
                                         } catch (CommandSyntaxException ignored) {
@@ -391,6 +406,7 @@ public class DiscordIntegrationMod {
                 }
             }
         }
+
     }
 
     @SubscribeEvent
@@ -428,6 +444,7 @@ public class DiscordIntegrationMod {
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
         if (Localization.instance().discordChatMessage.isBlank()) return;
+        if(!DiscordIntegration.INSTANCE.getServerInterface().playerHasPermissions(ev.getPlayer().getUUID(), MinecraftPermission.SEMD_MESSAGES,MinecraftPermission.USER)) return;
         if (LinkManager.isPlayerLinked(ev.getPlayer().getUUID()) && LinkManager.getLink(null, ev.getPlayer().getUUID()).settings.hideFromDiscord)
             return;
         final net.minecraft.network.chat.Component msg = ev.getMessage();
@@ -467,7 +484,7 @@ public class DiscordIntegrationMod {
                     }
                 } else
                     INSTANCE.sendMessage(ForgeMessageUtils.formatPlayerName(ev.getPlayer()), ev.getPlayer().getUUID().toString(), new DiscordMessage(embed, text, true), channel);
-            if(!Configuration.instance().compatibility.disableParsingMentionsIngame) {
+            if (!Configuration.instance().compatibility.disableParsingMentionsIngame) {
                 final String json = net.minecraft.network.chat.Component.Serializer.toJson(msg);
                 Component comp = GsonComponentSerializer.gson().deserialize(json);
                 final String editedJson = GsonComponentSerializer.gson().serialize(MessageUtils.mentionsToNames(comp, channel.getGuild()));

@@ -5,6 +5,7 @@ import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Configuration;
 import de.erdbeerbaerlp.dcintegration.common.storage.Localization;
 import de.erdbeerbaerlp.dcintegration.common.storage.linking.LinkManager;
+import de.erdbeerbaerlp.dcintegration.common.util.MinecraftPermission;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.players.PlayerList;
 import net.minecraftforge.server.ServerLifecycleHooks;
@@ -21,6 +22,9 @@ public class MixinPlayerLogin {
     private void canLogin(SocketAddress address, GameProfile profile, CallbackInfoReturnable<Component> cir) {
         if (Configuration.instance().linking.whitelistMode && ServerLifecycleHooks.getCurrentServer().usesAuthentication()) {
             LinkManager.checkGlobalAPI(profile.getId());
+            if(DiscordIntegration.INSTANCE.getServerInterface().playerHasPermissions(profile.getId(), MinecraftPermission.BYPASS_WHITELIST,MinecraftPermission.ADMIN)){
+                return;
+            }
             try {
                 if (!LinkManager.isPlayerLinked(profile.getId())) {
                     cir.setReturnValue(Component.literal(Localization.instance().linking.notWhitelistedCode.replace("%code%",""+LinkManager.genLinkNumber(profile.getId()))));

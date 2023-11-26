@@ -19,6 +19,7 @@ import de.erdbeerbaerlp.dcintegration.common.storage.linking.LinkManager;
 import de.erdbeerbaerlp.dcintegration.common.util.ComponentUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.McServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.MinecraftPermission;
+import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegrationMod;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -33,6 +34,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraftforge.server.permission.PermissionAPI;
 
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +59,8 @@ public class ForgeServerInterface implements McServerInterface {
         final List<ServerPlayer> l = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
         try {
             for (final ServerPlayer p : l) {
+                if (!playerHasPermissions(p.getUUID(), MinecraftPermission.READ_MESSAGES, MinecraftPermission.USER))
+                    return;
                 if (!DiscordIntegration.INSTANCE.ignoringPlayers.contains(p.getUUID()) && !(LinkManager.isPlayerLinked(p.getUUID()) && LinkManager.getLink(null, p.getUUID()).settings.ignoreDiscordChatIngame)) {
                     final Map.Entry<Boolean, Component> ping = ComponentUtils.parsePing(msg, p.getUUID(), p.getName().getString());
                     final String jsonComp = GsonComponentSerializer.gson().serialize(ping.getValue()).replace("\\\\n", "\n");
@@ -64,7 +68,7 @@ public class ForgeServerInterface implements McServerInterface {
                     p.sendSystemMessage(comp);
                     if (ping.getKey()) {
                         if (LinkManager.isPlayerLinked(p.getUUID()) && LinkManager.getLink(null, p.getUUID()).settings.pingSound) {
-                            p.connection.send(new ClientboundSoundPacket(SoundEvents.NOTE_BLOCK_PLING, SoundSource.MASTER, p.position().x,p.position().y,p.position().z, 1,1, 1));
+                            p.connection.send(new ClientboundSoundPacket(SoundEvents.NOTE_BLOCK_PLING, SoundSource.MASTER, p.position().x, p.position().y, p.position().z, 1, 1, 1));
                         }
                     }
                 }
@@ -111,16 +115,13 @@ public class ForgeServerInterface implements McServerInterface {
 
     @Override
     public void runMcCommand(String cmd, final CompletableFuture<InteractionHook> cmdMsg, User user) {
-        final DCCommandSender s = new DCCommandSender(cmdMsg, user);
-        if (s.hasPermissions(4)) {
-            try {
-                ServerLifecycleHooks.getCurrentServer().getCommands().getDispatcher().execute(cmd.trim(), s.createCommandSourceStack());
-            } catch (CommandSyntaxException e) {
-                s.sendSystemMessage(net.minecraft.network.chat.Component.literal(e.getMessage()));
-            }
-        } else
-            s.sendSystemMessage(net.minecraft.network.chat.Component.literal("Sorry, but the bot has no permissions...\nAdd this into the servers ops.json:\n```json\n {\n   \"uuid\": \"" + Configuration.instance().commands.senderUUID + "\",\n   \"name\": \"DiscordFakeUser\",\n   \"level\": 4,\n   \"bypassesPlayerLimit\": false\n }\n```"));
 
+        final DCCommandSender s = new DCCommandSender(cmdMsg, user);
+        try {
+            ServerLifecycleHooks.getCurrentServer().getCommands().getDispatcher().execute(cmd.trim(), s.createCommandSourceStack());
+        } catch (CommandSyntaxException e) {
+            s.sendSystemMessage(net.minecraft.network.chat.Component.literal(e.getMessage()));
+        }
     }
 
     @Override
@@ -137,7 +138,6 @@ public class ForgeServerInterface implements McServerInterface {
         final ServerPlayer p = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
         if (p != null)
             p.sendSystemMessage(net.minecraft.network.chat.Component.literal(msg));
-
     }
 
     @Override
@@ -146,6 +146,8 @@ public class ForgeServerInterface implements McServerInterface {
     }
 
     private void sendReactionMCMessage(ServerPlayer target, Component msgComp) {
+        if (!playerHasPermissions(target.getUUID(), MinecraftPermission.READ_MESSAGES, MinecraftPermission.USER))
+            return;
         final String jsonComp = GsonComponentSerializer.gson().serialize(msgComp).replace("\\\\n", "\n");
         try {
             final net.minecraft.network.chat.Component comp = ComponentArgument.textComponent().parse(new StringReader(jsonComp));
@@ -167,11 +169,18 @@ public class ForgeServerInterface implements McServerInterface {
 
     @Override
     public boolean playerHasPermissions(UUID player, String... permissions) {
+        final ServerPlayer serverPlayer = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
+        for (String p : permissions) {
+            if (serverPlayer != null) {
+                if (PermissionAPI.getPermission(serverPlayer, DiscordIntegrationMod.nodes.get(p))) {
+                    return true;
+                }
+            } else {
+                if (PermissionAPI.getOfflinePermission(player, DiscordIntegrationMod.nodes.get(p))) {
+                    return true;
+                }
+            }
+        }
         return false;
-    }
-
-    @Override
-    public boolean playerHasPermissions(UUID player, MinecraftPermission... permissions) {
-        return McServerInterface.super.playerHasPermissions(player, permissions);
     }
 }
