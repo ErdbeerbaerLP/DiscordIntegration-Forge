@@ -22,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 
@@ -68,7 +68,7 @@ public class ForgeMessageUtils extends MessageUtils {
                                     }
                                     final CompoundTag itemTag = is.getOrCreateTag();
                                     final EmbedBuilder b = new EmbedBuilder();
-                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : Component.translatable(is.getItem().getDescriptionId()).getString();
+                                    String title = is.hasCustomHoverName() ? is.getDisplayName().getString() : is.getItem().getDescription().getString();
                                     if (title.isEmpty())
                                         title = is.getItem().getDescriptionId();
                                     else
@@ -86,29 +86,16 @@ public class ForgeMessageUtils extends MessageUtils {
                                     }
                                     //Add Enchantments
                                     if (!flags[0]) {
-                                        //Implementing this code myself because the original is broken
-                                        for (int i = 0; i < is.getEnchantmentTags().size(); ++i) {
-                                            final CompoundTag compoundnbt = is.getEnchantmentTags().getCompound(i);
-                                            final Enchantment ench = Enchantment.byId(compoundnbt.getInt("id"));
-                                            if (compoundnbt.get("lvl") != null) {
-                                                final int level;
-                                                if (compoundnbt.get("lvl") instanceof StringTag) {
-                                                    level = Integer.parseInt(compoundnbt.getString("lvl").replace("s", ""));
-                                                } else
-                                                    level = compoundnbt.getInt("lvl") == 0 ? compoundnbt.getShort("lvl") : compoundnbt.getInt("lvl");
-                                                tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(level).getString())).append("\n");
-                                            }
-                                        }/*
                                         EnchantmentHelper.getEnchantments(is).forEach((ench, lvl) -> {
-                                            tooltip.append(TextFormatting.getTextWithoutFormattingCodes(ench.getDisplayName(lvl).getUnformattedComponentText())).append("\n");
-                                        });*/
+                                            tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(lvl).getString())).append("\n");
+                                        });
                                     }
                                     //Add Lores
                                     final ListTag list = itemTag.getCompound("display").getList("Lore", 8);
                                     list.forEach((nbt) -> {
                                         try {
                                             if (nbt instanceof StringTag) {
-                                                final Component comp = (Component) ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
+                                                final Component comp = ComponentArgument.textComponent().parse(new StringReader(nbt.getAsString()));
                                                 tooltip.append("_").append(comp.getString()).append("_\n");
                                             }
                                         } catch (CommandSyntaxException e) {

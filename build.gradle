@@ -94,7 +94,7 @@ configurations.all {
 //Dependencies
 dependencies {
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:3.0.4.1-SNAPSHOT') {
+    embed('de.erdbeerbaerlp:dcintegration.common:3.0.4.1') {
         changing = true
     }
 
@@ -146,8 +146,9 @@ curseforge {
             mainArtifact(jar) {
                 displayName = "DiscordIntegration-Forge $version (MC ${project.mcVersion})"
             }
-            //relations {
-            //}
+            relations {
+                optionalDependency("luckperms")
+            }
         }
     }
 }
@@ -162,6 +163,9 @@ modrinth {
         gameVersions = ["${project.mcVersion}"]
         loaders = ['forge']
         versionType = project.releaseType.toUpperCase()
+        dependencies {
+            optional.project "luckperms"
+        }
     }
 }
 
