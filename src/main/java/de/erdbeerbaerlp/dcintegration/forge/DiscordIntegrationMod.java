@@ -273,7 +273,7 @@ public class DiscordIntegrationMod {
             }
             INSTANCE.startThreads();
         }
-        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.18.2/update_checker.json");
+        UpdateChecker.runUpdateCheck("https://raw.githubusercontent.com/ErdbeerbaerLP/Discord-Chat-Integration/1.18/update_checker.json");
         if (ModList.get().getModContainerById("dynmap").isPresent()) {
             new DynmapListener().register();
         }
