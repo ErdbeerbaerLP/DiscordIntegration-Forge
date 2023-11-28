@@ -95,7 +95,7 @@ configurations.all {
 //Dependencies
 dependencies {
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:3.0.4.1') {
+    embed('de.erdbeerbaerlp:dcintegration.common:3.0.4.1-j8') {
         changing = true
     }
 

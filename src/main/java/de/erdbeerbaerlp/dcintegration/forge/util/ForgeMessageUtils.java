@@ -22,7 +22,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 
@@ -106,7 +105,7 @@ public class ForgeMessageUtils extends MessageUtils {
                                         }/*
                                         EnchantmentHelper.getEnchantments(is).forEach((ench, lvl) -> {
                                             tooltip.append(ChatFormatting.stripFormatting(ench.getFullname(lvl).getString())).append("\n");
-                                        });
+                                        });*/
                                     }
                                     //Add Lores
                                     final ListNBT list = itemTag.getCompound("display").getList("Lore", 8);

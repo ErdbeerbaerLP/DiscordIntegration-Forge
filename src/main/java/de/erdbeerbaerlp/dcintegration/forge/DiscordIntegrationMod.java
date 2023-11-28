@@ -54,15 +54,17 @@ import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
-import net.minecraftforge.server.permission.events.PermissionGatherEvent;
-import net.minecraftforge.server.permission.nodes.PermissionNode;
-import net.minecraftforge.server.permission.nodes.PermissionTypes;
+import net.minecraftforge.server.permission.DefaultPermissionLevel;
+import net.minecraftforge.server.permission.PermissionAPI;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static de.erdbeerbaerlp.dcintegration.common.DiscordIntegration.*;
@@ -135,16 +137,12 @@ public class DiscordIntegrationMod {
                 }
         } catch (InterruptedException | NullPointerException ignored) {
         }
+
+        for(MinecraftPermission p : MinecraftPermission.values()){
+            PermissionAPI.registerNode(p.getAsString(),p.getDefaultValue()? DefaultPermissionLevel.ALL:DefaultPermissionLevel.OP, p.getDescription());
+        }
     }
 
-    public static final HashMap<String, PermissionNode<Boolean>> nodes = new HashMap();
-    @SubscribeEvent
-    public void addPermissions(final PermissionGatherEvent.Nodes ev) {
-        for(MinecraftPermission p : MinecraftPermission.values()){
-            nodes.put(p.getAsString(), new PermissionNode<>("dcintegration", p.getAsString().replace("dcintegration.", ""), PermissionTypes.BOOLEAN, (player, playerUUID, context) -> p.getDefaultValue()));
-        }
-        ev.addNodes(nodes.values().toArray(new PermissionNode[0]));
-    }
     @SubscribeEvent
     public void playerJoin(final PlayerEvent.PlayerLoggedInEvent ev) {
         if (INSTANCE != null) {

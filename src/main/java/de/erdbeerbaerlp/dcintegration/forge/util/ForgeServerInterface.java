@@ -19,7 +19,6 @@ import de.erdbeerbaerlp.dcintegration.common.storage.linking.LinkManager;
 import de.erdbeerbaerlp.dcintegration.common.util.ComponentUtils;
 import de.erdbeerbaerlp.dcintegration.common.util.McServerInterface;
 import de.erdbeerbaerlp.dcintegration.common.util.MinecraftPermission;
-import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegrationMod;
 import de.erdbeerbaerlp.dcintegration.forge.command.DCCommandSender;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -29,6 +28,7 @@ import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.minecraft.command.arguments.ComponentArgument;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.play.server.SPlaySoundPacket;
 import net.minecraft.util.SoundCategory;
@@ -172,14 +172,14 @@ public class ForgeServerInterface implements McServerInterface {
 
     @Override
     public boolean playerHasPermissions(UUID player, String... permissions) {
-        final ServerPlayer serverPlayer = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
+        final PlayerEntity serverPlayer = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(player);
         for (String p : permissions) {
             if (serverPlayer != null) {
-                if (PermissionAPI.getPermission(serverPlayer, DiscordIntegrationMod.nodes.get(p))) {
+                if (PermissionAPI.hasPermission(serverPlayer, p)) {
                     return true;
                 }
             } else {
-                if (PermissionAPI.getOfflinePermission(player, DiscordIntegrationMod.nodes.get(p))) {
+                if (PermissionAPI.hasPermission(new GameProfile(player,null), p, null)) {
                     return true;
                 }
             }
