@@ -12,6 +12,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -19,6 +20,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -33,18 +35,18 @@ public class DCCommandSender implements CommandSource {
     public DCCommandSender(CompletableFuture<InteractionHook> cmdMsg, User user) {
         final Member member = DiscordIntegration.INSTANCE.getMemberById(user.getId());
         if (member != null)
-            name = Component.literal("@" + (!member.getUser().getDiscriminator().equals("0000") ? member.getUser().getAsTag() : member.getEffectiveName()))
+            name =  new TextComponent("@" + (!member.getUser().getDiscriminator().equals("0000") ? member.getUser().getAsTag() : member.getEffectiveName()))
                     .setStyle(Style.EMPTY.withHoverEvent(
                             new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                    Component.literal(Localization.instance().discordUserHover
+                                    new TextComponent(Localization.instance().discordUserHover
                                             .replace("%user#tag%", !member.getUser().getDiscriminator().equals("0000") ? member.getUser().getAsTag() : member.getEffectiveName())
                                             .replace("%user%", member.getEffectiveName())
                                             .replace("%id%", member.getId())))));
         else
-            name = Component.literal("@" + (!user.getDiscriminator().equals("0000") ? user.getAsTag() : user.getEffectiveName()))
+            name = new TextComponent("@" + (!user.getDiscriminator().equals("0000") ? user.getAsTag() : user.getEffectiveName()))
                     .setStyle(Style.EMPTY.withHoverEvent(
                             new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                    Component.literal(Localization.instance().discordUserHover
+                                    new TextComponent(Localization.instance().discordUserHover
                                             .replace("%user#tag%", !user.getDiscriminator().equals("0000") ? user.getAsTag() : user.getEffectiveName())
                                             .replace("%user%", user.getEffectiveName())
                                             .replace("%id%", user.getId())))));
