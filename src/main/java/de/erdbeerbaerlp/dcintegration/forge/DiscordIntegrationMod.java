@@ -505,8 +505,8 @@ public class DiscordIntegrationMod {
                 final MessageEmbed embed = ForgeMessageUtils.genItemStackEmbedIfAvailable(deathMessage);
                 if (Configuration.instance().embedMode.enabled && Configuration.instance().embedMode.deathMessage.asEmbed) {
                     final String avatarURL = Configuration.instance().webhook.playerAvatarURL.replace("%uuid%", ev.getEntity().getUUID().toString()).replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", "")).replace("%name%", ev.getEntity().getName().getString()).replace("%randomUUID%", UUID.randomUUID().toString());
-                    if (!Configuration.instance().embedMode.playerJoinMessage.customJSON.isBlank()) {
-                        final EmbedBuilder b = Configuration.instance().embedMode.playerJoinMessage.toEmbedJson(Configuration.instance().embedMode.playerJoinMessage.customJSON
+                    if (!Configuration.instance().embedMode.deathMessage.customJSON.isBlank()) {
+                        final EmbedBuilder b = Configuration.instance().embedMode.deathMessage.toEmbedJson(Configuration.instance().embedMode.deathMessage.customJSON
                                 .replace("%uuid%", ev.getEntity().getUUID().toString())
                                 .replace("%uuid_dashless%", ev.getEntity().getUUID().toString().replace("-", ""))
                                 .replace("%name%", ForgeMessageUtils.formatPlayerName(ev.getEntity()))
