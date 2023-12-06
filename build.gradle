@@ -30,7 +30,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 
 //Build variables
-version = "3.0.4"
+version = "3.0.5"
 group = "de.erdbeerbaerlp.dcintegration"
 archivesBaseName = "dcintegration-forge"
 
@@ -86,7 +86,6 @@ reobf {
 artifacts {
     archives tasks.shadowJar
 }
-
 configurations.all {
     resolutionStrategy {
         cacheChangingModulesFor 1, 'minutes'
@@ -95,8 +94,9 @@ configurations.all {
 //Dependencies
 dependencies {
     // =========  Common  =====================
-    embed('de.erdbeerbaerlp:dcintegration.common:3.0.4.1-j8') {
+    embed('de.erdbeerbaerlp:dcintegration.common:3.0.5-j8') {
         changing = true
+        transitive = false
     }
 
     // =========  Minecraft Forge =============

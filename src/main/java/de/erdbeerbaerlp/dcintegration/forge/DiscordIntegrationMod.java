@@ -61,6 +61,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -207,6 +209,8 @@ public class DiscordIntegrationMod {
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%advName%", TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()))
                                     .replace("%advDesc%", TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))
+                                    .replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
+                                    .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
@@ -224,7 +228,9 @@ public class DiscordIntegrationMod {
                                                             .getDisplay()
                                                             .getDescription()
                                                             .getString()))
-                                            .replace("\\n", "\n"));
+                                            .replace("\\n", "\n").replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
+                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                                    );
                             INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                         }
                     } else INSTANCE.sendMessage(Localization.instance().advancementMessage.replace("%player%",
@@ -238,7 +244,8 @@ public class DiscordIntegrationMod {
                                         TextFormatting.stripFormatting(ev.getAdvancement()
                                                 .getDisplay()
                                                 .getDescription()
-                                                .getString()))
+                                                .getString()).replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
+                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8)))
                                 .replace("\\n", "\n"),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                 }
     }
@@ -444,7 +451,8 @@ public class DiscordIntegrationMod {
     @SubscribeEvent
     public void chat(ServerChatEvent ev) {
         if (Localization.instance().discordChatMessage.isEmpty()) return;
-        if(!DiscordIntegration.INSTANCE.getServerInterface().playerHasPermissions(ev.getPlayer().getUUID(), MinecraftPermission.SEMD_MESSAGES,MinecraftPermission.USER)) return;
+        if (!DiscordIntegration.INSTANCE.getServerInterface().playerHasPermissions(ev.getPlayer().getUUID(), MinecraftPermission.SEMD_MESSAGES, MinecraftPermission.USER))
+            return;
         if (LinkManager.isPlayerLinked(ev.getPlayer().getUUID()) && LinkManager.getLink(null, ev.getPlayer().getUUID()).settings.hideFromDiscord)
             return;
         final ITextComponent msg = ev.getComponent();
