@@ -62,7 +62,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -209,8 +208,8 @@ public class DiscordIntegrationMod {
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%advName%", TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()))
                                     .replace("%advDesc%", TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))
-                                    .replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
-                                    .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                                    .replace("%advNameURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString())))
+                                    .replace("%advDescURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString())))
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
@@ -228,8 +227,8 @@ public class DiscordIntegrationMod {
                                                             .getDisplay()
                                                             .getDescription()
                                                             .getString()))
-                                            .replace("\\n", "\n").replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
-                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                                            .replace("\\n", "\n").replace("%advNameURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString())))
+                                            .replace("%advDescURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString())))
                                     );
                             INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                         }
@@ -244,8 +243,8 @@ public class DiscordIntegrationMod {
                                         TextFormatting.stripFormatting(ev.getAdvancement()
                                                 .getDisplay()
                                                 .getDescription()
-                                                .getString()).replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
-                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8)))
+                                                .getString()).replace("%advNameURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString())))
+                                            .replace("%advDescURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))))
                                 .replace("\\n", "\n"),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
                 }
     }
