@@ -60,6 +60,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -208,6 +210,8 @@ public class DiscordIntegrationMod {
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%advName%", ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()))
                                     .replace("%advDesc%", ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))
+                                    .replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
+                                    .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
@@ -225,7 +229,9 @@ public class DiscordIntegrationMod {
                                                             .getDisplay()
                                                             .getDescription()
                                                             .getString()))
-                                            .replace("\\n", "\n"));
+                                            .replace("\\n", "\n").replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
+                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                                    );
                             INSTANCE.sendMessage(new DiscordMessage(b.build()));
                         }
                     } else INSTANCE.sendMessage(Localization.instance().advancementMessage.replace("%player%",
@@ -237,9 +243,11 @@ public class DiscordIntegrationMod {
                                             .getString()))
                             .replace("%advDesc%",
                                     ChatFormatting.stripFormatting(ev.getAdvancement()
-                                            .getDisplay()
-                                            .getDescription()
-                                            .getString()))
+                                                    .getDisplay()
+                                                    .getDescription()
+                                                    .getString()).replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
+                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                            )
                             .replace("\\n", "\n"));
                 }
     }

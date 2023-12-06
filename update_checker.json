@@ -1,5 +1,9 @@
 [
   {
+    "version": "3.0.5",
+    "changelog": "Fix server stopping not working\nFix update checker\nImplement URL Encoded advancement message",
+    "type": "beta"
+  },{
     "version": "3.0.4.1",
     "changelog": "Fix death message custom embed",
     "type": "beta"
