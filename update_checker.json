@@ -1,5 +1,9 @@
 [
   {
+    "version": "3.0.5",
+    "changelog": "Fix server stopping not working\nFix update checker\nImplement URL Encoded advancement message",
+    "type": "beta"
+  },{
     "version": "3.0.4.1",
     "changelog": "Fix death message custom embed",
     "type": "beta"
@@ -7,8 +11,11 @@
     "version": "3.0.4",
     "changelog": "More bug fixes\nImplement permissions",
     "type": "beta"
-  },
-  {
+  },{
+    "version": "3.0.3",
+    "changelog": "Large discord integration rewrite adding new features and fixing long existing bugs\nOld configuration can be used as-is\n\nAdded custom status\nAdded tellraw\nAdded option to disable chat message editing for compatibility reasons\nFixed lots of bugs",
+    "type": "beta"
+  },{
     "version": "3.0.0",
     "changelog": "Added new event handling methods for addons\nOtherwise mostly a bug fix update\nDon't forget to use 'discord migrate' in console when updating from below 2.6.0",
     "type": "alpha"
