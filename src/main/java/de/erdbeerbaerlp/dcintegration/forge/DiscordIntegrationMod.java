@@ -210,7 +210,6 @@ public class DiscordIntegrationMod {
                                     .replace("%advDesc%", TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))
                                     .replace("%advNameURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString())))
                                     .replace("%advDescURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString())))
-                                    .replace("%avatarURL%", avatarURL)
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
                             INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
