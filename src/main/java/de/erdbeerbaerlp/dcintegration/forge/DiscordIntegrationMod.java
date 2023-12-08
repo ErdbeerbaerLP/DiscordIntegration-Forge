@@ -212,7 +212,7 @@ public class DiscordIntegrationMod {
                                     .replace("%advDescURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString())))
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
-                            INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
+                            INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.advancementChannelID));
                         } else {
                             EmbedBuilder b = Configuration.instance().embedMode.advancementMessage.toEmbed();
                             b = b.setAuthor(ForgeMessageUtils.formatPlayerName(ev.getEntity()), null, avatarURL)
@@ -229,7 +229,7 @@ public class DiscordIntegrationMod {
                                             .replace("\\n", "\n").replace("%advNameURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString())))
                                             .replace("%advDescURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString())))
                                     );
-                            INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
+                            INSTANCE.sendMessage(new DiscordMessage(b.build()),INSTANCE.getChannel(Configuration.instance().advanced.advancementChannelID));
                         }
                     } else INSTANCE.sendMessage(Localization.instance().advancementMessage.replace("%player%",
                                     TextFormatting.stripFormatting(ForgeMessageUtils.formatPlayerName(ev.getEntity())))
@@ -244,7 +244,7 @@ public class DiscordIntegrationMod {
                                                 .getDescription()
                                                 .getString()).replace("%advNameURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString())))
                                             .replace("%advDescURL%", URLEncoder.encode(TextFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()))))
-                                .replace("\\n", "\n"),INSTANCE.getChannel(Configuration.instance().advanced.serverChannelID));
+                                .replace("\\n", "\n"),INSTANCE.getChannel(Configuration.instance().advanced.advancementChannelID));
                 }
     }
 
