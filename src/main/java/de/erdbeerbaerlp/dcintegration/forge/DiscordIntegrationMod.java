@@ -52,7 +52,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.network.NetworkConstants;
 import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import net.minecraftforge.server.permission.nodes.PermissionTypes;
@@ -210,8 +209,8 @@ public class DiscordIntegrationMod {
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%advName%", ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getTitle().getString()))
                                     .replace("%advDesc%", ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getDescription().getString()))
-                                    .replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
-                                    .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                                    .replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getTitle().getString()), StandardCharsets.UTF_8))
+                                    .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getDescription().getString()), StandardCharsets.UTF_8))
                                     .replace("%avatarURL%", avatarURL)
                                     .replace("%playerColor%", "" + TextColors.generateFromUUID(ev.getEntity().getUUID()).getRGB())
                             );
@@ -233,8 +232,8 @@ public class DiscordIntegrationMod {
                                                             .get()
                                                             .getDescription()
                                                             .getString()))
-                                            .replace("\\n", "\n").replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
-                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                                            .replace("\\n", "\n").replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getTitle().getString()), StandardCharsets.UTF_8))
+                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getDescription().getString()), StandardCharsets.UTF_8))
                                     );
                             INSTANCE.sendMessage(new DiscordMessage(b.build()));
                         }
@@ -253,8 +252,8 @@ public class DiscordIntegrationMod {
                                                 .display()
                                                 .get()
                                                     .getDescription()
-                                                    .getString()).replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getTitle().getString()), StandardCharsets.UTF_8))
-                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().getDisplay().getDescription().getString()), StandardCharsets.UTF_8))
+                                                    .getString()).replace("%advNameURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getTitle().getString()), StandardCharsets.UTF_8))
+                                            .replace("%advDescURL%", URLEncoder.encode(ChatFormatting.stripFormatting(ev.getAdvancement().value().display().get().getDescription().getString()), StandardCharsets.UTF_8))
                             )
                             .replace("\\n", "\n"));
                 }
