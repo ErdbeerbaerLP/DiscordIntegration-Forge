@@ -12,7 +12,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath 'org.spongepowered:mixingradle:0.7.32'
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
     }
 }
 
@@ -100,7 +100,7 @@ dependencies {
     }
 
     // =========  Minecraft Forge =============
-    minecraft "net.minecraftforge:forge:${project.mcVersion}-48.0.13"
+    minecraft "net.minecraftforge:forge:${project.mcVersion}-49.0.9"
 
     //Mixin
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
