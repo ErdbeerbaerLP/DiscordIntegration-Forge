@@ -75,7 +75,7 @@ public class ForgeMessageUtils extends MessageUtils {
                             if (hoverEvent.getAsJsonObject("contents").has("tag")) {
                                 final JsonObject item = hoverEvent.getAsJsonObject("contents").getAsJsonObject();
                                 try {
-                                    final ItemStack is = new ItemStack(itemreg.get(new ResourceLocation(item.get("id").getAsString())));
+                                    final ItemStack is = new ItemStack(itemreg.get(ResourceLocation.parse(item.get("id").getAsString())));
                                     ItemStack.parse(ServerLifecycleHooks.getCurrentServer().registryAccess(), NbtTagArgument.nbtTag().parse(new StringReader(item.getAsString())));
                                     final DataComponentMap itemTag = is.getComponents();
                                     final EmbedBuilder b = new EmbedBuilder();
@@ -94,7 +94,7 @@ public class ForgeMessageUtils extends MessageUtils {
                                         final ItemEnchantments e = itemTag.get(DataComponents.ENCHANTMENTS);
                                         if (((ShowInTooltipAccessor) e).discordIntegrationFabric$showsInTooltip())
                                             for (Object2IntMap.Entry<Holder<Enchantment>> ench : e.entrySet()) {
-                                                tooltip.append(ChatFormatting.stripFormatting(ench.getKey().value().getFullname(e.getLevel(ench.getKey().value())).getString())).append("\n");
+                                                tooltip.append(ChatFormatting.stripFormatting(ench.getKey().value().getFullname(ench.getKey(),e.getLevel(ench.getKey())).getString())).append("\n");
                                             }
                                     }
                                     if(itemTag.has(DataComponents.LORE)) {

@@ -14,7 +14,7 @@ plugins {
     id 'idea'
     id "com.modrinth.minotaur" version "2.+"
     id 'com.github.johnrengelman.shadow' version '8.1.1+'
-    id 'net.neoforged.gradle.userdev' version '7.0.109'
+    id 'net.neoforged.gradle.userdev' version '7.0.142'
 
 }
 apply plugin: 'eclipse'
@@ -82,7 +82,7 @@ dependencies {
     }
 
     // =========  NeoForge =============
-    implementation "net.neoforged:neoforge:20.6.48-beta"
+    implementation "net.neoforged:neoforge:21.0.0-beta"
 
     //Dynmap-API
     compileOnly('com.github.webbukkit:DynmapCoreAPI:2.5')

@@ -1,6 +1,7 @@
 package de.erdbeerbaerlp.dcintegration.forge.mixin;
 
 import de.erdbeerbaerlp.dcintegration.forge.DiscordIntegrationMod;
+import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -19,8 +20,8 @@ public class MixinNetHandlerPlayServer {
     public ServerPlayer player;
 
     @Inject(method = "onDisconnect", at = @At("HEAD"))
-    private void onDisconnect(final Component textComponent, CallbackInfo ci) {
-        if (textComponent.equals(Component.translatable("disconnect.timeout")))
+    private void onDisconnect(final DisconnectionDetails d, CallbackInfo ci) {
+        if (d.reason().equals(Component.translatable("disconnect.timeout")))
             DiscordIntegrationMod.timeouts.add(this.player.getUUID());
     }
 }
